@@ -111,6 +111,26 @@ export const CONDO_IMAGE_PROMPTS: Record<string, string> = {
   "the-river":
     "Two-tower luxury residential building in Calgary's Mission neighbourhood, addresses 135 and 137 26 Avenue SW. Fifteen stories, sleek contemporary facade in white and glass, large private balconies, Elbow River pathway and mature trees in foreground. Sophisticated low-key luxury aesthetic. " +
     PROMPT_BASE,
+
+  // Six new condos verified against luxuryhomescalgary.ca (Apr 2026 batch)
+  "residences-of-king-edward":
+    "Heritage adaptive-reuse boutique condominium in Calgary's South Calgary neighbourhood near Marda Loop, located at 3030 17 Street SW. Three-storey low-rise residence built into the former 1895 King Edward School site. Coursed ashlar sandstone facade with split-faced and smooth-faced finishes, prominent custom-carved stone front entrance cornice, arched windows, contemporary glazing accents bringing modern luxury to the heritage massing. Mature elm-lined inner-city street setting. " +
+    PROMPT_BASE,
+  "princeton-hall":
+    "14-storey luxury residential mid-rise in Calgary's Eau Claire neighbourhood, located at 690 Princeton Way SW. Originally built in 2002 by Princeton Developments, comprehensively renovated 2012-2015 with a refreshed contemporary facade — light stone-and-glass exterior, slim modern profile, generous balconies. Set on a tree-lined Eau Claire street near the Bow River pathway. " +
+    PROMPT_BASE,
+  "reflection-westman-village":
+    "Boutique 4-storey lakefront luxury residential building in Calgary's master-planned Mahogany community, part of Westman Village by Jayman BUILT, at 30 Mahogany Mews SE. Contemporary West Coast-inspired architecture: clean lines, earth-tone cladding, natural wood accents, low-pitch rooflines, large glazing facing Mahogany Lake. Connected by +15 skywalks to neighbouring 6-storey buildings (visible in background). Lake and beach in foreground. " +
+    PROMPT_BASE,
+  "the-montana":
+    "27-storey luxury residential concrete high-rise in Calgary's Beltline neighbourhood at 817 15 Avenue SW. Completed in 2009 by ProCura Real Estate Services. Sleek contemporary facade combining concrete frame with extensive glazing and glass-railing balconies, slender profile rising above the 17 Avenue retail strip. Mature trees and walkable Beltline streetscape in foreground. " +
+    PROMPT_BASE,
+  "the-views":
+    "15-storey concrete luxury residential high-rise (also known as Liberté) in Calgary's Eau Claire neighbourhood at 804 3 Avenue SW. Developed by Bosa Developments. Distinctive contemporary design: south-facing expansive windows, signature well-rounded balconies, crossover floors on 5th, 9th and 13th levels connected by glass walkways visible across the facade. Bow River and downtown skyline beyond. " +
+    PROMPT_BASE,
+  "lincoln":
+    "36-storey landmark luxury residential high-rise in Calgary's Beltline at 301 11 Avenue SW. Recently completed by Truman, designed by NORR Architects. Modern concrete tower with sleek contemporary facade, clean vertical lines, expansive floor-to-ceiling glazing, premium materials. Slim slender profile rising above the Beltline streetscape. Walk Score 98/100 — set within an active, walkable inner-city block with mature trees in foreground. " +
+    PROMPT_BASE,
 };
 
 // ============================================================================
