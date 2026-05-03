@@ -374,8 +374,23 @@ export function seedDatabase() {
   for (const n of MARQUEE_NEIGHBOURHOODS) {
     const existing = db.select().from(neighbourhoods).where(eq(neighbourhoods.slug, n.slug)).get();
     if (existing) {
-      // Backfill zone only if it's still the default (no admin edit yet)
-      if ((existing as any).zone === "City Centre & Inner-City" && n.zone && n.zone !== "City Centre & Inner-City") {
+      // Backfill / re-sync zone in two cases:
+      // 1. Row still has the literal default "City Centre & Inner-City" (never
+      //    seeded with a real zone yet).
+      // 2. Row has one of the OLD zone labels from the first /neighbourhoods
+      //    rollout (Spencer corrected the zone scheme to match real Calgary
+      //    geography). One-time migration to map them to the new scheme.
+      const OLD_ZONES = new Set([
+        "City Centre & Inner-City",
+        "Inner West",
+        "Southwest Estates",
+        "South Suburbs",
+        "Southeast Lakes",
+        "New & Acreage Communities",
+        "Surrounding Towns",
+      ]);
+      const currentZone = (existing as any).zone as string | undefined;
+      if (currentZone && OLD_ZONES.has(currentZone) && n.zone && n.zone !== currentZone) {
         db.update(neighbourhoods).set({ zone: n.zone } as any).where(eq(neighbourhoods.slug, n.slug)).run();
         zonePatched++;
       }
