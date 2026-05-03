@@ -1,0 +1,64 @@
+# Manually-triggered: regenerate AI condo hero images from CONDO_IMAGE_PROMPTS.
+#
+# Setup (one-time):
+#   1. In GitHub Settings -> Secrets and variables -> Actions, add a new
+#      repository secret: OPENAI_API_KEY = sk-...
+#
+# Usage:
+#   Go to Actions tab -> "Regenerate Condo Hero Images" -> Run workflow.
+name: Regenerate Condo Hero Images
+
+on:
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Regenerate all images (overwrite existing)"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: regen-condo-images
+  cancel-in-progress: false
+
+jobs:
+  regen:
+    name: Generate condo heroes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate condo images
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ "${{ inputs.force }}" = "true" ]; then
+            npx tsx script/generate-condo-images.ts --force
+          else
+            npx tsx script/generate-condo-images.ts
+          fi
+
+      - name: Commit + push generated PNGs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add client/public/condo-heroes/
+          if git diff --cached --quiet; then
+            echo "No new images to commit -- nothing to push."
+          else
+            git commit -m "Regenerate condo hero images via workflow"
+            git push
+          fi
