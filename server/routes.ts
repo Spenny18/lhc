@@ -1,5 +1,8 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import type { Server } from "node:http";
+import express from "express";
+import path from "node:path";
+import fs from "node:fs";
 import session from "express-session";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "node:crypto";
@@ -12,6 +15,18 @@ import { runSync } from "./rets-sync";
 import { fetchListingPhoto } from "./rets-photos";
 
 const execFileAsync = promisify(execFile);
+
+// Where admin-uploaded images live. In production on Fly this is the
+// persistent volume mounted at /data, so files survive redeploys. In dev
+// we fall back to a local folder under client/public/ so the dev server
+// can serve them too.
+const UPLOADS_ROOT = process.env.UPLOADS_ROOT
+  || (process.env.NODE_ENV === "production" ? "/data/uploads" : path.resolve(process.cwd(), "client/public/uploads"));
+function ensureUploadsDir(sub: string): string {
+  const dir = path.join(UPLOADS_ROOT, sub);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  return dir;
+}
 
 function parseJsonArr(s: string | null | undefined): any[] {
   if (!s) return [];
@@ -349,6 +364,25 @@ export async function registerRoutes(
     seedDatabase();
   } catch (e) {
     console.error("[seed] failed:", e);
+  }
+
+  // Serve admin-uploaded media (condo heroes, etc.) from the persistent
+  // uploads root. Prefix /uploads/ so it never collides with Vite's
+  // client/public/ assets that also live at the site root.
+  try {
+    if (!fs.existsSync(UPLOADS_ROOT)) fs.mkdirSync(UPLOADS_ROOT, { recursive: true });
+    app.use(
+      "/uploads",
+      express.static(UPLOADS_ROOT, {
+        // Hero images change rarely. Browser-cache for 1 day, but bust on
+        // each new upload by appending ?v={timestamp} from the seed/db.
+        maxAge: "1d",
+        fallthrough: true,
+      }),
+    );
+    console.log(`[uploads] serving ${UPLOADS_ROOT} at /uploads`);
+  } catch (e) {
+    console.error("[uploads] failed to set up uploads dir:", e);
   }
 
   // ---------- SEO MIGRATION: 301 REDIRECTS ----------
@@ -1270,6 +1304,167 @@ export async function registerRoutes(
       gallery: parseJsonArr(c.gallery),
       listings,
     });
+  });
+
+  // ==========================================================================
+  // ADMIN — Condo CMS endpoints
+  //
+  // Spencer manages condo content (text, hero images, subdivisions, etc.) via
+  // /admin/condos. The seed only INSERTS new condos on first boot — once
+  // a condo is in the db, the admin UI is the source of truth (see seed.ts).
+  // ==========================================================================
+
+  // Helper: convert raw DB row -> client-friendly condo (parses JSON arrays).
+  const adminCondoToJson = (c: any) => ({
+    ...c,
+    intro: parseJsonArr(c.intro),
+    residencesCopy: parseJsonArr(c.residencesCopy),
+    architecturalCopy: parseJsonArr(c.architecturalCopy),
+    locationCopy: parseJsonArr(c.locationCopy),
+    diningCopy: parseJsonArr(c.diningCopy),
+    shoppingCopy: parseJsonArr(c.shoppingCopy),
+    communityCopy: parseJsonArr(c.communityCopy),
+    schoolsCopy: parseJsonArr(c.schoolsCopy),
+    amenities: parseJsonArr(c.amenities),
+    gallery: parseJsonArr(c.gallery),
+  });
+  // Helper: serialize incoming JSON arrays back to TEXT for SQLite.
+  const adminCondoToRow = (data: any): any => {
+    const out: any = { ...data };
+    for (const f of [
+      "intro", "residencesCopy", "architecturalCopy",
+      "locationCopy", "diningCopy", "shoppingCopy", "communityCopy", "schoolsCopy",
+      "amenities", "gallery",
+    ]) {
+      if (Array.isArray(out[f])) out[f] = JSON.stringify(out[f]);
+    }
+    return out;
+  };
+
+  app.get("/api/admin/condos", requireAuth, (_req, res) => {
+    const rows = storage.listCondoBuildings();
+    res.json(rows.map(adminCondoToJson));
+  });
+
+  app.get("/api/admin/condos/:slug", requireAuth, (req, res) => {
+    const c = storage.getCondoBuildingBySlug(req.params.slug);
+    if (!c) return res.status(404).json({ message: "Condo not found" });
+    res.json(adminCondoToJson(c));
+  });
+
+  // PATCH — partial update. Slug is the row key and cannot be changed.
+  app.patch("/api/admin/condos/:slug", requireAuth, (req, res) => {
+    const slug = req.params.slug;
+    const existing = storage.getCondoBuildingBySlug(slug);
+    if (!existing) return res.status(404).json({ message: "Condo not found" });
+    try {
+      const row = adminCondoToRow(req.body);
+      delete row.slug; // Never allow slug rename via PATCH
+      const updated = storage.updateCondoBuilding(slug, row);
+      res.json(adminCondoToJson(updated));
+    } catch (err: any) {
+      console.error("[admin] update condo failed:", err);
+      res.status(500).json({ message: err?.message ?? "Update failed" });
+    }
+  });
+
+  // POST — create a brand-new condo. Slug is required + must not collide.
+  app.post("/api/admin/condos", requireAuth, (req, res) => {
+    const body = req.body || {};
+    if (!body.slug || !/^[a-z0-9-]+$/.test(body.slug)) {
+      return res.status(400).json({ message: "Slug is required (lowercase + hyphens only)" });
+    }
+    if (storage.getCondoBuildingBySlug(body.slug)) {
+      return res.status(409).json({ message: "A condo with this slug already exists" });
+    }
+    const row = adminCondoToRow({
+      slug: body.slug,
+      name: body.name || body.slug,
+      tagline: body.tagline || "",
+      intro: body.intro ?? [],
+      residencesCopy: body.residencesCopy ?? [],
+      architecturalCopy: body.architecturalCopy ?? [],
+      locationCopy: body.locationCopy ?? [],
+      diningCopy: body.diningCopy ?? [],
+      shoppingCopy: body.shoppingCopy ?? [],
+      communityCopy: body.communityCopy ?? [],
+      schoolsCopy: body.schoolsCopy ?? [],
+      amenities: body.amenities ?? [],
+      address: body.address || "",
+      addressAliases: body.addressAliases ?? null,
+      neighbourhoodSlug: body.neighbourhoodSlug || "beltline",
+      neighbourhood: body.neighbourhood || "",
+      quadrant: body.quadrant || "city-centre",
+      units: body.units ?? null,
+      stories: body.stories ?? null,
+      builtIn: body.builtIn ?? null,
+      developer: body.developer ?? null,
+      architect: body.architect ?? null,
+      lat: body.lat ?? 51.05,
+      lng: body.lng ?? -114.07,
+      heroImage: body.heroImage || "/condo-heroes/placeholder.png",
+      gallery: body.gallery ?? [],
+      sortOrder: body.sortOrder ?? 999,
+      featured: body.featured ?? false,
+    });
+    try {
+      const created = storage.upsertCondoBuilding(row);
+      res.status(201).json(adminCondoToJson(created));
+    } catch (err: any) {
+      res.status(500).json({ message: err?.message ?? "Create failed" });
+    }
+  });
+
+  // DELETE — remove a condo from the db.
+  app.delete("/api/admin/condos/:slug", requireAuth, (req, res) => {
+    const ok = storage.deleteCondoBuilding(req.params.slug);
+    if (!ok) return res.status(404).json({ message: "Condo not found" });
+    res.json({ ok: true });
+  });
+
+  // POST — upload a hero image as a base64 data URL. Server decodes, writes to
+  // the persistent uploads volume, and updates the condo row to point at the
+  // new public URL.
+  app.post("/api/admin/condos/:slug/hero", requireAuth, (req, res) => {
+    const slug = req.params.slug;
+    const c = storage.getCondoBuildingBySlug(slug);
+    if (!c) return res.status(404).json({ message: "Condo not found" });
+    const dataUrl: string | undefined = req.body?.dataUrl;
+    if (!dataUrl || typeof dataUrl !== "string") {
+      return res.status(400).json({ message: "dataUrl is required (data:image/...;base64,...)" });
+    }
+    const m = dataUrl.match(/^data:image\/(png|jpe?g|webp|gif);base64,(.+)$/);
+    if (!m) return res.status(400).json({ message: "dataUrl must be a base64 image (png|jpg|jpeg|webp|gif)" });
+    let extRaw = m[1].toLowerCase();
+    if (extRaw === "jpeg") extRaw = "jpg";
+    const ext = extRaw;
+    const buf = Buffer.from(m[2], "base64");
+    if (buf.length > 10 * 1024 * 1024) {
+      return res.status(413).json({ message: "Image too large (max 10MB)" });
+    }
+    try {
+      const dir = ensureUploadsDir("condo-heroes");
+      // Write to a temp file then rename so the static server never serves a
+      // half-written PNG. Cache-bust via ?v=timestamp on the saved URL.
+      const tmp = path.join(dir, `${slug}.${ext}.tmp`);
+      const final = path.join(dir, `${slug}.${ext}`);
+      fs.writeFileSync(tmp, buf);
+      fs.renameSync(tmp, final);
+      // Clean up any stale alternate-extension file (e.g. uploaded PNG before, JPG now)
+      for (const otherExt of ["png", "jpg", "webp", "gif"]) {
+        if (otherExt === ext) continue;
+        const stale = path.join(dir, `${slug}.${otherExt}`);
+        if (fs.existsSync(stale)) {
+          try { fs.unlinkSync(stale); } catch {}
+        }
+      }
+      const heroUrl = `/uploads/condo-heroes/${slug}.${ext}?v=${Date.now()}`;
+      const updated = storage.updateCondoBuilding(slug, { heroImage: heroUrl } as any);
+      res.json({ heroImage: heroUrl, condo: adminCondoToJson(updated) });
+    } catch (err: any) {
+      console.error("[admin] hero upload failed:", err);
+      res.status(500).json({ message: err?.message ?? "Hero upload failed" });
+    }
   });
 
   // GET /api/public/neighbourhoods/:slug

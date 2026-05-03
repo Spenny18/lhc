@@ -1446,6 +1446,26 @@ export class DatabaseStorage implements IStorage {
     }
     return db.insert(condoBuildings).values(data).returning().get();
   }
+  // Used by the seed: only insert if a condo with this slug doesn't already
+  // exist. Once Spencer has edited a condo via the /admin/condos UI, the seed
+  // must NEVER overwrite his changes — so additive seed updates only land for
+  // brand-new condo slugs.
+  insertCondoBuildingIfMissing(data: InsertCondoBuilding): CondoBuilding | null {
+    const existing = db.select().from(condoBuildings).where(eq(condoBuildings.slug, data.slug!)).get();
+    if (existing) return null;
+    return db.insert(condoBuildings).values(data).returning().get();
+  }
+  // Update arbitrary fields on a condo (admin UI). Slug is the row key and
+  // is excluded from updates — renaming a slug breaks public URLs.
+  updateCondoBuilding(slug: string, data: Partial<InsertCondoBuilding>): CondoBuilding | undefined {
+    const { slug: _slug, ...rest } = data as any;
+    db.update(condoBuildings).set(rest).where(eq(condoBuildings.slug, slug)).run();
+    return this.getCondoBuildingBySlug(slug);
+  }
+  deleteCondoBuilding(slug: string): boolean {
+    const res = db.delete(condoBuildings).where(eq(condoBuildings.slug, slug)).run();
+    return (res.changes ?? 0) > 0;
+  }
   // Active MLS listings at a specific street address — used by condo detail
   // pages to show units currently for sale in the building.
   listingsAtAddress(addressMatch: string, limit = 24): MlsListing[] {

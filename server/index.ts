@@ -18,13 +18,16 @@ declare module "http" {
 
 app.use(
   express.json({
+    // 12 MB ceiling so the admin condo editor can POST hero images as base64
+    // data URLs (typical hero PNG ~2-3 MB; base64 inflates ~33%).
+    limit: "12mb",
     verify: (req, _res, buf) => {
       req.rawBody = buf;
     },
   }),
 );
 
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: false, limit: "12mb" }));
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {

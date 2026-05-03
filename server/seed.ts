@@ -396,8 +396,16 @@ export function seedDatabase() {
   }
   console.log("[seed] Upserted " + MARQUEE_NEIGHBOURHOODS.length + " marquee neighbourhoods");
 
-  // 4b. Condo buildings — same upsert pattern
+  // 4b. Condo buildings — INSERT-IF-MISSING ONLY.
+  //
+  // Once a condo exists in the database, the seed never overwrites it. Spencer
+  // edits condo content via /admin/condos and the database is the source of
+  // truth. The seed's only job is to introduce *new* condo slugs on first boot
+  // (or when I add a slug to MARQUEE_CONDOS that wasn't in the db before).
+  let inserted = 0;
   for (const c of MARQUEE_CONDOS) {
+    const existing = db.select().from(condoBuildings).where(eq(condoBuildings.slug, c.slug)).get();
+    if (existing) continue; // Skip — admin owns this condo's content now.
     const row: any = {
       slug: c.slug,
       name: c.name,
@@ -428,14 +436,10 @@ export function seedDatabase() {
       sortOrder: c.sortOrder,
       featured: c.featured,
     };
-    const existing = db.select().from(condoBuildings).where(eq(condoBuildings.slug, c.slug)).get();
-    if (existing) {
-      db.update(condoBuildings).set(row).where(eq(condoBuildings.slug, c.slug)).run();
-    } else {
-      db.insert(condoBuildings).values(row).run();
-    }
+    db.insert(condoBuildings).values(row).run();
+    inserted++;
   }
-  console.log("[seed] Upserted " + MARQUEE_CONDOS.length + " condo buildings");
+  console.log(`[seed] Inserted ${inserted} new condo buildings (${MARQUEE_CONDOS.length - inserted} skipped — already exist; admin owns content)`);
 
   // 5. Blog posts
   const existingPosts = db.select().from(blogPosts).all();

@@ -34,6 +34,7 @@ import AdminCalendarPage from "@/pages/admin-calendar";
 import AdminMarketingPage from "@/pages/admin-marketing";
 import AdminAnalyticsPage from "@/pages/admin-analytics";
 import AdminSavedSearchesPage from "@/pages/admin-saved-searches";
+import AdminCondosPage from "@/pages/admin-condos";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType<any> }) {
   const { user, loading } = useAuth();
@@ -121,6 +122,10 @@ function AppRouter() {
       <Route
         path="/admin/saved-searches"
         component={() => <ProtectedRoute component={AdminSavedSearchesPage} />}
+      />
+      <Route
+        path="/admin/condos"
+        component={() => <ProtectedRoute component={AdminCondosPage} />}
       />
       <Route
         path="/admin/mls-sync"
