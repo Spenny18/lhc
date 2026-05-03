@@ -362,10 +362,25 @@ export function seedDatabase() {
     console.log("[seed] Inserted " + SEED_LEADS.length + " leads");
   }
 
-  // 4. Neighbourhoods — UPSERT each marquee row so existing 6 get the new
-  // structured fields (quadrant, borders, schools, lifeCopy, realEstateCopy)
-  // and the additional 24 marquee rows get inserted.
+  // 4. Neighbourhoods — INSERT-IF-MISSING ONLY (same pattern as condos).
+  // Once a neighbourhood exists in the db, the seed never overwrites it. This
+  // is so future admin CMS edits to neighbourhood content are safe from being
+  // clobbered when I add new neighbourhoods to the marquee in code. Only the
+  // `zone` column is opportunistically backfilled if it's still the default
+  // value (so the new zone-based grouping on /neighbourhoods works for
+  // existing rows that pre-date the zone field).
+  let nhoodsInserted = 0;
+  let zonePatched = 0;
   for (const n of MARQUEE_NEIGHBOURHOODS) {
+    const existing = db.select().from(neighbourhoods).where(eq(neighbourhoods.slug, n.slug)).get();
+    if (existing) {
+      // Backfill zone only if it's still the default (no admin edit yet)
+      if ((existing as any).zone === "City Centre & Inner-City" && n.zone && n.zone !== "City Centre & Inner-City") {
+        db.update(neighbourhoods).set({ zone: n.zone } as any).where(eq(neighbourhoods.slug, n.slug)).run();
+        zonePatched++;
+      }
+      continue;
+    }
     const row = {
       slug: n.slug,
       name: n.name,
@@ -377,6 +392,7 @@ export function seedDatabase() {
       realEstateCopy: JSON.stringify(n.realEstateCopy),
       lifeCopy: JSON.stringify(n.lifeCopy),
       quadrant: n.quadrant,
+      zone: n.zone,
       borders: JSON.stringify(n.borders),
       schools: JSON.stringify(n.schools),
       heroImage: n.heroImage,
@@ -387,14 +403,10 @@ export function seedDatabase() {
       activeCount: 0,
       sortOrder: n.sortOrder,
     };
-    const existing = db.select().from(neighbourhoods).where(eq(neighbourhoods.slug, n.slug)).get();
-    if (existing) {
-      db.update(neighbourhoods).set(row).where(eq(neighbourhoods.slug, n.slug)).run();
-    } else {
-      db.insert(neighbourhoods).values(row).run();
-    }
+    db.insert(neighbourhoods).values(row).run();
+    nhoodsInserted++;
   }
-  console.log("[seed] Upserted " + MARQUEE_NEIGHBOURHOODS.length + " marquee neighbourhoods");
+  console.log(`[seed] Inserted ${nhoodsInserted} new neighbourhoods (${MARQUEE_NEIGHBOURHOODS.length - nhoodsInserted} skipped — already exist), patched zone on ${zonePatched}`);
 
   // 4b. Condo buildings — INSERT-IF-MISSING ONLY.
   //

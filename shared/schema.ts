@@ -306,6 +306,10 @@ export const neighbourhoods = sqliteTable("neighbourhoods", {
   lifeCopy: text("life_copy").notNull().default("[]"),
   // Quadrant: city-centre | west | south | southeast | north | northwest | northeast | east | surrounding
   quadrant: text("quadrant").notNull().default("city-centre"),
+  // Display zone for grouping on /neighbourhoods (e.g. "City Centre & Inner-City",
+  // "Northwest", "Southwest Estates", "Southeast Lakes", "Surrounding Towns").
+  // Public /neighbourhoods page groups by this label.
+  zone: text("zone").notNull().default("City Centre & Inner-City"),
   // Border streets {north, south, east, west}
   borders: text("borders").notNull().default("{}"),
   // Schools list — JSON array of {name, level, area, url}

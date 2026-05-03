@@ -555,6 +555,7 @@ try {
       ["quadrant", "TEXT NOT NULL DEFAULT 'city-centre'"],
       ["borders", "TEXT NOT NULL DEFAULT '{}'"],
       ["schools", "TEXT NOT NULL DEFAULT '[]'"],
+      ["zone", "TEXT NOT NULL DEFAULT 'City Centre & Inner-City'"],
     ];
     for (const [name, type] of additions) {
       if (!existing.has(name)) {
