@@ -1215,6 +1215,9 @@ export const MARQUEE_CONDOS: MarqueeCondo[] = [
     architecturalCopy: [
       "Designed with sleek glass facades and a slim residential profile that maximizes views in every direction. South-facing units capture the Bow River and the Rocky Mountains; north-facing units look across the downtown core.",
     ],
+    locationCopy: [
+      "The Guardian's Victoria Park address offers an unbeatable lifestyle, with the Stampede Grounds, Scotiabank Saddledome, and the vibrant 17th Avenue restaurant scene just steps away. Residents enjoy direct access to the C-Train, the Peace Bridge, and the Bow River pathway system — putting all of Calgary's downtown amenities within easy reach.",
+    ],
     amenities: [
       "1,350 sqft Social Club lounge with adjoining garden terrace",
       "Lions Gym fitness facility with dedicated yoga studio",
@@ -1226,12 +1229,12 @@ export const MARQUEE_CONDOS: MarqueeCondo[] = [
     ],
     address: "1188 3 Street SE, Calgary, AB T2G 1H8",
     neighbourhoodSlug: "beltline",
-    neighbourhood: "Beltline",
+    neighbourhood: "Victoria Park / Beltline",
     quadrant: "city-centre",
     units: 316,
     stories: 44,
     builtIn: 2016,
-    developer: "Hon Towers",
+    developer: "Hon Developments & Jäger Homes",
     architect: "Lemay",
     lat: 51.043,
     lng: -114.058,
@@ -1250,7 +1253,10 @@ export const MARQUEE_CONDOS: MarqueeCondo[] = [
       "316 residential units across 44 floors, in one-bedroom and two-bedroom configurations averaging 500-900 sqft. Italian-inspired kitchens with quartz counters and stainless appliances; floor-to-ceiling glazing throughout.",
     ],
     architecturalCopy: [
-      "Identical massing to the South Tower II, with the two buildings flanking 11 Avenue SE as a paired marker of the Beltline's eastern edge. Designed by Lemay.",
+      "Slightly shorter than its South Tower II twin, the North Tower 1 rises 38 storeys with the same Lemay-designed glass-and-concrete language. The pair flank 3 Street SE as a paired marker of the Beltline's eastern edge.",
+    ],
+    locationCopy: [
+      "The Guardian's Victoria Park address offers an unbeatable lifestyle, with the Stampede Grounds, Scotiabank Saddledome, and the vibrant 17th Avenue restaurant scene just steps away. Residents enjoy direct access to the C-Train, the Peace Bridge, and the Bow River pathway system — putting all of Calgary's downtown amenities within easy reach.",
     ],
     amenities: [
       "Social Club lounge",
@@ -1263,12 +1269,12 @@ export const MARQUEE_CONDOS: MarqueeCondo[] = [
     ],
     address: "1122 3 Street SE, Calgary, AB T2G 1H7",
     neighbourhoodSlug: "beltline",
-    neighbourhood: "Beltline",
+    neighbourhood: "Victoria Park / Beltline",
     quadrant: "city-centre",
     units: 316,
-    stories: 44,
+    stories: 38,
     builtIn: 2015,
-    developer: "Hon Towers",
+    developer: "Hon Developments & Jäger Homes",
     architect: "Lemay",
     lat: 51.0435,
     lng: -114.058,
@@ -1434,6 +1440,9 @@ export const MARQUEE_CONDOS: MarqueeCondo[] = [
     architecturalCopy: [
       "Designed by Arthur Erickson Architectural Corporation (one of Erickson's last residential projects) with a refined glass and limestone facade.",
     ],
+    locationCopy: [
+      "The Concord sits in Calgary's highly desirable Eau Claire neighbourhood, directly along the Bow River pathway system. Residents enjoy immediate access to Prince's Island Park, river pathways and cycling routes, downtown office towers, fine dining and boutique retail, and the upcoming Eau Claire redevelopment enhancements. This riverfront positioning lets owners enjoy the serenity of nature while remaining steps from Calgary's financial core — a fit for professionals, executives, and downsizers seeking walkability without compromise.",
+    ],
     amenities: [
       "24/7 concierge and valet",
       "Indoor pool, hot tub, and steam room",
@@ -1568,15 +1577,18 @@ export const MARQUEE_CONDOS: MarqueeCondo[] = [
   {
     slug: "vogue",
     name: "Vogue",
-    tagline: "Downtown's tallest residential tower at 36 floors.",
+    tagline: "36-storey, 232-residence Art Deco-inspired luxury tower in Downtown West End.",
     intro: [
-      "Vogue is a 36-story tower at 6 Avenue and 9 Street SW in the Downtown West End, completed in 2017. The building is the tallest pure-residential tower in the downtown core and sits directly above the C-Train station for transit access into the central business district.",
+      "Vogue offers one of Calgary's most iconic luxury high-rise living experiences in the Downtown West End. Rising 36 storeys at 930 6 Avenue SW, Vogue was completed in 2017 by the La Caille Group and stands 125 metres tall — a striking addition to Calgary's skyline.",
     ],
     residencesCopy: [
-      "Approximately 360 units across 36 floors. One-, two-, and three-bedroom configurations from 500 to 1,400 sqft. Sub-zero appliances and quartz counters in larger units.",
+      "Residences at Vogue feature open-concept layouts with premium finishes, in-suite laundry, and central air conditioning. Floor plans range from stylish one-bedroom suites to expansive penthouses, each designed to maximize natural light and panoramic views of the Rocky Mountains, Bow River, and downtown skyline.",
     ],
     architecturalCopy: [
-      "Designed by IBI Group with a glass curtain wall and a slim residential massing.",
+      "Vogue's Art Deco-inspired design pays homage to the classic towers of New York and Chicago. The building features a distinctive 8-storey black granite arch entrance, blending timeless elegance with modern luxury. Concrete and steel construction ensures lasting structural integrity and superior sound insulation throughout the 232 residences.",
+    ],
+    locationCopy: [
+      "Vogue's Downtown West End location places residents within walking distance of Prince's Island Park, Kensington Village, the Bow River pathway system, and Calgary's +15 enclosed walkway network. The building sits just one block from the CTrain, providing effortless access to the entire city.",
     ],
     amenities: [
       "Concierge",
@@ -1593,7 +1605,7 @@ export const MARQUEE_CONDOS: MarqueeCondo[] = [
     neighbourhoodSlug: "eau-claire",
     neighbourhood: "Downtown West End",
     quadrant: "city-centre",
-    units: 360,
+    units: 232,
     stories: 36,
     builtIn: 2017,
     developer: "La Caille Group",
@@ -1928,6 +1940,9 @@ export const MARQUEE_CONDOS: MarqueeCondo[] = [
     architecturalCopy: [
       "The building's coursed ashlar facade honours the former King Edward School that occupied this site since 1895. The exterior features natural sandstone in both split-faced and smooth-faced finishes, crowned by a front entrance cornice weighing over 25,000 pounds of custom-carved stone — a heritage-inspired design that blends historical character with contemporary luxury.",
     ],
+    locationCopy: [
+      "Located on a quiet residential street adjacent to the cSPACE cultural hub, the Residences of King Edward place residents within walking distance of Marda Loop's acclaimed restaurants, cafes, boutique shops, and services. Nearby off-leash dog parks, green spaces, and bike paths offer an active outdoor lifestyle — making this an ideal address for discerning buyers seeking boutique luxury near one of Calgary's most beloved neighbourhoods.",
+    ],
     amenities: ["Heritage sandstone exterior", "Single-level flats", "Underground parking", "Bike storage", "Secure entry", "Steps to Marda Loop"],
     address: "3030 17 Street SW, Calgary, AB",
     neighbourhoodSlug: "south-calgary",
@@ -1955,6 +1970,9 @@ export const MARQUEE_CONDOS: MarqueeCondo[] = [
     ],
     architecturalCopy: [
       "The building's post-renovation contemporary design combines refined aesthetics with premium construction quality. Condo fees include heat, air conditioning, and heated underground parking with a dedicated car wash facility.",
+    ],
+    locationCopy: [
+      "Princeton Hall's riverside Eau Claire location places residents directly along the Bow River and Prince's Island Park, offering an exceptional urban lifestyle surrounded by nature. The neighbourhood provides walking access to downtown offices, fine dining, the Peace Bridge, and Calgary's extensive pathway system — an ideal address for discerning buyers seeking Eau Claire's finest luxury residences.",
     ],
     amenities: ["Concierge", "Heated underground parking", "Car wash facility", "Heat + AC included", "Storage lockers", "Adjacent to Bow River pathway"],
     address: "690 Princeton Way SW, Calgary, AB",
@@ -1984,6 +2002,9 @@ export const MARQUEE_CONDOS: MarqueeCondo[] = [
     architecturalCopy: [
       "The contemporary West Coast-inspired design features clean lines, earth tones, and natural wood accents with low-pitch rooflines. A Mitsubishi Electric HVAC system — recognized as the largest Canadian multi-unit residential village installation — provides efficient climate control year-round. All buildings are connected by heated underground pathways and +15 skywalks.",
     ],
+    locationCopy: [
+      "Westman Village offers a resort-style lifestyle with direct access to Mahogany Lake — Calgary's largest freshwater lake community. The self-contained village includes on-site dining, retail, and an unmatched amenity centre, while Mahogany's surrounding parks, pathways, and family-friendly atmosphere make Reflection an ideal choice for buyers seeking luxury lakefront living in Southeast Calgary.",
+    ],
     amenities: ["Indoor saltwater pool", "Fitness centre", "Theatre room", "Art studio", "Wine room", "Private dining", "Direct beach access (Mahogany Lake)", "+15 skywalks between buildings", "Underground parking"],
     address: "30 Mahogany Mews SE, Calgary, AB",
     neighbourhoodSlug: "mahogany",
@@ -2012,6 +2033,9 @@ export const MARQUEE_CONDOS: MarqueeCondo[] = [
     architecturalCopy: [
       "Sleek concrete-and-glass tower designed for the Beltline corridor, with retail at street level and 27 stories of residences above. ProCura Real Estate Services anchored its reputation in Calgary with this build.",
     ],
+    locationCopy: [
+      "Situated in Calgary's vibrant Beltline district, The Montana places residents just steps from 17th Avenue's acclaimed dining, boutique shopping, and nightlife scene. The central location offers easy access to downtown offices, the Bow River pathway system, and Calgary's cultural attractions — making it an ideal choice for professionals seeking luxury condominium living with urban convenience.",
+    ],
     amenities: ["Concierge", "Fitness room", "Underground heated parking", "Visitor parking", "Bicycle storage", "Secure entry"],
     address: "817 15 Avenue SW, Calgary, AB",
     neighbourhoodSlug: "beltline",
@@ -2038,6 +2062,9 @@ export const MARQUEE_CONDOS: MarqueeCondo[] = [
     ],
     architecturalCopy: [
       "Four elegant brick-clad buildings arranged around a gated centre courtyard with a circular driveway, buffered by mature trees and landscaped walkways. The exterior features a sophisticated brick and stucco facade with metal-clad wood windows, built on concrete foundations.",
+    ],
+    locationCopy: [
+      "Situated directly adjacent to Prince's Island Park and the Bow River, this community provides immediate access to Calgary's most beloved green spaces and the extensive river pathway system. Eau Claire's dining, entertainment, and downtown business district are all within an easy walk, making Prince's Island Estates a premier address for luxury buyers seeking a secure, park-side lifestyle in the heart of the city.",
     ],
     amenities: ["Gated entry + concierge", "Underground heated parking", "Centre courtyard with circular driveway", "Mature landscaped grounds", "Direct elevator access", "Adjacent to Prince's Island Park", "Bow River pathway access"],
     address: "400 Eau Claire Avenue SW, Calgary, AB",
@@ -2066,6 +2093,9 @@ export const MARQUEE_CONDOS: MarqueeCondo[] = [
     ],
     architecturalCopy: [
       "The Views is a concrete high-rise featuring a fresh, contemporary design with distinctive architectural elements. The building's unique layout includes crossover floors on the 5th, 9th, and 13th levels connected by glass walkways, along with signature well-rounded balconies. South-facing expansive windows flood suites with natural light throughout the day.",
+    ],
+    locationCopy: [
+      "The Views sits at the centre of Eau Claire's vibrant community, within walking distance of Prince's Island Park, the Bow River pathway system, downtown shopping and dining, and the future Green Line LRT hub. This prime location offers the perfect balance of urban convenience and riverside tranquility for Calgary condominium buyers.",
     ],
     amenities: ["24/7 concierge", "Indoor pool", "Fitness centre", "Steam room", "Sauna", "Underground heated parking", "Visitor parking", "Bicycle storage"],
     address: "804 3 Avenue SW, Calgary, AB",
@@ -2117,6 +2147,9 @@ export const MARQUEE_CONDOS: MarqueeCondo[] = [
     architecturalCopy: [
       "Lincoln is a modern concrete high-rise designed by NORR Architects, featuring a sleek contemporary facade that complements the Beltline's evolving urban landscape. The design emphasizes clean lines, expansive glazing, and premium materials — setting a new benchmark for the Lincoln Calgary condominium experience.",
     ],
+    locationCopy: [
+      "Lincoln's Beltline address places residents just an 8-minute walk from the iconic Calgary Tower and steps from CTrain stations, the CORE Shopping Centre, and the University of Calgary's Downtown Campus. The vibrant 17th Avenue entertainment district, 4th Street dining, and the Bow River pathway system are all within easy reach — making Lincoln an exceptional choice for those seeking the best of urban Calgary living.",
+    ],
     amenities: ["Concierge", "Fitness facility", "Underground heated parking", "Visitor parking", "Bicycle storage", "Pet-friendly", "Walk Score 98/100"],
     address: "301 11 Avenue SW, Calgary, AB",
     neighbourhoodSlug: "beltline",
@@ -2145,6 +2178,9 @@ export const MARQUEE_CONDOS: MarqueeCondo[] = [
     ],
     architecturalCopy: [
       "Concrete high-rise built for durability and acoustic separation. The clean modern facade reads as a slim downtown tower, with full-height glazing maximizing daylight and skyline views.",
+    ],
+    locationCopy: [
+      "Arriva sits on the edge of the Stampede District and downtown core — walkable to Stampede Park, event venues, transit, and the Beltline's best restaurants and services. It's a strong fit for professionals and downsizers who want a premium tower in a high-access location.",
     ],
     amenities: ["24/7 concierge", "Fitness facility", "Yoga studio", "Resident lounge", "Underground heated parking", "Bicycle storage", "Visitor parking"],
     address: "433 11 Avenue SE, Calgary, AB",
