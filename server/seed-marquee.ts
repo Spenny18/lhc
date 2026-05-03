@@ -25,14 +25,18 @@ const HERO_BANK = {
 // to read well as section headings (don't change them without updating the
 // frontend grouping logic).
 type NeighbourhoodZone =
-  | "City Centre & Inner-City"
-  | "Inner West"
+  | "City Centre"
+  | "West"
+  | "Southwest"
+  | "South"
+  | "Southeast"
   | "Northwest"
-  | "Southwest Estates"
-  | "South Suburbs"
-  | "Southeast Lakes"
-  | "New & Acreage Communities"
-  | "Surrounding Towns";
+  | "Northeast"
+  | "Rural Rocky View County"
+  | "Foothills MD"
+  | "Airdrie"
+  | "Chestermere"
+  | "Canmore";
 
 interface MarqueeNeighbourhood {
   slug: string;
@@ -85,7 +89,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
       "Upper Mount Royal is not a young community — the median household runs older than most Calgary neighbourhoods, and the streets are quiet most evenings. Families do well here, but the rhythm is private rather than communal. Western Canada High School draws families who would otherwise consider private.",
     ],
     quadrant: "city-centre",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "Royal Avenue SW", south: "Premier Way SW", east: "Mount Royal Crescent / Hillcrest Avenue", west: "14th Street SW" },
     schools: [
       { name: "Mount Royal School", level: "K-6", area: "Mount Royal", url: "https://school.cbe.ab.ca/school/mountroyal/" },
@@ -125,7 +129,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
       "Elbow Park is the most family-active of Calgary's prestige communities. The community association rink runs leagues for kids most weeknights through the winter, and the river pathway is the social spine in summer. Elbow Park Elementary anchors a tight cohort.",
     ],
     quadrant: "city-centre",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "Mission Bridge / 25 Avenue SW", south: "50 Avenue SW", east: "Macleod Trail / Elbow River", west: "4th Street SW" },
     schools: [
       { name: "Elbow Park School", level: "K-6", area: "Elbow Park", url: "https://school.cbe.ab.ca/school/elbowpark/" },
@@ -164,7 +168,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
       "Britannia residents tend to stay for decades. Demographics skew established-family and empty-nester, with a quiet evening rhythm and minimal through-traffic. The community plaza is the social anchor.",
     ],
     quadrant: "city-centre",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "50 Avenue SW", south: "Glenmore Trail SW", east: "Elbow River", west: "Elbow Drive" },
     schools: [
       { name: "Elbow Park School", level: "K-6", area: "Elbow Park" },
@@ -203,7 +207,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
       "Demographics skew older and established. The community is private and quiet — there's no neighbourhood plaza, no commercial strip, just the homes and the reservoir.",
     ],
     quadrant: "city-centre",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "Glenmore Trail SW", south: "Glenmore Reservoir", east: "14 Street SW", west: "Bel-Aire Place SW" },
     schools: [
       { name: "Earl Grey School", level: "7-9", area: "Mount Royal" },
@@ -241,7 +245,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
       "Aspen is the most family-dense of the prestige communities. The cohort effect is strong — kids walk to private schools together, parents network through school families. Suburban in feel, with the community amenity spine running through Aspen Landing.",
     ],
     quadrant: "west",
-    zone: "Southwest Estates",
+    zone: "West",
     borders: { north: "17 Avenue SW", south: "Old Banff Coach Road", east: "Sarcee Trail", west: "85 Street SW" },
     schools: [
       { name: "Webber Academy", level: "JK-12 (private)", area: "Aspen Woods" },
@@ -281,7 +285,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
       "Springbank Hill is suburban-quiet with strong family demographics. The newer sections have the cohort feel of Aspen; the older sections feel more spread-out and private.",
     ],
     quadrant: "west",
-    zone: "Southwest Estates",
+    zone: "West",
     borders: { north: "Old Banff Coach Road", south: "Highway 8 / Glenmore Trail", east: "69 Street SW / Sarcee Trail", west: "City limit (101 Street SW)" },
     schools: [
       { name: "Webber Academy", level: "JK-12 (private)", area: "Aspen Woods" },
@@ -326,7 +330,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
       "Demographics skew young-professional and DINK. Streets are walkable and active most evenings. Family density is lower than Upper Mount Royal but rising as duplexes attract second-time buyers.",
     ],
     quadrant: "city-centre",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "12 Avenue SW", south: "Royal Avenue SW", east: "4 Street SW", west: "14 Street SW" },
     schools: [
       { name: "Sunalta School", level: "K-6", area: "Sunalta" },
@@ -364,7 +368,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
       "Eau Claire skews professional and downsizer. The community is more residential-feeling than the Beltline despite its downtown adjacency — quiet evenings, river-pathway commuters, and a high concentration of full-time residents (rather than investor-owned units).",
     ],
     quadrant: "city-centre",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "Bow River", south: "5 Avenue SW", east: "Centre Street", west: "10 Street SW" },
     schools: [
       { name: "Connaught School", level: "K-6", area: "Beltline" },
@@ -401,7 +405,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
       "Demographics skew young-professional and downsizer. Weekend retail and nightlife drive heavy foot traffic on 17th Ave; the side streets are calm. Dog ownership is high; family density is low.",
     ],
     quadrant: "city-centre",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "9 Avenue SW", south: "17 Avenue SW", east: "Macleod Trail / 1 Street SE", west: "14 Street SW" },
     schools: [
       { name: "Connaught School", level: "K-6", area: "Beltline" },
@@ -438,7 +442,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
       "Demographics are mixed: established residents on the row-house blocks, younger professionals in the condos, families on the western edges. Streetscape is active most days but never hectic.",
     ],
     quadrant: "city-centre",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "Mission Bridge / 17 Avenue SW", south: "Macdonald Avenue SW / 26 Avenue", east: "Macleod Trail", west: "Elbow River" },
     schools: [
       { name: "Western Canada High School", level: "10-12", area: "Cliff Bungalow" },
@@ -476,7 +480,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
       "Inglewood is the most artistic-identifying community in Calgary by self-report. The demographic is creative-class, professional, and increasingly families. Weekend foot traffic on 9th Ave is heavy; side streets are quiet.",
     ],
     quadrant: "city-centre",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "Bow River / 12 Avenue SE", south: "Bow River / Inglewood Wildlands", east: "Inglewood Bird Sanctuary", west: "Elbow River / 6 Street SE" },
     schools: [
       { name: "Colonel Walker School", level: "K-9", area: "Inglewood" },
@@ -514,7 +518,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
       "Demographics are mixed-young-professional and family. Sense of community is unusually strong — community-association events draw real attendance, and the Italian-heritage anchor businesses along 1st Avenue still drive a daytime social rhythm.",
     ],
     quadrant: "city-centre",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "Memorial Drive NE", south: "Bow River", east: "12 Street NE", west: "Centre Street North" },
     schools: [
       { name: "Langevin School", level: "K-9 (French Immersion)", area: "Bridgeland" },
@@ -552,7 +556,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
       "Sunnyside is one of Calgary's most age-balanced communities — established residents, young professionals, and growing families share the streets. The community association hosts the most active outdoor calendar of any inner-city community.",
     ],
     quadrant: "city-centre",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "5 Avenue NW", south: "Bow River", east: "Centre Street", west: "10 Street NW" },
     schools: [
       { name: "Hillhurst School", level: "K-6", area: "Hillhurst" },
@@ -590,7 +594,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
       "Hillhurst skews family. Riley Park drives weekend rhythm; weekday foot traffic is light. The community association runs strong outdoor and youth programming.",
     ],
     quadrant: "city-centre",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "5 Avenue NW", south: "Bow River", east: "10 Street NW", west: "14 Street NW" },
     schools: [
       { name: "Hillhurst School", level: "K-6", area: "Hillhurst" },
@@ -627,7 +631,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
       "West Hillhurst is family-dense and quiet. The proximity to the hospital and university creates a high-education, established-professional community character.",
     ],
     quadrant: "city-centre",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "5 Avenue NW", south: "Bow River", east: "14 Street NW", west: "Crowchild Trail" },
     schools: [
       { name: "Hillhurst School", level: "K-6", area: "Hillhurst" },
@@ -665,7 +669,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
       "Altadore is family-dense and walkable. Marda Loop is the social anchor; River Park is the weekend anchor. The community association runs an active outdoor rink.",
     ],
     quadrant: "city-centre",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "33 Avenue SW", south: "50 Avenue SW", east: "Elbow Drive", west: "Crowchild Trail" },
     schools: [
       { name: "Altadore School", level: "K-6", area: "Altadore" },
@@ -705,7 +709,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
       "Garrison Woods is family-dense and quiet. The community-centre design pulls daily life into the central park; the streets are calm and pedestrian-friendly.",
     ],
     quadrant: "city-centre",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "Richmond Road SW", south: "33 Avenue SW", east: "Garrison Crossing", west: "Crowchild Trail" },
     schools: [
       { name: "Master's Academy", level: "K-12 (private)", area: "Garrison Woods" },
@@ -743,7 +747,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
       "Currie skews young-professional and young-family. The community is still establishing its rhythm; events and amenities are growing year over year.",
     ],
     quadrant: "city-centre",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "33 Avenue SW", south: "Flanders Avenue / Lakeview Drive", east: "Crowchild Trail", west: "Sarcee Trail" },
     schools: [
       { name: "Master's Academy", level: "K-12 (private)", area: "Garrison Woods" },
@@ -780,7 +784,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
       "Scarboro is established-family and downsizer demographics, very quiet streets, and an unusually strong sense of community for an inner-city neighbourhood.",
     ],
     quadrant: "city-centre",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "Bow Trail SW", south: "17 Avenue SW", east: "14 Street SW", west: "Crowchild Trail" },
     schools: [
       { name: "Sunalta School", level: "K-6", area: "Sunalta" },
@@ -817,7 +821,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
       "Rideau Park is family-dense around the school; the rest of the community is established-family and downsizer. Streets are quiet and cohesive.",
     ],
     quadrant: "city-centre",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "26 Avenue SW", south: "Erlton Place SW", east: "Macleod Trail", west: "Elbow River" },
     schools: [
       { name: "Rideau Park School", level: "K-9", area: "Rideau Park" },
@@ -854,7 +858,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
       "Roxboro is established-family demographics, very quiet, and intensely private. The community feels almost rural in places despite its inner-city location.",
     ],
     quadrant: "city-centre",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "26 Avenue SW", south: "Mission Bridge", east: "Macleod Trail", west: "Mount Royal" },
     schools: [
       { name: "Earl Grey School", level: "7-9", area: "Mount Royal" },
@@ -891,7 +895,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
       "Mayfair is established-family and downsizer. Quiet streets, no commercial, very private.",
     ],
     quadrant: "city-centre",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "75 Avenue SW", south: "Glenmore Reservoir", east: "Elbow Drive", west: "14 Street SW" },
     schools: [
       { name: "Earl Grey School", level: "7-9", area: "Mount Royal" },
@@ -928,7 +932,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
       "Pump Hill is family-dense and established. CFIS shapes the daily rhythm; the community is quiet outside school hours.",
     ],
     quadrant: "south",
-    zone: "Southwest Estates",
+    zone: "Southwest",
     borders: { north: "Glenmore Reservoir", south: "90 Avenue SW", east: "14 Street SW", west: "Elbow Drive" },
     schools: [
       { name: "Calgary French & International School", level: "PreK-12 (private)", area: "Pump Hill" },
@@ -966,7 +970,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
       "Eagle Ridge is established-family and downsizer demographics. Very quiet.",
     ],
     quadrant: "south",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "Glenmore Reservoir", south: "75 Avenue SW", east: "Elbow Drive", west: "14 Street SW" },
     schools: [
       { name: "Calgary French & International School", level: "PreK-12 (private)", area: "Pump Hill" },
@@ -1004,7 +1008,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
       "Bayview is family-dense. The lake drives summer rhythm; community programming brings consistent neighbour interaction.",
     ],
     quadrant: "south",
-    zone: "Southwest Estates",
+    zone: "Southwest",
     borders: { north: "Anderson Road SE", south: "Lake Bonavista Drive SE", east: "Lake Bonavista", west: "Bow Bottom Trail" },
     schools: [
       { name: "Lake Bonavista School", level: "K-6", area: "Lake Bonavista" },
@@ -1042,7 +1046,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
       "Patterson is family-dense in the central blocks; established-family and downsizer on the view streets. Quiet and residential.",
     ],
     quadrant: "west",
-    zone: "Southwest Estates",
+    zone: "West",
     borders: { north: "Bow Trail SW", south: "Old Banff Coach Road", east: "Sarcee Trail", west: "85 Street SW" },
     schools: [
       { name: "Patterson School", level: "K-6", area: "Patterson" },
@@ -1080,7 +1084,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
       "Discovery Ridge is family-dense and quiet. The forest network drives outdoor rhythm; community events center around the small commercial node and the school catchments.",
     ],
     quadrant: "west",
-    zone: "Southwest Estates",
+    zone: "West",
     borders: { north: "Highway 8 / Discovery Ridge Way SW", south: "Griffith Woods", east: "Sarcee Trail", west: "Discovery Ridge Boulevard" },
     schools: [
       { name: "Olympic Heights School", level: "K-6", area: "Cougar Ridge" },
@@ -1118,7 +1122,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
       "West Springs is family-dense and walkable. The community centre and the 85 Street commercial node drive daily life.",
     ],
     quadrant: "west",
-    zone: "Southwest Estates",
+    zone: "West",
     borders: { north: "Bow Trail SW", south: "17 Avenue SW", east: "69 Street SW", west: "85 Street SW" },
     schools: [
       { name: "West Springs School", level: "K-6", area: "West Springs" },
@@ -1156,7 +1160,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
       "Mahogany is family-dense and amenity-driven. Summer rhythm centres on the lake; winter on the rink and Beach Club.",
     ],
     quadrant: "southeast",
-    zone: "Southeast Lakes",
+    zone: "Southeast",
     borders: { north: "52 Street SE", south: "196 Avenue SE", east: "Bow River", west: "Stoney Trail" },
     schools: [
       { name: "Mahogany School", level: "K-4", area: "Mahogany" },
@@ -1194,7 +1198,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
       "Auburn Bay is family-dense. The lake and hospital create distinct daytime and weekend rhythms.",
     ],
     quadrant: "southeast",
-    zone: "Southeast Lakes",
+    zone: "Southeast",
     borders: { north: "Stoney Trail SE", south: "52 Street SE", east: "Deerfoot Trail", west: "Auburn Bay Boulevard" },
     schools: [
       { name: "Auburn Bay School", level: "K-4", area: "Auburn Bay" },
@@ -1227,7 +1231,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "city-centre",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.innerCityClassic,
@@ -1249,7 +1253,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "city-centre",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.riverside,
@@ -1271,7 +1275,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "northwest",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.innerCityClassic,
@@ -1293,7 +1297,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "northwest",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.innerCityClassic,
@@ -1315,7 +1319,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "northwest",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.innerCityClassic,
@@ -1337,7 +1341,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "northwest",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.innerCityClassic,
@@ -1359,7 +1363,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "northwest",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.riverside,
@@ -1381,7 +1385,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "city-centre",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.innerCityClassic,
@@ -1403,7 +1407,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "city-centre",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.innerCityClassic,
@@ -1425,7 +1429,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "south",
-    zone: "City Centre & Inner-City",
+    zone: "South",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.innerCityClassic,
@@ -1447,7 +1451,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "city-centre",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.innerCityClassic,
@@ -1469,7 +1473,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "city-centre",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.innerCityClassic,
@@ -1491,7 +1495,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "city-centre",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.innerCityClassic,
@@ -1513,7 +1517,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "city-centre",
-    zone: "City Centre & Inner-City",
+    zone: "City Centre",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.innerCityClassic,
@@ -1623,7 +1627,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "west",
-    zone: "Southwest Estates",
+    zone: "Rural Rocky View County",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.westsideEstate,
@@ -1645,7 +1649,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "west",
-    zone: "Southwest Estates",
+    zone: "Rural Rocky View County",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.westsideEstate,
@@ -1667,7 +1671,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "west",
-    zone: "Southwest Estates",
+    zone: "West",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.reservoir,
@@ -1689,7 +1693,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "south",
-    zone: "Southwest Estates",
+    zone: "Southwest",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.reservoir,
@@ -1711,7 +1715,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "west",
-    zone: "Southwest Estates",
+    zone: "West",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.westsideEstate,
@@ -1733,7 +1737,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "west",
-    zone: "Southwest Estates",
+    zone: "West",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.reservoir,
@@ -1755,7 +1759,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "west",
-    zone: "Southwest Estates",
+    zone: "West",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.westsideEstate,
@@ -1777,7 +1781,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "south",
-    zone: "Southwest Estates",
+    zone: "Southwest",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.modernEstate,
@@ -1799,7 +1803,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "south",
-    zone: "South Suburbs",
+    zone: "South",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.modernEstate,
@@ -1821,7 +1825,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "south",
-    zone: "South Suburbs",
+    zone: "South",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.modernEstate,
@@ -1843,7 +1847,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "southeast",
-    zone: "Southeast Lakes",
+    zone: "Southeast",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.modernEstate,
@@ -1865,7 +1869,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "southeast",
-    zone: "Southeast Lakes",
+    zone: "Southeast",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.modernEstate,
@@ -1887,7 +1891,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "southeast",
-    zone: "Southeast Lakes",
+    zone: "Southeast",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.modernEstate,
@@ -1909,7 +1913,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "southeast",
-    zone: "Southeast Lakes",
+    zone: "Southeast",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.modernEstate,
@@ -1931,7 +1935,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "south",
-    zone: "New & Acreage Communities",
+    zone: "South",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.modernEstate,
@@ -1953,7 +1957,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "surrounding",
-    zone: "New & Acreage Communities",
+    zone: "Rural Rocky View County",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.modernEstate,
@@ -1975,7 +1979,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "surrounding",
-    zone: "New & Acreage Communities",
+    zone: "Rural Rocky View County",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.modernEstate,
@@ -1997,7 +2001,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "south",
-    zone: "New & Acreage Communities",
+    zone: "South",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.modernEstate,
@@ -2008,7 +2012,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
   },
   {
     slug: "spring-creek-canmore",
-    name: "Spring Creek (Canmore)",
+    name: "Spring Creek",
     tagline: "Mountain village condominiums in Canmore's Spring Creek master-plan.",
     story: [
       "Spring Creek Mountain Village is Canmore's premier walk-to-everything master-planned mountain community, paired with the Bow River pathway and downtown Canmore. A mix of mountain condominiums, townhomes, and a hotel anchor — popular for primary, recreational, and rental investments.",
@@ -2019,7 +2023,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "surrounding",
-    zone: "Surrounding Towns",
+    zone: "Canmore",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.modernEstate,
@@ -2030,7 +2034,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
   },
   {
     slug: "coopers-crossing-airdrie",
-    name: "Coopers Crossing (Airdrie)",
+    name: "Coopers Crossing",
     tagline: "Premier Airdrie family community paired with the Coopers TownCentre amenity.",
     story: [
       "Coopers Crossing is Airdrie's flagship family community by Apex Land, paired with the Coopers Townhall, Genesis Place recreation, and strong K-12 catchments. Modern single-family homes with bungalow + estate options.",
@@ -2041,7 +2045,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "surrounding",
-    zone: "Surrounding Towns",
+    zone: "Airdrie",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.modernEstate,
@@ -2052,7 +2056,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
   },
   {
     slug: "bayside-airdrie",
-    name: "Bayside (Airdrie)",
+    name: "Bayside",
     tagline: "Lake-and-canal community in Airdrie's south side.",
     story: [
       "Bayside is an Airdrie lake-and-canal community, paired with the Bayside marina-style pathway system. Family-focused with single-family homes ranging from starter to estate. Strong K-9 catchments and direct QE2 access.",
@@ -2063,7 +2067,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "surrounding",
-    zone: "Surrounding Towns",
+    zone: "Airdrie",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.modernEstate,
@@ -2074,7 +2078,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
   },
   {
     slug: "chestermere-lakefront",
-    name: "Chestermere (Lakefront)",
+    name: "Chestermere",
     tagline: "Lakefront homes on Chestermere Lake, east of Calgary.",
     story: [
       "Chestermere lakefront is the city's premier address — a string of custom estate homes along the western and eastern shores of Chestermere Lake, paired with private docks, beachfront, and direct lake access. 20 minutes east of Calgary via 17 Avenue SE / Glenmore Trail.",
@@ -2085,7 +2089,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "surrounding",
-    zone: "Surrounding Towns",
+    zone: "Chestermere",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.westsideEstate,
@@ -2107,7 +2111,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "south",
-    zone: "Surrounding Towns",
+    zone: "Foothills MD",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.modernEstate,

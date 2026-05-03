@@ -11,33 +11,39 @@ const HERO_IMAGE =
   "https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=2400&h=1200&fit=crop";
 
 // Display order for zone sections on the page. Zones not in this list fall to
-// the bottom in alpha order.
+// the bottom in alpha order. Calgary city zones first, then surrounding
+// municipalities (Rural Rocky View County, Foothills MD, Airdrie, Chestermere,
+// Canmore).
 const ZONE_ORDER = [
-  "City Centre & Inner-City",
-  "Inner West",
+  "City Centre",
+  "West",
+  "Southwest",
+  "South",
+  "Southeast",
   "Northwest",
-  "Southwest Estates",
-  "South Suburbs",
-  "Southeast Lakes",
-  "New & Acreage Communities",
-  "Surrounding Towns",
+  "Northeast",
+  "Rural Rocky View County",
+  "Foothills MD",
+  "Airdrie",
+  "Chestermere",
+  "Canmore",
 ];
 
 // Each zone needs a short blurb under its heading so the section feels
-// intentional rather than just a label. Spencer can edit these later when we
-// build the zone-management UI.
+// intentional rather than just a label.
 const ZONE_BLURBS: Record<string, string> = {
-  "City Centre & Inner-City":
-    "Calgary's most established inner-city blocks — heritage character, walkability, and quick access to downtown.",
-  "Inner West": "Established west-of-core enclaves paired with the Bow River escarpment and Edworthy Park.",
+  "City Centre": "Calgary's most established inner-city blocks — heritage character, walkability, and quick access to downtown.",
+  "West": "West-side family + estate communities paired with the Bow River escarpment, Edworthy Park, and Westside commuter routes.",
+  "Southwest": "Established SW family communities anchored by Fish Creek Park and the Glenmore Reservoir.",
+  "South": "South-side family communities along the Macleod / Bow Bottom corridors and the newest south-edge master-plans.",
+  "Southeast": "SE communities built around private freshwater lakes — beaches, swimming, and tight-knit lake culture.",
   "Northwest": "Established NW family communities, golf-course addresses, and the U of C / Foothills corridor.",
-  "Southwest Estates": "West-side estate communities paired with Glenmore Reservoir, Fish Creek, and the Elbow Valley.",
-  "South Suburbs": "South-side family communities anchored by Fish Creek Park and the Macleod / Bow Bottom corridors.",
-  "Southeast Lakes": "SE communities built around private freshwater lakes — beaches, swimming, and tight-knit lake culture.",
-  "New & Acreage Communities":
-    "Newer master-planned and acreage-feel developments at Calgary's edges — modern builds, mountain views, and trail systems.",
-  "Surrounding Towns":
-    "Premier addresses in Canmore, Airdrie, Chestermere, and the Foothills MD — paired with Calgary commuter routes.",
+  "Northeast": "Established NE family communities with strong school catchments and quick airport access.",
+  "Rural Rocky View County": "Acreage estate communities west of Calgary — Bearspaw, Springbank, and the Elbow Valley.",
+  "Foothills MD": "Country-residential parcels south of Calgary, paired with the Foothills commuter routes.",
+  "Airdrie": "Calgary's largest commuter city — newer master-planned communities 20 minutes north on the QE2.",
+  "Chestermere": "Lakefront luxury 20 minutes east of Calgary on Chestermere Lake.",
+  "Canmore": "Mountain residences in Canmore, paired with Banff National Park and the Bow Valley.",
 };
 
 export default function NeighbourhoodsIndexPage() {
