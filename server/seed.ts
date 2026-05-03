@@ -362,6 +362,52 @@ export function seedDatabase() {
     console.log("[seed] Inserted " + SEED_LEADS.length + " leads");
   }
 
+  // ---- One-time neighbourhood corrections (idempotent on each boot) ----
+  // Spencer asked for several content cleanups after the initial roll-out:
+  //   1. Slug renames (drop the location suffix that was a hint, not part of
+  //      the canonical slug): spring-creek-canmore → spring-creek, etc.
+  //   2. Lake Bonaventure isn't a real Calgary subdivision — delete the row.
+  //   3. Zone migrations: consolidate "Southwest" into "South" and re-zone a
+  //      couple of SE → South (handled by the zone backfill below).
+  // These run on every boot but are no-ops once applied.
+  try {
+    const SLUG_RENAMES: Array<[string, string]> = [
+      ["spring-creek-canmore", "spring-creek"],
+      ["coopers-crossing-airdrie", "coopers-crossing"],
+      ["bayside-airdrie", "bayside"],
+      ["chestermere-lakefront", "chestermere"],
+    ];
+    for (const [oldSlug, newSlug] of SLUG_RENAMES) {
+      const oldRow = db.select().from(neighbourhoods).where(eq(neighbourhoods.slug, oldSlug)).get();
+      if (!oldRow) continue;
+      const newRow = db.select().from(neighbourhoods).where(eq(neighbourhoods.slug, newSlug)).get();
+      if (newRow) {
+        // Both exist — drop the old one (the new one wins, was created by seed)
+        db.delete(neighbourhoods).where(eq(neighbourhoods.slug, oldSlug)).run();
+      } else {
+        // Just the old exists — rename in place via UPDATE on the primary key.
+        db.update(neighbourhoods).set({ slug: newSlug } as any).where(eq(neighbourhoods.slug, oldSlug)).run();
+      }
+      console.log(`[migration] renamed neighbourhood ${oldSlug} -> ${newSlug}`);
+    }
+    // Lake Bonaventure isn't a real subdivision — remove if it still exists
+    const lb = db.select().from(neighbourhoods).where(eq(neighbourhoods.slug, "lake-bonaventure")).get();
+    if (lb) {
+      db.delete(neighbourhoods).where(eq(neighbourhoods.slug, "lake-bonaventure")).run();
+      console.log("[migration] deleted lake-bonaventure (not a real subdivision)");
+    }
+    // Consolidate any leftover "Southwest" zone rows into "South"
+    const swRows = (db.select().from(neighbourhoods).all() as any[]).filter((n) => n.zone === "Southwest");
+    if (swRows.length > 0) {
+      for (const r of swRows) {
+        db.update(neighbourhoods).set({ zone: "South" } as any).where(eq(neighbourhoods.slug, r.slug)).run();
+      }
+      console.log(`[migration] re-zoned ${swRows.length} Southwest -> South`);
+    }
+  } catch (err) {
+    console.error("[migration] neighbourhood cleanups failed:", err);
+  }
+
   // 4. Neighbourhoods — INSERT-IF-MISSING ONLY (same pattern as condos).
   // Once a neighbourhood exists in the db, the seed never overwrites it. This
   // is so future admin CMS edits to neighbourhood content are safe from being

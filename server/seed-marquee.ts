@@ -27,7 +27,6 @@ const HERO_BANK = {
 type NeighbourhoodZone =
   | "City Centre"
   | "West"
-  | "Southwest"
   | "South"
   | "Southeast"
   | "Northwest"
@@ -932,7 +931,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
       "Pump Hill is family-dense and established. CFIS shapes the daily rhythm; the community is quiet outside school hours.",
     ],
     quadrant: "south",
-    zone: "Southwest",
+    zone: "South",
     borders: { north: "Glenmore Reservoir", south: "90 Avenue SW", east: "14 Street SW", west: "Elbow Drive" },
     schools: [
       { name: "Calgary French & International School", level: "PreK-12 (private)", area: "Pump Hill" },
@@ -1008,7 +1007,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
       "Bayview is family-dense. The lake drives summer rhythm; community programming brings consistent neighbour interaction.",
     ],
     quadrant: "south",
-    zone: "Southwest",
+    zone: "South",
     borders: { north: "Anderson Road SE", south: "Lake Bonavista Drive SE", east: "Lake Bonavista", west: "Bow Bottom Trail" },
     schools: [
       { name: "Lake Bonavista School", level: "K-6", area: "Lake Bonavista" },
@@ -1693,7 +1692,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "south",
-    zone: "Southwest",
+    zone: "South",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.reservoir,
@@ -1781,7 +1780,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "south",
-    zone: "Southwest",
+    zone: "South",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.modernEstate,
@@ -1847,7 +1846,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "southeast",
-    zone: "Southeast",
+    zone: "South",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.modernEstate,
@@ -1855,28 +1854,6 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     centerLng: -114.058,
     avgPrice: 920000,
     sortOrder: 128,
-  },
-  {
-    slug: "lake-bonaventure",
-    name: "Lake Bonaventure",
-    tagline: "Quiet SE lake community paired with the McKenzie Lake corridor.",
-    story: [
-      "Lake Bonaventure is a SE lake community within the McKenzie Lake / McKenzie Towne corridor, with private lake access for residents. Family-focused with strong walkability to the lake and Fish Creek Park trails.",
-    ],
-    outsideCopy: [],
-    amenitiesCopy: [],
-    shopDineCopy: [],
-    realEstateCopy: [],
-    lifeCopy: [],
-    quadrant: "southeast",
-    zone: "Southeast",
-    borders: { north: "", south: "", east: "", west: "" },
-    schools: [],
-    heroImage: HERO_BANK.modernEstate,
-    centerLat: 50.9,
-    centerLng: -113.975,
-    avgPrice: 760000,
-    sortOrder: 129,
   },
   {
     slug: "chaparral",
@@ -1891,7 +1868,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     realEstateCopy: [],
     lifeCopy: [],
     quadrant: "southeast",
-    zone: "Southeast",
+    zone: "South",
     borders: { north: "", south: "", east: "", west: "" },
     schools: [],
     heroImage: HERO_BANK.modernEstate,
@@ -2011,7 +1988,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     sortOrder: 135,
   },
   {
-    slug: "spring-creek-canmore",
+    slug: "spring-creek",
     name: "Spring Creek",
     tagline: "Mountain village condominiums in Canmore's Spring Creek master-plan.",
     story: [
@@ -2033,7 +2010,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     sortOrder: 136,
   },
   {
-    slug: "coopers-crossing-airdrie",
+    slug: "coopers-crossing",
     name: "Coopers Crossing",
     tagline: "Premier Airdrie family community paired with the Coopers TownCentre amenity.",
     story: [
@@ -2055,7 +2032,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     sortOrder: 137,
   },
   {
-    slug: "bayside-airdrie",
+    slug: "bayside",
     name: "Bayside",
     tagline: "Lake-and-canal community in Airdrie's south side.",
     story: [
@@ -2077,7 +2054,7 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     sortOrder: 138,
   },
   {
-    slug: "chestermere-lakefront",
+    slug: "chestermere",
     name: "Chestermere",
     tagline: "Lakefront homes on Chestermere Lake, east of Calgary.",
     story: [

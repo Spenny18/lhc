@@ -17,7 +17,6 @@ const HERO_IMAGE =
 const ZONE_ORDER = [
   "City Centre",
   "West",
-  "Southwest",
   "South",
   "Southeast",
   "Northwest",
@@ -34,9 +33,8 @@ const ZONE_ORDER = [
 const ZONE_BLURBS: Record<string, string> = {
   "City Centre": "Calgary's most established inner-city blocks — heritage character, walkability, and quick access to downtown.",
   "West": "West-side family + estate communities paired with the Bow River escarpment, Edworthy Park, and Westside commuter routes.",
-  "Southwest": "Established SW family communities anchored by Fish Creek Park and the Glenmore Reservoir.",
-  "South": "South-side family communities along the Macleod / Bow Bottom corridors and the newest south-edge master-plans.",
-  "Southeast": "SE communities built around private freshwater lakes — beaches, swimming, and tight-knit lake culture.",
+  "South": "South-side family communities along the Glenmore Reservoir, Fish Creek Park, and the Macleod / Bow Bottom corridors — including Calgary's lake communities and newest south-edge master-plans.",
+  "Southeast": "SE communities anchored by Mahogany Lake, Auburn Bay, and the Bow River escarpment.",
   "Northwest": "Established NW family communities, golf-course addresses, and the U of C / Foothills corridor.",
   "Northeast": "Established NE family communities with strong school catchments and quick airport access.",
   "Rural Rocky View County": "Acreage estate communities west of Calgary — Bearspaw, Springbank, and the Elbow Valley.",
