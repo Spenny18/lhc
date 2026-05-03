@@ -2084,29 +2084,27 @@ export const MARQUEE_CONDOS: MarqueeCondo[] = [
   {
     slug: "the-views",
     name: "The Views",
-    tagline: "Patterson luxury condominium on Calgary's west escarpment.",
+    tagline: "Cougar Ridge luxury condominium on Calgary's west escarpment.",
     intro: [
-      "The Views is a luxury condominium in Calgary's Patterson neighbourhood on the city's west escarpment, set above the Bow River valley with sweeping downtown and Rocky Mountain views. The building anchors one of Calgary's most established west-side luxury enclaves, paired with mature landscaping and quiet residential streets.",
+      "The Views is a luxury condominium at 15 Cougar Ridge Landing SW on Calgary's west escarpment, set above the Bow River valley with sweeping downtown and Rocky Mountain views. The building anchors one of Calgary's most established west-side luxury enclaves, paired with mature landscaping and quiet residential streets.",
     ],
     residencesCopy: [
       "Large one, two, and three-bedroom plans with full-height windows, hardwood floors, and oversized balconies designed to capture the panoramic views the building is named for.",
     ],
     architecturalCopy: [
-      "Concrete high-rise construction with a contemporary facade tuned to the escarpment site — the building reads as a quiet, low-key luxury address rather than a downtown statement tower.",
+      "Concrete construction with a contemporary facade tuned to the escarpment site — the building reads as a quiet, low-key luxury address rather than a downtown statement tower.",
     ],
     locationCopy: [
-      "Patterson sits on Calgary's west escarpment, minutes from downtown via Bow Trail and the LRT yet quiet enough to feel suburban. Residents enjoy direct access to the Edworthy Park / Douglas Fir Trail river-valley pathway system, Westside Recreation Centre, and a short drive to the West Hills shopping precinct. Easy commute west toward the Rockies.",
+      "Cougar Ridge sits on Calgary's west escarpment, minutes from downtown via Bow Trail and the LRT yet quiet enough to feel suburban. Residents enjoy direct access to the Edworthy Park / Douglas Fir Trail river-valley pathway system, Westside Recreation Centre, and a short drive to the West Hills shopping precinct. Easy commute west toward the Rockies.",
     ],
     amenities: ["24/7 concierge", "Indoor pool", "Fitness centre", "Steam room", "Sauna", "Underground heated parking", "Visitor parking", "Bicycle storage"],
-    // ⚠️ Address + lat/lng pending — Spencer flagged WP source had wrong info (it
-    // described an Eau Claire building called Liberte). Patterson address TBD.
-    address: "Patterson, Calgary, AB",
-    neighbourhoodSlug: "patterson",
-    neighbourhood: "Patterson",
+    address: "15 Cougar Ridge Landing SW, Calgary, AB T3H 0X8",
+    neighbourhoodSlug: "cougar-ridge",
+    neighbourhood: "Cougar Ridge",
     quadrant: "sw",
     stories: 15,
-    lat: 51.0680,
-    lng: -114.1830,
+    lat: 51.0540,
+    lng: -114.2150,
     heroImage: "/condo-heroes/the-views.png",
     sortOrder: 27,
     featured: true,
