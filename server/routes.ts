@@ -122,7 +122,7 @@ out center tags;`;
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
           "Accept": "application/json,text/plain,*/*",
-          "User-Agent": "RiversRealEstate/1.0 (https://luxuryhomescalgary.ca)",
+          "User-Agent": "RiversRealEstate/1.0 (https://riversrealestate.ca)",
         },
         body: "data=" + encodeURIComponent(ql),
       });
@@ -310,7 +310,7 @@ async function sendInquiryEmail(opts: {
     : `New inquiry from ${opts.name}`;
 
   const body = [
-    `New inquiry received via luxuryhomescalgary.ca`,
+    `New inquiry received via riversrealestate.ca`,
     ``,
     `Property: ${opts.listingTitle ?? "(general inquiry)"}`,
     opts.listingAddress ? `Address: ${opts.listingAddress}` : "",
@@ -323,7 +323,7 @@ async function sendInquiryEmail(opts: {
     opts.message,
     ``,
     `—`,
-    `Sent automatically from luxuryhomescalgary.ca`,
+    `Sent automatically from riversrealestate.ca`,
   ]
     .filter(Boolean)
     .join("\n");
@@ -366,6 +366,24 @@ export async function registerRoutes(
     console.error("[seed] failed:", e);
   }
 
+  // Consumer portal (/account/*) endpoints — magic-link auth + favorites.
+  // Mounted before the SPA catch-all so /api/account/* routes are served.
+  try {
+    const { registerAccountRoutes } = await import("./account");
+    registerAccountRoutes(app);
+  } catch (e) {
+    console.error("[account] failed to register portal routes:", e);
+  }
+
+  // Home evaluation widget — POST /api/home-value proxies to Gnowise's AVM
+  // API and captures a lead. See server/home-value.ts.
+  try {
+    const { registerHomeValueRoutes } = await import("./home-value");
+    registerHomeValueRoutes(app);
+  } catch (e) {
+    console.error("[home-value] failed to register routes:", e);
+  }
+
   // Serve admin-uploaded media (condo heroes, etc.) from the persistent
   // uploads root. Prefix /uploads/ so it never collides with Vite's
   // client/public/ assets that also live at the site root.
@@ -391,80 +409,269 @@ export async function registerRoutes(
   // this app. Each redirect uses 301 (permanent) so Google passes link
   // equity. Express 5 uses path-to-regexp v8 — plain regex routes can crash
   // route registration, so we use string params instead.
+  //
+  // Coverage: ~232 indexed WP URLs collapse into the categories below.
+  //   * /calgary-condos/:slug AND /condos-calgary/:slug → /condos/:slug
+  //   * /neighbourhood/:slug-homes-for-sale → /neighbourhoods/:slug
+  //   * /listing-detail/:wpId/:address (165 WP listings) → /mls (search shell)
+  //   * /properties/:slug (67 WP property pages) → /mls
+  //   * /tag/:slug → /blog
+  //   * Old marketing pages (buyers, selling, mortgage-calculator, etc.)
+  //     → closest equivalent on the React app.
   const slugify = (s: string) =>
-    s.toLowerCase().replace(/-condos-calgary$/i, "").replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "");
-  app.get("/calgary-condos/:slug", (req, res) => {
-    const slug = slugify(req.params.slug);
-    res.redirect(301, `/#/condos/${slug}`);
-  });
-  app.get("/calgary-condos", (_req, res) => res.redirect(301, "/#/condos"));
-  app.get("/calgary-neighbourhoods/:slug", (req, res) => {
-    const slug = slugify(req.params.slug.replace(/-calgary$/i, ""));
-    res.redirect(301, `/#/neighbourhoods/${slug}`);
-  });
-  app.get("/calgary-neighbourhoods", (_req, res) => res.redirect(301, "/#/neighbourhoods"));
-  app.get("/neighborhoods", (_req, res) => res.redirect(301, "/#/neighbourhoods"));
-  app.get("/listings", (_req, res) => res.redirect(301, "/#/mls"));
-  app.get("/search", (_req, res) => res.redirect(301, "/#/mls"));
-  app.get("/home-search", (_req, res) => res.redirect(301, "/#/mls"));
+    s
+      .toLowerCase()
+      .replace(/-homes-for-sale$/i, "")
+      .replace(/-condos-calgary$/i, "")
+      .replace(/-condos$/i, "")
+      .replace(/-calgary$/i, "")
+      .replace(/[^a-z0-9-]+/g, "-")
+      .replace(/^-+|-+$/g, "");
 
-  // ---------- SEO: XML SITEMAP ----------
-  // Lists every public URL Google should index — homepage, MLS search, all
-  // marquee neighbourhood + condo pages, all active MLS listing details.
+  // Condo URL patterns (both WP variants exist in the wild).
+  app.get("/calgary-condos/:slug", (req, res) => {
+    res.redirect(301, `/condos/${slugify(req.params.slug)}`);
+  });
+  app.get("/calgary-condos", (_req, res) => res.redirect(301, "/condos"));
+  app.get("/condos-calgary/:slug", (req, res) => {
+    res.redirect(301, `/condos/${slugify(req.params.slug)}`);
+  });
+  app.get("/condos-calgary", (_req, res) => res.redirect(301, "/condos"));
+
+  // Neighbourhood URL patterns. WP uses /neighbourhood/aspen-woods-homes-for-sale,
+  // React app uses /neighbourhoods/aspen-woods.
+  app.get("/neighbourhood/:slug", (req, res) => {
+    res.redirect(301, `/neighbourhoods/${slugify(req.params.slug)}`);
+  });
+  app.get("/neighbourhood", (_req, res) => res.redirect(301, "/neighbourhoods"));
+  app.get("/calgary-neighbourhoods/:slug", (req, res) => {
+    res.redirect(301, `/neighbourhoods/${slugify(req.params.slug)}`);
+  });
+  app.get("/calgary-neighbourhoods", (_req, res) => res.redirect(301, "/neighbourhoods"));
+  app.get("/neighborhoods", (_req, res) => res.redirect(301, "/neighbourhoods"));
+
+  // WP "listing-detail" pages (165 indexed). The Pillar 9 numeric IDs in
+  // WP URLs don't map 1:1 to the React app's MLS letter-prefixed IDs, so
+  // we send everyone to the live MLS search rather than a stale 404.
+  app.get("/listing-detail/:wpId/:address", (_req, res) => res.redirect(301, "/mls"));
+  app.get("/listing-detail/:wpId", (_req, res) => res.redirect(301, "/mls"));
+  app.get("/listing-detail", (_req, res) => res.redirect(301, "/mls"));
+
+  // WP "properties" pages (67 indexed) — likely sold listings whose specific
+  // pages aren't worth migrating. Push to live search.
+  app.get("/properties/:slug", (_req, res) => res.redirect(301, "/mls"));
+  app.get("/properties", (_req, res) => res.redirect(301, "/mls"));
+
+  // Other listing-search aliases.
+  app.get("/listings", (_req, res) => res.redirect(301, "/mls"));
+  app.get("/search", (_req, res) => res.redirect(301, "/mls"));
+  app.get("/home-search", (_req, res) => res.redirect(301, "/mls"));
+
+  // WP tag archives → blog index.
+  app.get("/tag/:slug", (_req, res) => res.redirect(301, "/blog"));
+  app.get("/tag", (_req, res) => res.redirect(301, "/blog"));
+
+  // WP marketing pages → React equivalents.
+  app.get("/luxury-real-estate-agent", (_req, res) => res.redirect(301, "/about"));
+  app.get("/calgary-luxury-realtor", (_req, res) => res.redirect(301, "/about"));
+  app.get("/buyers", (_req, res) => res.redirect(301, "/contact"));
+  app.get("/sellers", (_req, res) => res.redirect(301, "/home-evaluation"));
+  app.get("/selling-a-luxury-home", (_req, res) => res.redirect(301, "/home-evaluation"));
+  app.get("/selling-a-luxury-home-in-calgary", (_req, res) => res.redirect(301, "/home-evaluation"));
+  app.get("/mortgage-calculator", (_req, res) => res.redirect(301, "/mls"));
+  // NOTE: do not register a redirect for /home-evaluation — the React page
+  // owns that path now. Old WP traffic at /valuation funnels into it.
+  app.get("/valuation", (_req, res) => res.redirect(301, "/home-evaluation"));
+
+  // ---------- SEO: XML SITEMAPS ----------
+  // Split-sitemap setup. Previously this was a single ~5,100-URL document
+  // where every URL shared the same per-request `lastmod` timestamp — Google
+  // (correctly) interpreted that as a fake signal and stopped trusting our
+  // lastmod hints. Worse, the 5,000 MLS listing URLs were drowning the 41
+  // blog posts and 73 neighbourhood pages we actually want indexed.
+  //
+  // New shape: a top-level sitemap *index* points at five purpose-specific
+  // sitemaps, each with real per-entity lastmod values (or no lastmod when
+  // we don't have a meaningful one — better than a lie). The split lets
+  // Search Console report indexation rates per content type and lets us
+  // toggle the MLS sitemap off entirely while authority is still low.
+  const escapeXml = (s: string): string =>
+    s
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&apos;");
+
+  type SitemapUrl = {
+    loc: string;
+    lastmod?: string;
+    priority?: string;
+    changefreq?: string;
+  };
+
+  const renderUrlset = (urls: SitemapUrl[]): string =>
+    `<?xml version="1.0" encoding="UTF-8"?>\n` +
+    `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+    urls
+      .map((u) => {
+        const parts = [`<loc>${escapeXml(u.loc)}</loc>`];
+        if (u.lastmod) parts.push(`<lastmod>${u.lastmod}</lastmod>`);
+        if (u.changefreq) parts.push(`<changefreq>${u.changefreq}</changefreq>`);
+        if (u.priority) parts.push(`<priority>${u.priority}</priority>`);
+        return `  <url>${parts.join("")}</url>`;
+      })
+      .join("\n") +
+    `\n</urlset>\n`;
+
+  // Toggle: include the 5,000+ MLS listing URLs in the sitemap index?
+  // Default OFF until the domain has enough authority that Google's crawl
+  // budget can comfortably absorb them. The /mls search page is still in
+  // the pages sitemap and MLS detail pages are still reachable + indexable
+  // via internal links + the homepage feed — they just won't be promoted
+  // via sitemap, so they don't compete with blog/neighbourhood content for
+  // crawl priority.
+  const INCLUDE_MLS_SITEMAP = process.env.SITEMAP_INCLUDE_MLS === "1";
+
+  // Sitemap index — entry point Google should pick up from robots.txt.
   app.get("/sitemap.xml", (_req, res) => {
-    const origin = process.env.PUBLIC_ORIGIN || "https://luxuryhomescalgary.ca";
-    const now = new Date().toISOString();
-    const urls: Array<{ loc: string; priority: string; changefreq: string }> = [
-      { loc: `${origin}/`, priority: "1.0", changefreq: "daily" },
-      { loc: `${origin}/#/mls`, priority: "0.9", changefreq: "hourly" },
-      { loc: `${origin}/#/neighbourhoods`, priority: "0.9", changefreq: "weekly" },
-      { loc: `${origin}/#/condos`, priority: "0.9", changefreq: "weekly" },
-      { loc: `${origin}/#/about`, priority: "0.5", changefreq: "monthly" },
-      { loc: `${origin}/#/contact`, priority: "0.5", changefreq: "monthly" },
-      { loc: `${origin}/#/blog`, priority: "0.7", changefreq: "weekly" },
+    const origin = process.env.PUBLIC_ORIGIN || "https://riversrealestate.ca";
+    const children = [
+      `${origin}/sitemap-pages.xml`,
+      `${origin}/sitemap-blog.xml`,
+      `${origin}/sitemap-neighbourhoods.xml`,
+      `${origin}/sitemap-condos.xml`,
     ];
-    try {
-      for (const n of storage.listNeighbourhoods()) {
-        urls.push({ loc: `${origin}/#/neighbourhoods/${n.slug}`, priority: "0.8", changefreq: "weekly" });
-      }
-    } catch (e) { console.error("[sitemap] neighbourhoods:", e); }
-    try {
-      for (const c of storage.listCondoBuildings()) {
-        urls.push({ loc: `${origin}/#/condos/${c.slug}`, priority: "0.8", changefreq: "weekly" });
-      }
-    } catch (e) { console.error("[sitemap] condos:", e); }
-    try {
-      // Cap MLS listing count at 5000 to keep the sitemap under Google's 50k/50MB limits.
-      const listings = storage.searchMlsListings({ limit: 5000 } as any);
-      const items = (listings as any).items ?? [];
-      for (const l of items) {
-        urls.push({ loc: `${origin}/#/mls/${l.id}`, priority: "0.6", changefreq: "daily" });
-      }
-    } catch (e) { console.error("[sitemap] mls:", e); }
+    if (INCLUDE_MLS_SITEMAP) children.push(`${origin}/sitemap-mls.xml`);
 
     const xml =
       `<?xml version="1.0" encoding="UTF-8"?>\n` +
-      `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
-      urls
-        .map(
-          (u) =>
-            `  <url><loc>${u.loc}</loc><lastmod>${now}</lastmod><changefreq>${u.changefreq}</changefreq><priority>${u.priority}</priority></url>`,
-        )
+      `<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+      children
+        .map((loc) => `  <sitemap><loc>${escapeXml(loc)}</loc></sitemap>`)
         .join("\n") +
-      `\n</urlset>\n`;
+      `\n</sitemapindex>\n`;
     res.set("Content-Type", "application/xml; charset=utf-8");
     res.send(xml);
   });
 
+  // Static pages — no lastmod (these change infrequently and we don't track
+  // edit timestamps for them; omitting lastmod is preferred over fabricating
+  // one).
+  app.get("/sitemap-pages.xml", (_req, res) => {
+    const origin = process.env.PUBLIC_ORIGIN || "https://riversrealestate.ca";
+    const urls: SitemapUrl[] = [
+      { loc: `${origin}/`, priority: "1.0", changefreq: "weekly" },
+      { loc: `${origin}/mls`, priority: "0.9", changefreq: "daily" },
+      { loc: `${origin}/neighbourhoods`, priority: "0.9", changefreq: "weekly" },
+      { loc: `${origin}/condos`, priority: "0.9", changefreq: "weekly" },
+      { loc: `${origin}/blog`, priority: "0.8", changefreq: "weekly" },
+      { loc: `${origin}/about`, priority: "0.6", changefreq: "monthly" },
+      { loc: `${origin}/contact`, priority: "0.4", changefreq: "monthly" },
+      { loc: `${origin}/home-evaluation`, priority: "0.7", changefreq: "monthly" },
+    ];
+    res.set("Content-Type", "application/xml; charset=utf-8");
+    res.send(renderUrlset(urls));
+  });
+
+  // Blog posts — uses publishedAt as lastmod (real signal). Drafts excluded.
+  app.get("/sitemap-blog.xml", (_req, res) => {
+    const origin = process.env.PUBLIC_ORIGIN || "https://riversrealestate.ca";
+    const urls: SitemapUrl[] = [];
+    try {
+      for (const p of storage.listBlogPosts()) {
+        if ((p as any).status === "draft") continue;
+        urls.push({
+          loc: `${origin}/blog/${p.slug}`,
+          lastmod: (p as any).publishedAt || undefined,
+          priority: "0.8",
+          changefreq: "monthly",
+        });
+      }
+    } catch (e) {
+      console.error("[sitemap] blog:", e);
+    }
+    res.set("Content-Type", "application/xml; charset=utf-8");
+    res.send(renderUrlset(urls));
+  });
+
+  // Neighbourhoods — no per-entity timestamp in schema, so we omit lastmod.
+  app.get("/sitemap-neighbourhoods.xml", (_req, res) => {
+    const origin = process.env.PUBLIC_ORIGIN || "https://riversrealestate.ca";
+    const urls: SitemapUrl[] = [];
+    try {
+      for (const n of storage.listNeighbourhoods()) {
+        urls.push({
+          loc: `${origin}/neighbourhoods/${n.slug}`,
+          priority: "0.8",
+          changefreq: "weekly",
+        });
+      }
+    } catch (e) {
+      console.error("[sitemap] neighbourhoods:", e);
+    }
+    res.set("Content-Type", "application/xml; charset=utf-8");
+    res.send(renderUrlset(urls));
+  });
+
+  // Condo buildings — same reasoning as neighbourhoods.
+  app.get("/sitemap-condos.xml", (_req, res) => {
+    const origin = process.env.PUBLIC_ORIGIN || "https://riversrealestate.ca";
+    const urls: SitemapUrl[] = [];
+    try {
+      for (const c of storage.listCondoBuildings()) {
+        urls.push({
+          loc: `${origin}/condos/${c.slug}`,
+          priority: "0.7",
+          changefreq: "weekly",
+        });
+      }
+    } catch (e) {
+      console.error("[sitemap] condos:", e);
+    }
+    res.set("Content-Type", "application/xml; charset=utf-8");
+    res.send(renderUrlset(urls));
+  });
+
+  // MLS listings — only served when SITEMAP_INCLUDE_MLS=1. Uses the most
+  // recent meaningful timestamp (priceChangedAt > listDate > createdAt) so
+  // Google's lastmod signal reflects real changes, not sync churn.
+  app.get("/sitemap-mls.xml", (_req, res) => {
+    const origin = process.env.PUBLIC_ORIGIN || "https://riversrealestate.ca";
+    if (!INCLUDE_MLS_SITEMAP) {
+      res.status(404).set("Content-Type", "application/xml; charset=utf-8");
+      res.send(renderUrlset([]));
+      return;
+    }
+    const urls: SitemapUrl[] = [];
+    try {
+      const listings = storage.searchMlsListings({ limit: 5000 } as any);
+      const items = (listings as any).items ?? [];
+      for (const l of items as any[]) {
+        urls.push({
+          loc: `${origin}/mls/${l.id}`,
+          lastmod: l.priceChangedAt || l.listDate || l.createdAt || undefined,
+          priority: "0.5",
+          changefreq: "weekly",
+        });
+      }
+    } catch (e) {
+      console.error("[sitemap] mls:", e);
+    }
+    res.set("Content-Type", "application/xml; charset=utf-8");
+    res.send(renderUrlset(urls));
+  });
+
   // ---------- SEO: robots.txt ----------
   app.get("/robots.txt", (_req, res) => {
-    const origin = process.env.PUBLIC_ORIGIN || "https://luxuryhomescalgary.ca";
+    const origin = process.env.PUBLIC_ORIGIN || "https://riversrealestate.ca";
     res.set("Content-Type", "text/plain");
     res.send(
       `User-agent: *\n` +
         `Allow: /\n` +
         `Disallow: /admin\n` +
         `Disallow: /api/\n` +
+        `Disallow: /account\n` +
         `\n` +
         `Sitemap: ${origin}/sitemap.xml\n`,
     );
@@ -874,23 +1081,23 @@ export async function registerRoutes(
     const state = typeof req.query.state === "string" ? req.query.state : "";
     const error = typeof req.query.error === "string" ? req.query.error : "";
     if (error) {
-      return res.redirect(`/#/admin/calendar?google_error=${encodeURIComponent(error)}`);
+      return res.redirect(`/admin/calendar?google_error=${encodeURIComponent(error)}`);
     }
     if (!code || !state) {
-      return res.redirect("/#/admin/calendar?google_error=missing_code_or_state");
+      return res.redirect("/admin/calendar?google_error=missing_code_or_state");
     }
     const userId = parseInt(state, 10);
     if (!Number.isFinite(userId)) {
-      return res.redirect("/#/admin/calendar?google_error=bad_state");
+      return res.redirect("/admin/calendar?google_error=bad_state");
     }
     try {
       const { exchangeCode, persistTokens } = await import("./google-calendar");
       const tokens = await exchangeCode(code);
       await persistTokens(userId, tokens);
-      res.redirect("/#/admin/calendar?google_connected=1");
+      res.redirect("/admin/calendar?google_connected=1");
     } catch (e: any) {
       console.error("[google-cal] callback failed:", e?.message);
-      res.redirect(`/#/admin/calendar?google_error=${encodeURIComponent(e?.message ?? "exchange_failed")}`);
+      res.redirect(`/admin/calendar?google_error=${encodeURIComponent(e?.message ?? "exchange_failed")}`);
     }
   });
 
@@ -1505,15 +1712,29 @@ export async function registerRoutes(
     });
   });
 
-  // GET /api/public/blog
-  app.get("/api/public/blog", (_req, res) => {
-    res.json(storage.listBlogPosts());
+  // GET /api/public/config — exposes runtime config the public site needs
+  // at the client (currently: Google Maps API key for the home-evaluation
+  // address autocomplete). The key is meant to be public — security comes
+  // from HTTP-referrer restrictions on the Google Cloud Console side, not
+  // from hiding the value.
+  app.get("/api/public/config", (_req, res) => {
+    res.json({
+      googleMapsKey: process.env.GOOGLE_MAPS_API_KEY || null,
+    });
   });
 
-  // GET /api/public/blog/:slug
+  // GET /api/public/blog — only published posts (drafts hidden from public).
+  app.get("/api/public/blog", (_req, res) => {
+    const all = storage.listBlogPosts();
+    res.json(all.filter((p: any) => (p.status ?? "published") === "published"));
+  });
+
+  // GET /api/public/blog/:slug — 404 on drafts so they don't leak.
   app.get("/api/public/blog/:slug", (req, res) => {
     const post = storage.getBlogBySlug(req.params.slug);
-    if (!post) return res.status(404).json({ message: "Post not found" });
+    if (!post || ((post as any).status ?? "published") !== "published") {
+      return res.status(404).json({ message: "Post not found" });
+    }
     res.json(post);
   });
 
@@ -1538,6 +1759,155 @@ export async function registerRoutes(
   // GET /api/admin/mls-sync (auth) — recent sync runs for admin sidebar
   app.get("/api/admin/mls-sync", requireAuth, (_req, res) => {
     res.json(storage.listRecentSyncRuns(15));
+  });
+
+  // -------------------- ADMIN: BLOG POSTS ---------------------------------
+  // Slug-keyed CRUD for the public blog. Body content uses the same simple
+  // markdown subset rendered by client/src/pages/blog-detail.tsx (## h2,
+  // ### h3, > blockquote, **bold**, paragraphs).
+  //
+  // Auth model:
+  //   - GET / PATCH require the cookie-based admin session (requireAuth).
+  //   - POST (new draft) ALSO accepts a Bearer token via ADMIN_API_TOKEN
+  //     env var so the BOFU auto-blog scheduled task can drop new drafts
+  //     without needing a browser session.
+
+  // Allow either a valid admin session OR a matching bearer token.
+  function requireAdminOrToken(req: Request, res: Response, next: NextFunction) {
+    const tok = process.env.ADMIN_API_TOKEN;
+    const header = String(req.headers.authorization || "");
+    if (tok && header === `Bearer ${tok}`) return next();
+    return requireAuth(req, res, next);
+  }
+
+  app.get("/api/admin/blog", requireAuth, (_req, res) => {
+    res.json(storage.listBlogPosts());
+  });
+  app.get("/api/admin/blog/:slug", requireAuth, (req, res) => {
+    const p = storage.getBlogBySlug(req.params.slug);
+    if (!p) return res.status(404).json({ message: "Post not found" });
+    res.json(p);
+  });
+
+  // POST — create a new post. Defaults to status="draft" unless explicitly
+  // overridden. Used by the BOFU auto-blog pipeline.
+  app.post("/api/admin/blog", requireAdminOrToken, (req, res) => {
+    const body = req.body || {};
+    if (!body.slug || typeof body.slug !== "string" || !/^[a-z0-9-]+$/i.test(body.slug)) {
+      return res.status(400).json({ message: "slug is required (lowercase letters, digits, hyphens)" });
+    }
+    if (storage.getBlogBySlug(body.slug)) {
+      return res.status(409).json({ message: "A post with this slug already exists" });
+    }
+    if (!body.title || !body.body) {
+      return res.status(400).json({ message: "title and body are required" });
+    }
+    try {
+      const created = storage.upsertBlogPost({
+        slug: String(body.slug).toLowerCase(),
+        title: String(body.title),
+        excerpt: String(body.excerpt ?? "").slice(0, 280),
+        body: String(body.body),
+        category: String(body.category ?? "Guide"),
+        heroImage: String(body.heroImage ?? ""),
+        authorName: String(body.authorName ?? "Spencer Rivers"),
+        authorAvatar: body.authorAvatar ?? null,
+        readMinutes: Number(body.readMinutes) || Math.max(3, Math.ceil(String(body.body).split(/\s+/).length / 220)),
+        status: body.status === "published" ? "published" : "draft",
+        publishedAt: typeof body.publishedAt === "string" ? body.publishedAt : new Date().toISOString(),
+      } as any);
+      res.status(201).json(created);
+    } catch (err: any) {
+      console.error("[admin] create blog failed:", err);
+      res.status(500).json({ message: err?.message ?? "Create failed" });
+    }
+  });
+
+  app.patch("/api/admin/blog/:slug", requireAuth, (req, res) => {
+    const existing = storage.getBlogBySlug(req.params.slug);
+    if (!existing) return res.status(404).json({ message: "Post not found" });
+    const body = req.body || {};
+    try {
+      const updated = storage.upsertBlogPost({
+        slug: existing.slug, // never rename via PATCH
+        title: typeof body.title === "string" ? body.title : existing.title,
+        excerpt: typeof body.excerpt === "string" ? body.excerpt : existing.excerpt,
+        body: typeof body.body === "string" ? body.body : existing.body,
+        category: typeof body.category === "string" ? body.category : existing.category,
+        heroImage: typeof body.heroImage === "string" ? body.heroImage : existing.heroImage,
+        authorName: typeof body.authorName === "string" ? body.authorName : existing.authorName,
+        authorAvatar: typeof body.authorAvatar === "string" ? body.authorAvatar : existing.authorAvatar,
+        readMinutes: typeof body.readMinutes === "number" ? body.readMinutes : existing.readMinutes,
+        status: body.status === "draft" || body.status === "published" ? body.status : (existing as any).status,
+        publishedAt: typeof body.publishedAt === "string" ? body.publishedAt : existing.publishedAt,
+      } as any);
+      res.json(updated);
+    } catch (err: any) {
+      console.error("[admin] update blog failed:", err);
+      res.status(500).json({ message: err?.message ?? "Update failed" });
+    }
+  });
+
+  // -------------------- ADMIN: NEIGHBOURHOODS -----------------------------
+  // Slug-keyed CRUD for the editorial neighbourhood pages.
+  const neighbourhoodToJson = (n: any) => ({
+    ...n,
+    story: safeJsonParse(n.story, []),
+    outsideCopy: safeJsonParse(n.outsideCopy, []),
+    amenitiesCopy: safeJsonParse(n.amenitiesCopy, []),
+    shopDineCopy: safeJsonParse(n.shopDineCopy, []),
+    realEstateCopy: safeJsonParse(n.realEstateCopy, []),
+    lifeCopy: safeJsonParse(n.lifeCopy, []),
+    borders: safeJsonParse(n.borders, {}),
+    schools: safeJsonParse(n.schools, []),
+    gallery: safeJsonParse(n.gallery, []),
+  });
+  function safeJsonParse(s: any, fallback: any) {
+    if (typeof s !== "string") return s ?? fallback;
+    try { return JSON.parse(s); } catch { return fallback; }
+  }
+  app.get("/api/admin/neighbourhoods", requireAuth, (_req, res) => {
+    res.json(storage.listNeighbourhoods().map(neighbourhoodToJson));
+  });
+  app.get("/api/admin/neighbourhoods/:slug", requireAuth, (req, res) => {
+    const n = storage.getNeighbourhoodBySlug(req.params.slug);
+    if (!n) return res.status(404).json({ message: "Neighbourhood not found" });
+    res.json(neighbourhoodToJson(n));
+  });
+  app.patch("/api/admin/neighbourhoods/:slug", requireAuth, (req, res) => {
+    const existing = storage.getNeighbourhoodBySlug(req.params.slug);
+    if (!existing) return res.status(404).json({ message: "Neighbourhood not found" });
+    const body = req.body || {};
+    const stringifyIfArray = (v: any, fallback: any) =>
+      v === undefined ? fallback : typeof v === "string" ? v : JSON.stringify(v);
+    try {
+      const updated = storage.upsertNeighbourhood({
+        slug: existing.slug,
+        name: typeof body.name === "string" ? body.name : existing.name,
+        tagline: typeof body.tagline === "string" ? body.tagline : existing.tagline,
+        story: stringifyIfArray(body.story, existing.story),
+        outsideCopy: stringifyIfArray(body.outsideCopy, existing.outsideCopy),
+        amenitiesCopy: stringifyIfArray(body.amenitiesCopy, existing.amenitiesCopy),
+        shopDineCopy: stringifyIfArray(body.shopDineCopy, existing.shopDineCopy),
+        realEstateCopy: stringifyIfArray(body.realEstateCopy, existing.realEstateCopy),
+        lifeCopy: stringifyIfArray(body.lifeCopy, existing.lifeCopy),
+        quadrant: typeof body.quadrant === "string" ? body.quadrant : existing.quadrant,
+        zone: typeof body.zone === "string" ? body.zone : existing.zone,
+        borders: stringifyIfArray(body.borders, existing.borders),
+        schools: stringifyIfArray(body.schools, existing.schools),
+        heroImage: typeof body.heroImage === "string" ? body.heroImage : existing.heroImage,
+        gallery: stringifyIfArray(body.gallery, existing.gallery),
+        centerLat: typeof body.centerLat === "number" ? body.centerLat : existing.centerLat,
+        centerLng: typeof body.centerLng === "number" ? body.centerLng : existing.centerLng,
+        avgPrice: typeof body.avgPrice === "number" ? body.avgPrice : existing.avgPrice,
+        activeCount: typeof body.activeCount === "number" ? body.activeCount : existing.activeCount,
+        sortOrder: typeof body.sortOrder === "number" ? body.sortOrder : existing.sortOrder,
+      } as any);
+      res.json(neighbourhoodToJson(updated));
+    } catch (err: any) {
+      console.error("[admin] update neighbourhood failed:", err);
+      res.status(500).json({ message: err?.message ?? "Update failed" });
+    }
   });
 
   // POST /api/admin/mls-sync/run (auth) — manually trigger a sync run
@@ -1751,7 +2121,7 @@ export async function registerRoutes(
         const r = await fetch(url, {
           headers: {
             "Accept": "application/json",
-            "User-Agent": "RiversRealEstate/1.0 (https://luxuryhomescalgary.ca)",
+            "User-Agent": "RiversRealEstate/1.0 (https://riversrealestate.ca)",
           },
         });
         if (!r.ok) {
