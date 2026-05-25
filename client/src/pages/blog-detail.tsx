@@ -12,6 +12,14 @@ import {
 } from "@/lib/format";
 import type { PublicBlogPost } from "@/lib/mls-types";
 
+const BLOG_FALLBACK_HERO =
+  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1600&h=900&fit=crop&q=80";
+function heroFor(post: { heroImage?: string | null }): string {
+  const h = (post.heroImage || "").trim();
+  if (!h) return BLOG_FALLBACK_HERO;
+  return h;
+}
+
 function fmtDate(iso: string) {
   if (!iso) return "";
   return new Date(iso).toLocaleDateString("en-CA", {
@@ -199,7 +207,8 @@ export default function BlogDetailPage() {
         <section className="max-w-[1100px] mx-auto px-4 lg:px-8 mt-12">
           <div className="aspect-[16/9] rounded-sm overflow-hidden bg-secondary">
             <img
-              src={post.heroImage}
+              src={heroFor(post)}
+              onError={(e) => ((e.target as HTMLImageElement).src = BLOG_FALLBACK_HERO)}
               alt={post.title}
               className="w-full h-full object-cover"
             />
@@ -272,7 +281,8 @@ export default function BlogDetailPage() {
                 >
                   <div className="relative aspect-[4/3] rounded-sm overflow-hidden bg-secondary">
                     <img
-                      src={p.heroImage}
+                      src={heroFor(p)}
+                      onError={(e) => ((e.target as HTMLImageElement).src = BLOG_FALLBACK_HERO)}
                       alt={p.title}
                       loading="lazy"
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"

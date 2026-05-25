@@ -222,7 +222,7 @@ export default function ListingEditPage() {
     );
   }
 
-  const publicUrl = draft.slug ? `luxuryhomescalgary.ca/p/${draft.slug}` : "";
+  const publicUrl = draft.slug ? `riversrealestate.ca/p/${draft.slug}` : "";
 
   const handleCopy = () => {
     navigator.clipboard?.writeText(`https://${publicUrl}`);

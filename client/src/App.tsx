@@ -1,12 +1,35 @@
 import { Switch, Route, Router, useLocation } from "wouter";
-import { useHashLocation } from "wouter/use-hash-location";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider, useAuth } from "@/lib/auth";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+
+// ---- Follow Up Boss pixel: SPA pageview tracker ----------------------------
+// The initial pageview fires from the snippet in index.html. This hook fires
+// a fresh pageview every time wouter's location changes, so deep navigations
+// (e.g. /condos/the-river, /mls/A2305467) each register as their own event
+// in FUB rather than the homepage being the only thing FUB ever sees.
+declare global {
+  interface Window {
+    widgetTracker?: (...args: any[]) => void;
+  }
+}
+function usePageviewTracker() {
+  const [location] = useLocation();
+  const firstRender = useRef(true);
+  useEffect(() => {
+    if (firstRender.current) {
+      // Skip — index.html's snippet already fired the first pageview.
+      firstRender.current = false;
+      return;
+    }
+    if (typeof window === "undefined" || !window.widgetTracker) return;
+    window.widgetTracker("send", "pageview");
+  }, [location]);
+}
 
 // Public pages
 import HomePage from "@/pages/home";
@@ -20,6 +43,7 @@ import AboutPage from "@/pages/about";
 import BlogIndexPage from "@/pages/blog-index";
 import BlogDetailPage from "@/pages/blog-detail";
 import ContactPage from "@/pages/contact";
+import HomeEvaluationPage from "@/pages/home-evaluation";
 
 // Admin (existing dashboard) pages — mounted under /admin/*
 import NotFound from "@/pages/not-found";
@@ -35,6 +59,18 @@ import AdminMarketingPage from "@/pages/admin-marketing";
 import AdminAnalyticsPage from "@/pages/admin-analytics";
 import AdminSavedSearchesPage from "@/pages/admin-saved-searches";
 import AdminCondosPage from "@/pages/admin-condos";
+import AdminBlogPage from "@/pages/admin-blog";
+import AdminNeighbourhoodsPage from "@/pages/admin-neighbourhoods";
+
+// Consumer portal (/account/*) pages
+import AccountLoginPage from "@/pages/account-login";
+import AccountDashboardPage from "@/pages/account-dashboard";
+import AccountFavoritesPage from "@/pages/account-favorites";
+import AccountSearchesPage from "@/pages/account-searches";
+import AccountNotesPage from "@/pages/account-notes";
+import AccountToursPage from "@/pages/account-tours";
+import AccountReportsPage from "@/pages/account-reports";
+import AccountCalendarPage from "@/pages/account-calendar";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType<any> }) {
   const { user, loading } = useAuth();
@@ -68,6 +104,7 @@ function AuthGate({ component: Component }: { component: React.ComponentType<any
 }
 
 function AppRouter() {
+  usePageviewTracker();
   return (
     <Switch>
       {/* PUBLIC marketing site */}
@@ -82,9 +119,21 @@ function AppRouter() {
       <Route path="/blog" component={BlogIndexPage} />
       <Route path="/blog/:slug" component={BlogDetailPage} />
       <Route path="/contact" component={ContactPage} />
+      <Route path="/home-evaluation" component={HomeEvaluationPage} />
 
       {/* Public-facing single-listing page (slug-based, agent's own listings) */}
       <Route path="/p/:slug" component={ListingPublicPage} />
+
+      {/* CONSUMER PORTAL — /account/* */}
+      <Route path="/account" component={AccountLoginPage} />
+      <Route path="/account/login" component={AccountLoginPage} />
+      <Route path="/account/dashboard" component={AccountDashboardPage} />
+      <Route path="/account/favorites" component={AccountFavoritesPage} />
+      <Route path="/account/searches" component={AccountSearchesPage} />
+      <Route path="/account/notes" component={AccountNotesPage} />
+      <Route path="/account/tours" component={AccountToursPage} />
+      <Route path="/account/reports" component={AccountReportsPage} />
+      <Route path="/account/calendar" component={AccountCalendarPage} />
 
       {/* ADMIN — agent back office */}
       <Route path="/admin" component={() => <AuthGate component={AuthPage} />} />
@@ -128,6 +177,14 @@ function AppRouter() {
         component={() => <ProtectedRoute component={AdminCondosPage} />}
       />
       <Route
+        path="/admin/blog"
+        component={() => <ProtectedRoute component={AdminBlogPage} />}
+      />
+      <Route
+        path="/admin/neighbourhoods"
+        component={() => <ProtectedRoute component={AdminNeighbourhoodsPage} />}
+      />
+      <Route
         path="/admin/mls-sync"
         component={() => <ProtectedRoute component={MlsSyncPage} />}
       />
@@ -143,7 +200,7 @@ function App() {
       <ThemeProvider>
         <TooltipProvider>
           <Toaster />
-          <Router hook={useHashLocation}>
+          <Router>
             <AuthProvider>
               <AppRouter />
             </AuthProvider>

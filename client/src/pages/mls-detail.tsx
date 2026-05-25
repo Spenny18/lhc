@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useRoute } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -27,6 +27,8 @@ import {
 import { PublicLayout } from "@/components/public-layout";
 import { ListingCard } from "@/components/listing-card";
 import { NeighbourhoodPois } from "@/components/neighbourhood-pois";
+import { useAccount, useNote, useSaveNote, useRequestTour } from "@/lib/account";
+import { Lock, FileText, CalendarPlus, Check } from "lucide-react";
 import {
   SeoHead,
   buildOrgPersonSchema,
@@ -121,8 +123,8 @@ export default function MlsDetailPage() {
   const seoDesc = data.description
     ? data.description.replace(/<[^>]+>/g, "").replace(/&[#a-zA-Z0-9]+;/g, "").slice(0, 200)
     : `${data.beds ?? "—"} bed · ${data.baths ?? "—"} bath · ${data.sqft ? data.sqft.toLocaleString("en-CA") + " sqft" : ""} home for sale at ${data.fullAddress}, Calgary.`;
-  const canonicalUrl = `https://luxuryhomescalgary.ca/mls/${data.id}`;
-  const heroImg = data.heroImage ? (data.heroImage.startsWith("http") ? data.heroImage : `https://luxuryhomescalgary.ca${data.heroImage}`) : undefined;
+  const canonicalUrl = `https://riversrealestate.ca/mls/${data.id}`;
+  const heroImg = data.heroImage ? (data.heroImage.startsWith("http") ? data.heroImage : `https://riversrealestate.ca${data.heroImage}`) : undefined;
 
   return (
     <>
@@ -133,8 +135,8 @@ export default function MlsDetailPage() {
         ogImage={heroImg}
         ogType="article"
         breadcrumbs={[
-          { label: "Home", url: "https://luxuryhomescalgary.ca/" },
-          { label: "MLS Search", url: "https://luxuryhomescalgary.ca/mls" },
+          { label: "Home", url: "https://riversrealestate.ca/" },
+          { label: "MLS Search", url: "https://riversrealestate.ca/mls" },
           { label: data.fullAddress, url: canonicalUrl },
         ]}
         schemas={[
@@ -154,7 +156,6 @@ export default function MlsDetailPage() {
           }),
         ]}
       />
-      <ListingUnlockGate listingId={data.id} />
       <MlsDetailBody listing={data} />
     </>
   );
@@ -176,26 +177,37 @@ function isUnlocked(): boolean {
   }
 }
 
-function ListingUnlockGate({ listingId }: { listingId: string }) {
-  const [unlocked, setUnlocked] = useState<boolean>(() => isUnlocked());
+/** Shared unlock-state hook: portal sign-in OR pre-existing localStorage flag
+ *  (set by anyone who filled out the legacy quick-unlock form). */
+function useIsUnlocked(): boolean {
+  const { data: account } = useAccount();
+  const [hasLocal, setHasLocal] = useState<boolean>(() => isUnlocked());
+  useEffect(() => {
+    const sync = () => setHasLocal(isUnlocked());
+    window.addEventListener("storage", sync);
+    // Also poll on focus so a sign-in / unlock in another tab is picked up.
+    window.addEventListener("focus", sync);
+    return () => {
+      window.removeEventListener("storage", sync);
+      window.removeEventListener("focus", sync);
+    };
+  }, []);
+  return Boolean(account) || hasLocal;
+}
+
+/** Soft gate — inline card that appears between the stats strip and the
+ *  full content on /mls/:id. Anonymous users see the hero, address, price,
+ *  beds/baths/sqft and the gate; the content underneath is rendered (for
+ *  SEO crawlers) but visually blurred and non-interactive for humans.
+ *  Two unlock paths: sign in to the portal (preferred) OR fill the quick
+ *  form (creates a lead with source=listing_unlock, same as the old gate). */
+function ListingSoftGate({ listingId }: { listingId: string }) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-
-  // Lock body scroll while gate is up so the modal feels truly modal.
-  useEffect(() => {
-    if (unlocked) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [unlocked]);
-
-  if (unlocked) return null;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -213,8 +225,9 @@ function ListingUnlockGate({ listingId }: { listingId: string }) {
       });
       try {
         window.localStorage.setItem(UNLOCK_KEY, "1");
+        // Trigger the useIsUnlocked hook in the parent to re-read.
+        window.dispatchEvent(new StorageEvent("storage", { key: UNLOCK_KEY }));
       } catch {}
-      setUnlocked(true);
       toast({ title: "Welcome — listings unlocked." });
     } catch (err: any) {
       setError(err?.message ?? "Couldn't submit. Please try again.");
@@ -225,79 +238,238 @@ function ListingUnlockGate({ listingId }: { listingId: string }) {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center"
-      style={{ background: "rgba(10, 10, 10, 0.85)", backdropFilter: "blur(8px)" }}
-      role="dialog"
-      aria-modal="true"
+      className="my-10 relative z-10 max-w-[640px] mx-auto bg-background border border-border shadow-xl"
+      style={{ borderRadius: "2px" }}
+      data-testid="soft-gate"
     >
-      <div
-        className="w-full max-w-[440px] mx-4 bg-background border border-border shadow-2xl"
-        style={{ borderRadius: "2px" }}
-      >
-        <div className="px-8 pt-8 pb-2 text-center">
-          <div
-            className="font-display text-[11px] tracking-[0.22em] mb-3"
-            style={{ color: "#D4AF37" }}
-          >
-            RIVERS REAL ESTATE
-          </div>
-          <h2
-            className="font-serif text-3xl text-foreground"
-            style={{ letterSpacing: "-0.01em", lineHeight: 1.15 }}
-          >
-            See every detail.
-          </h2>
-          <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-            Tell me who you are and I'll show you the full listing — photos,
-            address, room counts, and price history.
-          </p>
+      <div className="px-8 pt-8 pb-3 text-center">
+        <div
+          className="inline-flex items-center gap-2 font-display text-[11px] tracking-[0.22em] mb-3"
+          style={{ color: "#D4AF37" }}
+        >
+          <Lock className="w-3 h-3" strokeWidth={1.8} />
+          MEMBERS ONLY
         </div>
-        <form onSubmit={submit} className="p-8 pt-6 space-y-3">
-          <div className="grid grid-cols-2 gap-2">
-            <Input
-              autoFocus
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              placeholder="First name"
-              className="rounded-sm h-11"
-              autoComplete="given-name"
-              required
-            />
-            <Input
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              placeholder="Last name"
-              className="rounded-sm h-11"
-              autoComplete="family-name"
-              required
-            />
-          </div>
+        <h2
+          className="font-serif text-3xl text-foreground"
+          style={{ letterSpacing: "-0.01em", lineHeight: 1.15 }}
+        >
+          See every detail.
+        </h2>
+        <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-md mx-auto">
+          Sign in for full photo gallery, walk score, property facts, location
+          data, mortgage estimate, and to request a tour.
+        </p>
+      </div>
+
+      {/* Primary CTA: portal sign-in */}
+      <div className="px-8 pt-2 pb-2">
+        <a
+          href="/account/login"
+          className="block w-full text-center rounded-sm h-11 leading-[44px] font-display tracking-[0.18em] text-[11px] text-white"
+          style={{ background: "#0a0a0a" }}
+          data-testid="btn-soft-gate-signin"
+        >
+          SIGN IN TO YOUR ACCOUNT
+        </a>
+      </div>
+
+      <div className="flex items-center gap-3 px-8 my-4 text-[10px] tracking-[0.22em] text-muted-foreground">
+        <div className="flex-1 border-t border-border" />
+        <span>OR UNLOCK INSTANTLY</span>
+        <div className="flex-1 border-t border-border" />
+      </div>
+
+      <form onSubmit={submit} className="px-8 pb-8 space-y-3">
+        <div className="grid grid-cols-2 gap-2">
           <Input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Best email"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            placeholder="First name"
             className="rounded-sm h-11"
-            autoComplete="email"
+            autoComplete="given-name"
             required
           />
-          {error && (
-            <div className="text-xs text-destructive pt-1">{error}</div>
-          )}
-          <Button
-            type="submit"
-            disabled={submitting}
-            className="w-full mt-2 rounded-sm h-11 font-display tracking-[0.18em] text-[11px]"
-            style={{ background: "#23412d", color: "#fff" }}
-          >
-            {submitting ? "UNLOCKING…" : "UNLOCK LISTING"}
-          </Button>
-          <p className="text-[10px] text-muted-foreground text-center pt-2 leading-relaxed">
-            By continuing, you agree to receive occasional listing updates from
-            Spencer Rivers. Unsubscribe anytime.
-          </p>
-        </form>
+          <Input
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            placeholder="Last name"
+            className="rounded-sm h-11"
+            autoComplete="family-name"
+            required
+          />
+        </div>
+        <Input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Best email"
+          className="rounded-sm h-11"
+          autoComplete="email"
+          required
+        />
+        {error && (
+          <div className="text-xs text-destructive pt-1">{error}</div>
+        )}
+        <Button
+          type="submit"
+          disabled={submitting}
+          className="w-full mt-2 rounded-sm h-11 font-display tracking-[0.18em] text-[11px]"
+          style={{ background: "#23412d", color: "#fff" }}
+        >
+          {submitting ? "UNLOCKING…" : "UNLOCK THIS LISTING"}
+        </Button>
+        <p className="text-[10px] text-muted-foreground text-center pt-2 leading-relaxed">
+          By continuing, you agree to receive occasional listing updates from
+          Spencer Rivers. Unsubscribe anytime.
+        </p>
+      </form>
+    </div>
+  );
+}
+
+/** Portal-only inline panel: private notes on this property. Auto-saves
+ *  on blur. Renders only for signed-in users (anonymous users don't see
+ *  this — the soft gate is what they'll hit first). */
+function NotesPanel({ mlsId }: { mlsId: string }) {
+  const { data: account } = useAccount();
+  const { data: note, isLoading } = useNote(mlsId);
+  const save = useSaveNote();
+  const [draft, setDraft] = useState("");
+  const [savedFlash, setSavedFlash] = useState(false);
+  const lastSyncedRef = useRef<string>("");
+  useEffect(() => {
+    if (note && note.note !== lastSyncedRef.current) {
+      setDraft(note.note);
+      lastSyncedRef.current = note.note;
+    } else if (!note && lastSyncedRef.current === "") {
+      setDraft("");
+    }
+  }, [note]);
+  if (!account) return null;
+  function onBlur() {
+    if (draft === lastSyncedRef.current) return;
+    save.mutate(
+      { mlsId, note: draft.trim() },
+      {
+        onSuccess: () => {
+          lastSyncedRef.current = draft.trim();
+          setSavedFlash(true);
+          setTimeout(() => setSavedFlash(false), 1800);
+        },
+      },
+    );
+  }
+  return (
+    <div className="mt-12">
+      <div className="flex items-center justify-between">
+        <h2 className="font-display text-xs tracking-[0.22em] text-muted-foreground inline-flex items-center gap-2">
+          <FileText className="w-3 h-3" strokeWidth={1.8} /> YOUR PRIVATE NOTES
+        </h2>
+        {savedFlash && (
+          <span className="font-display text-[10px] tracking-[0.22em] text-muted-foreground inline-flex items-center gap-1">
+            <Check className="w-3 h-3" /> SAVED
+          </span>
+        )}
       </div>
+      <textarea
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={onBlur}
+        placeholder={isLoading ? "Loading…" : "Jot down what stands out, questions to ask, or how this compares to others you're considering. Only you see this."}
+        rows={5}
+        className="mt-4 w-full rounded-sm border border-border bg-background p-4 text-[14px] leading-relaxed focus:outline-none focus:border-foreground transition-colors resize-y"
+        data-testid="textarea-property-note"
+      />
+    </div>
+  );
+}
+
+/** Portal-only inline panel: request a private tour. Native datetime-local
+ *  input — Spencer reviews each request via /admin/calendar and confirms. */
+function TourRequestPanel({ mlsId }: { mlsId: string }) {
+  const { data: account } = useAccount();
+  const requestTour = useRequestTour();
+  const [when, setWhen] = useState("");
+  const [notes, setNotes] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  if (!account) return null;
+  function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!when) return;
+    const iso = new Date(when).toISOString();
+    requestTour.mutate(
+      { mlsId, preferredAt: iso, notes: notes.trim() || undefined },
+      {
+        onSuccess: () => {
+          setSubmitted(true);
+          setWhen("");
+          setNotes("");
+        },
+      },
+    );
+  }
+  if (submitted) {
+    return (
+      <div className="rounded-sm border border-border p-5">
+        <div className="font-display text-[10px] tracking-[0.22em] text-muted-foreground inline-flex items-center gap-1">
+          <Check className="w-3 h-3" /> TOUR REQUESTED
+        </div>
+        <div className="mt-3 font-serif text-xl">Spencer will be in touch.</div>
+        <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+          Your request is in the queue. You'll get an email when Spencer
+          confirms a time. Track status anytime under{" "}
+          <a href="/account/tours" className="underline">your tours</a>.
+        </p>
+      </div>
+    );
+  }
+  return (
+    <div className="rounded-sm border border-border p-5">
+      <div className="font-display text-[10px] tracking-[0.22em] text-muted-foreground inline-flex items-center gap-2">
+        <CalendarPlus className="w-3 h-3" strokeWidth={1.8} /> REQUEST A PRIVATE TOUR
+      </div>
+      <form onSubmit={onSubmit} className="mt-4 space-y-3">
+        <div>
+          <label className="block font-display text-[10px] tracking-[0.22em] text-muted-foreground mb-1.5">
+            PREFERRED DATE / TIME
+          </label>
+          <input
+            type="datetime-local"
+            value={when}
+            onChange={(e) => setWhen(e.target.value)}
+            required
+            min={new Date(Date.now() + 3600_000).toISOString().slice(0, 16)}
+            className="w-full rounded-sm border border-border bg-background h-10 px-3 text-[14px] focus:outline-none focus:border-foreground"
+            data-testid="input-tour-when"
+          />
+        </div>
+        <div>
+          <label className="block font-display text-[10px] tracking-[0.22em] text-muted-foreground mb-1.5">
+            ANYTHING TO MENTION? (OPTIONAL)
+          </label>
+          <textarea
+            rows={3}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Specific questions, accessibility needs, scheduling flexibility…"
+            className="w-full rounded-sm border border-border bg-background p-3 text-[14px] resize-y focus:outline-none focus:border-foreground"
+            data-testid="textarea-tour-notes"
+          />
+        </div>
+        <Button
+          type="submit"
+          disabled={!when || requestTour.isPending}
+          className="w-full rounded-sm h-11 font-display tracking-[0.18em] text-[11px]"
+          data-testid="btn-request-tour"
+        >
+          {requestTour.isPending ? "SENDING…" : "REQUEST TOUR"}
+        </Button>
+        <p className="text-[10px] text-muted-foreground leading-relaxed">
+          Spencer reviews every request personally and replies within one
+          business day to confirm a time that works for both of you.
+        </p>
+      </form>
     </div>
   );
 }
@@ -306,6 +478,10 @@ function MlsDetailBody({ listing }: { listing: PublicMlsListingDetail }) {
   const status = (listing.status ?? "").toLowerCase();
   const isSold = status === "sold";
   const isPending = status === "pending" || status === "conditional";
+  // Soft-gate state: signed-in portal users + legacy quick-unlock users
+  // see the full page. Everyone else gets a gated preview.
+  const isPageUnlocked = useIsUnlocked();
+  const { data: portalAccount } = useAccount();
 
   const gallery = useMemo(() => {
     // For RETS-sourced listings (those with photoCount), construct photo URLs
@@ -450,6 +626,20 @@ function MlsDetailBody({ listing }: { listing: PublicMlsListingDetail }) {
               />
             </div>
 
+            {/* Soft gate (appears between stats and the rest of the content
+                when the visitor is not signed in or quick-unlocked). Full
+                content is still rendered below — visually blurred — so
+                Googlebot can index everything for SEO. */}
+            {!isPageUnlocked && <ListingSoftGate listingId={listing.id} />}
+
+            <div
+              className={
+                isPageUnlocked
+                  ? ""
+                  : "filter blur-[6px] select-none pointer-events-none transition"
+              }
+              aria-hidden={!isPageUnlocked || undefined}
+            >
             {/* Description */}
             {listing.description && (
               <div className="mt-10">
@@ -461,6 +651,10 @@ function MlsDetailBody({ listing }: { listing: PublicMlsListingDetail }) {
                 </div>
               </div>
             )}
+
+            {/* Portal-only: private notes panel. Only renders when the user
+                is signed in via the account portal. */}
+            {portalAccount && <NotesPanel mlsId={listing.id} />}
 
             {/* Property facts */}
             <div className="mt-12">
@@ -568,12 +762,27 @@ function MlsDetailBody({ listing }: { listing: PublicMlsListingDetail }) {
                 <span className="ml-3">· LIVE FROM PILLAR 9</span>
               )}
             </div>
+            </div>{/* /soft-gate blur wrapper for left column */}
           </div>
 
-          {/* Right column: contact / showing */}
-          <aside className="space-y-6 lg:sticky lg:top-28 self-start">
+          {/* Right column: contact / showing — also gated for anon users so
+              the contact form doesn't capture before the user signs in. */}
+          <aside
+            className={`space-y-6 lg:sticky lg:top-28 self-start ${
+              isPageUnlocked ? "" : "filter blur-[6px] select-none pointer-events-none"
+            }`}
+            aria-hidden={!isPageUnlocked || undefined}
+          >
             <ContactCard listing={listing} />
-            <ShowingForm listing={listing} />
+            {/* Signed-in portal users get the structured tour-request form
+                that creates a row in /account/tours. Everyone else (legacy
+                quick-unlock users) sees the existing showing form which
+                creates a lead via /api/contact. */}
+            {portalAccount ? (
+              <TourRequestPanel mlsId={listing.id} />
+            ) : (
+              <ShowingForm listing={listing} />
+            )}
           </aside>
         </div>
       </section>

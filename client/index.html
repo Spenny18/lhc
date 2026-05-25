@@ -12,6 +12,24 @@
       href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Manrope:wght@200;300;400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
+    <!-- Follow Up Boss Widget Tracker (pixel). Initialises the tracker and
+         fires the first pageview. SPA route changes are tracked separately
+         in client/src/App.tsx via the usePageviewTracker hook. -->
+    <script>
+      (function (w, i, d, g, e, t) {
+        w["WidgetTrackerObject"] = g;
+        (w[g] = w[g] || function () { (w[g].q = w[g].q || []).push(arguments); }),
+          (w[g].ds = 1 * new Date());
+        (e = "script"),
+          (t = d.createElement(e)),
+          (e = d.getElementsByTagName(e)[0]);
+        t.async = 1;
+        t.src = i;
+        e.parentNode.insertBefore(t, e);
+      })(window, "https://widgetbe.com/agent", document, "widgetTracker");
+      window.widgetTracker("create", "WT-GFURXFCK");
+      window.widgetTracker("send", "pageview");
+    </script>
   </head>
   <body>
     <div id="root"></div>

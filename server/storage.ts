@@ -355,7 +355,93 @@ sqlite.exec(`
     posted_at TEXT,
     created_at TEXT NOT NULL
   );
+
+  -- Consumer portal (/account/*) tables ----------------------------------
+  CREATE TABLE IF NOT EXISTS account_users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    lead_id INTEGER NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    email_verified INTEGER NOT NULL DEFAULT 0,
+    google_sub TEXT,
+    name TEXT,
+    phone TEXT,
+    last_login_at TEXT,
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_account_users_email ON account_users(email);
+  CREATE INDEX IF NOT EXISTS idx_account_users_lead_id ON account_users(lead_id);
+
+  CREATE TABLE IF NOT EXISTS account_sessions (
+    id TEXT PRIMARY KEY,
+    account_user_id INTEGER NOT NULL,
+    expires_at TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_account_sessions_user ON account_sessions(account_user_id);
+
+  CREATE TABLE IF NOT EXISTS account_magic_tokens (
+    id TEXT PRIMARY KEY,
+    email TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    consumed_at TEXT,
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_account_magic_tokens_email ON account_magic_tokens(email);
+
+  CREATE TABLE IF NOT EXISTS account_favorites (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    account_user_id INTEGER NOT NULL,
+    mls_id TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    UNIQUE(account_user_id, mls_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS account_property_notes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    account_user_id INTEGER NOT NULL,
+    mls_id TEXT NOT NULL,
+    note TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    UNIQUE(account_user_id, mls_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS account_market_report_subs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    account_user_id INTEGER NOT NULL,
+    neighbourhood_slug TEXT,
+    frequency TEXT NOT NULL DEFAULT 'weekly',
+    active INTEGER NOT NULL DEFAULT 1,
+    last_sent_at TEXT,
+    created_at TEXT NOT NULL
+  );
 `);
+
+// Migration: add account_user_id to saved_searches so portal users own
+// their own rows separately from admin-created searches.
+try {
+  const cols = sqlite.prepare("PRAGMA table_info(saved_searches)").all() as Array<{ name: string }>;
+  if (cols.length > 0 && !cols.some((c) => c.name === "account_user_id")) {
+    sqlite.exec("ALTER TABLE saved_searches ADD COLUMN account_user_id INTEGER");
+    sqlite.exec("CREATE INDEX IF NOT EXISTS idx_saved_searches_account_user ON saved_searches(account_user_id)");
+    console.log("[migration] added account_user_id to saved_searches");
+  }
+} catch (e) {
+  console.error("[migration] saved_searches account_user_id:", e);
+}
+
+// Migration: add status column to blog_posts (draft | published). Existing
+// rows default to "published" so legacy migrated content stays live.
+try {
+  const cols = sqlite.prepare("PRAGMA table_info(blog_posts)").all() as Array<{ name: string }>;
+  if (cols.length > 0 && !cols.some((c) => c.name === "status")) {
+    sqlite.exec("ALTER TABLE blog_posts ADD COLUMN status TEXT NOT NULL DEFAULT 'published'");
+    sqlite.exec("CREATE INDEX IF NOT EXISTS idx_blog_posts_status ON blog_posts(status)");
+    console.log("[migration] added status to blog_posts");
+  }
+} catch (e) {
+  console.error("[migration] blog_posts status:", e);
+}
 
 // Migration: add link_url + variants columns to existing social_posts rows.
 try {

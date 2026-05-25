@@ -94,7 +94,7 @@ export default function AdminAnalyticsPage() {
             icon={Building2}
             label="Managed listings"
             value={kpis.managedListings.toString()}
-            sub="on luxuryhomescalgary.ca"
+            sub="on riversrealestate.ca"
           />
           <KpiCard
             icon={Users}

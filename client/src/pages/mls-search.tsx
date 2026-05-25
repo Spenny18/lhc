@@ -13,7 +13,11 @@ import {
   MapPin,
   Map as MapIcon,
   List as ListIcon,
+  Bookmark,
+  BookmarkCheck,
 } from "lucide-react";
+import { useAccount, useCreateSavedSearch } from "@/lib/account";
+import { toast as showToast } from "@/hooks/use-toast";
 import { PublicLayout } from "@/components/public-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -510,6 +514,16 @@ function FitBoundsOnce({ points }: { points: Array<[number, number]> }) {
   useEffect(() => {
     if (fittedRef.current) return;
     if (points.length === 0) return;
+    // Default-state heuristic: when the unfiltered result set is huge
+    // (thousands of listings spread across Calgary metro + outlying towns),
+    // auto-fitting zooms out to a non-useful "all of Southern Alberta" view.
+    // Keep the MapContainer's preset Calgary center / zoom 11 in that case.
+    // A filtered subset (< 200 markers) is small enough that fitting to it
+    // is helpful — e.g., filtering to one neighbourhood pans the map there.
+    if (points.length > 200) {
+      fittedRef.current = true;
+      return;
+    }
     if (points.length === 1) {
       map.setView(points[0], 13);
       fittedRef.current = true;
@@ -525,15 +539,63 @@ function FitBoundsOnce({ points }: { points: Array<[number, number]> }) {
 export default function MlsSearchPage() {
   const [location, setLocation] = useLocation();
   const initialFilters = useMemo<Filters>(() => {
-    const hash = typeof window !== "undefined" ? window.location.hash : "";
-    const qIdx = hash.indexOf("?");
-    const qs = qIdx >= 0 ? hash.slice(qIdx + 1) : "";
+    const search = typeof window !== "undefined" ? window.location.search : "";
+    const qs = search.startsWith("?") ? search.slice(1) : search;
     return { ...DEFAULT_FILTERS, ...parseQuery(qs) };
   }, []);
 
   const [filters, setFilters] = useState<Filters>(initialFilters);
   const [page, setPage] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  // "Save this search" — portal users can persist the current filter set as
+  // a recurring email-alert subscription. Signed-out clicks bounce to login.
+  const { data: portalMe } = useAccount();
+  const createSearch = useCreateSavedSearch();
+  const [savedFlash, setSavedFlash] = useState(false);
+  function deriveSearchName(f: Filters): string {
+    const parts: string[] = [];
+    if (f.q) parts.push(`"${f.q}"`);
+    if (f.neighbourhood) parts.push(String(f.neighbourhood));
+    if (f.type && f.type !== "any") parts.push(String(f.type));
+    if (f.beds && f.beds !== "any") parts.push(`${f.beds}+ bd`);
+    if (f.minPrice || f.maxPrice) {
+      const lo = f.minPrice ? `$${Math.round(Number(f.minPrice) / 1000)}K` : "";
+      const hi = f.maxPrice ? `$${Math.round(Number(f.maxPrice) / 1000)}K` : "";
+      parts.push([lo, hi].filter(Boolean).join("–"));
+    }
+    return parts.length ? parts.join(" · ") : `Calgary MLS · ${new Date().toLocaleDateString("en-CA")}`;
+  }
+  function handleSaveSearch() {
+    if (!portalMe) {
+      window.location.href = "/account/login";
+      return;
+    }
+    createSearch.mutate(
+      {
+        name: deriveSearchName(filters),
+        filters: filters as unknown as Record<string, unknown>,
+        frequency: "daily",
+        emailAlerts: true,
+      },
+      {
+        onSuccess: () => {
+          setSavedFlash(true);
+          showToast({
+            title: "Search saved",
+            description: "You'll get daily email alerts when new matches hit the market.",
+          });
+          setTimeout(() => setSavedFlash(false), 4000);
+        },
+        onError: () =>
+          showToast({
+            title: "Couldn't save",
+            description: "Please try again in a moment.",
+            variant: "destructive",
+          }),
+      },
+    );
+  }
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [popupListing, setPopupListing] = useState<PublicMlsListing | null>(null);
   const [zoom, setZoom] = useState(11);
@@ -943,6 +1005,31 @@ export default function MlsSearchPage() {
                   ))}
                 </SelectContent>
               </Select>
+
+              <button
+                type="button"
+                onClick={handleSaveSearch}
+                disabled={createSearch.isPending}
+                className={`h-9 px-3.5 rounded-full border text-[13px] transition flex items-center gap-1.5 ${
+                  savedFlash
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-border hover:bg-secondary/50"
+                }`}
+                title={portalMe ? "Save this filter set as a recurring alert" : "Sign in to save searches"}
+                data-testid="button-save-search"
+              >
+                {savedFlash ? (
+                  <>
+                    <BookmarkCheck className="w-3.5 h-3.5" strokeWidth={1.6} />
+                    Saved
+                  </>
+                ) : (
+                  <>
+                    <Bookmark className="w-3.5 h-3.5" strokeWidth={1.6} />
+                    Save search
+                  </>
+                )}
+              </button>
 
               <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
                 <SheetTrigger asChild>

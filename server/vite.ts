@@ -5,6 +5,7 @@ import viteConfig from "../vite.config";
 import fs from "node:fs";
 import path from "node:path";
 import { nanoid } from "nanoid";
+import { metaForPath, injectMetaIntoHtml } from "./seo-inject";
 
 const viteLogger = createLogger();
 
@@ -48,7 +49,22 @@ export async function setupVite(server: Server, app: Express) {
         `src="/src/main.tsx"`,
         `src="/src/main.tsx?v=${nanoid()}"`,
       );
-      const page = await vite.transformIndexHtml(url, template);
+      let page = await vite.transformIndexHtml(url, template);
+      // Inject per-route SEO meta tags so Googlebot gets full HEAD
+      // metadata even without executing JS. Same logic as production
+      // (server/static.ts). Unknown routes return 404.
+      const meta = metaForPath(req.path);
+      if (!meta) {
+        const fallbackHtml = injectMetaIntoHtml(page, {
+          title: "Page not found — Rivers Real Estate",
+          description: "The page you're looking for doesn't exist.",
+          canonical: `${process.env.PUBLIC_ORIGIN || "https://riversrealestate.ca"}${req.path}`,
+          noindex: true,
+        });
+        res.status(404).set({ "Content-Type": "text/html" }).end(fallbackHtml);
+        return;
+      }
+      page = injectMetaIntoHtml(page, meta);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);

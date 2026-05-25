@@ -1,16 +1,15 @@
-node_modules/
-dist/
-.vite/
 
-# SQLite database files — never commit; exposes demo data at rest
-data.db
-data.db-shm
-data.db-wal
-data.db-journal
-
-.env
-.env.*
 !.env.example
-
+# SQLite database files — never commit; exposes demo data at rest
 *.log
 .DS_Store
+.env
+.env.*
+.vite/
+data.db
+data.db-journal
+data.db-shm
+data.db-wal
+dist/
+node_modules/
+{node_modules,dist,.vite,*.log,.DS_Store,.env,.env.*,\!.env.example,data.db*,.github/workflows/*.local}

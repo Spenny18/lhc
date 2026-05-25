@@ -18,6 +18,8 @@ import {
   BarChart3,
   Bookmark,
   Building2,
+  FileText,
+  MapPinned,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -40,6 +42,8 @@ const primaryNav: NavItem[] = [
   { label: "Analytics", icon: BarChart3, href: "/admin/analytics" },
   { label: "Saved Searches", icon: Bookmark, href: "/admin/saved-searches" },
   { label: "Condos CMS", icon: Building2, href: "/admin/condos" },
+  { label: "Neighbourhoods", icon: MapPinned, href: "/admin/neighbourhoods" },
+  { label: "Blog CMS", icon: FileText, href: "/admin/blog" },
   { label: "MLS Sync", icon: Database, href: "/admin/mls-sync" },
 ];
 

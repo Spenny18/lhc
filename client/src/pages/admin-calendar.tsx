@@ -405,17 +405,16 @@ function GoogleCalendarConnect() {
     queryKey: ["/api/admin/google/status"],
   });
 
-  // Surface success/error from the OAuth callback redirect (URL hash params).
+  // Surface success/error from the OAuth callback redirect (URL search params).
   React.useEffect(() => {
-    const hash = window.location.hash;
-    const qIdx = hash.indexOf("?");
-    if (qIdx < 0) return;
-    const qs = new URLSearchParams(hash.slice(qIdx + 1));
+    const search = window.location.search;
+    if (!search) return;
+    const qs = new URLSearchParams(search);
+    const cleanUrl = window.location.pathname;
     if (qs.get("google_connected") === "1") {
       toast({ title: "Google Calendar connected", description: "Tours will now sync." });
       qc.invalidateQueries({ queryKey: ["/api/admin/google/status"] });
-      // Strip query params from URL.
-      window.history.replaceState(null, "", hash.slice(0, qIdx));
+      window.history.replaceState(null, "", cleanUrl);
     }
     const err = qs.get("google_error");
     if (err) {
@@ -424,7 +423,7 @@ function GoogleCalendarConnect() {
         description: err,
         variant: "destructive",
       });
-      window.history.replaceState(null, "", hash.slice(0, qIdx));
+      window.history.replaceState(null, "", cleanUrl);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

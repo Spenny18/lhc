@@ -63,7 +63,7 @@ export default function AuthPage() {
             <span className="block italic">listings.</span>
           </h1>
           <p className="text-muted-foreground mt-4 text-[15px] leading-relaxed">
-            The private workspace behind luxuryhomescalgary.ca — listings,
+            The private workspace behind riversrealestate.ca — listings,
             buyer enquiries, and tours for Spencer Rivers and his clients in
             Calgary's most exacting neighbourhoods.
           </p>

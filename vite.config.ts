@@ -12,7 +12,11 @@ export default defineConfig({
     },
   },
   root: path.resolve(import.meta.dirname, "client"),
-  base: "./",
+  // Absolute base ("/") so deep routes under BrowserRouter resolve assets
+  // from the site root. Was "./" — that produced relative URLs that worked
+  // under the old HashRouter (URL bar stayed at /) but 404'd on any deep
+  // path like /condos/the-river, leaving the page blank.
+  base: "/",
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,

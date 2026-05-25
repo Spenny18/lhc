@@ -2097,6 +2097,93 @@ export const MARQUEE_NEIGHBOURHOODS: MarqueeNeighbourhood[] = [
     avgPrice: 1750000,
     sortOrder: 140,
   },
+  {
+    slug: "bearspaw",
+    name: "Bearspaw",
+    tagline: "Acreage estate living fifteen minutes northwest of downtown Calgary.",
+    story: [
+      "Bearspaw sits in Rocky View County, immediately northwest of Calgary's city limit. Lots run two to ten acres, most with private wells and septic, and the housing stock is a mix of original 1980s ranchers and substantial post-2010 custom builds. The defining characteristic is privacy — most homes are not visible from the road, and trees do most of the screening.",
+      "Pricing varies dramatically with lot size and water access. Estate properties on the Bearspaw Country Estates side regularly clear $4M, while smaller two-acre parcels start in the high $1M range. Tax treatment is also different — county taxes run roughly half of Calgary city rates, and there's no city business tax on residential-only acreage.",
+    ],
+    outsideCopy: [
+      "Glenbow Ranch Provincial Park, Bearspaw Reservoir, and the Twelve Mile Coulee trail network are all within a 10-minute drive — serious horse and trail country, plus direct Bow River frontage on the south-side parcels.",
+    ],
+    amenitiesCopy: [
+      "Country Hills Golf Club and Bearspaw Country Club are the dominant social anchors. Webber Academy, Rundle College, and Calgary Academy are 15-20 minutes via Stoney Trail; Bearspaw School (K-9) is the local public catchment.",
+    ],
+    shopDineCopy: [
+      "Bearspaw Lifestyle Centre carries everyday essentials. Crowfoot Crossing is 12 minutes south for full retail; downtown Calgary is a 20-minute commute via Stoney Trail.",
+    ],
+    realEstateCopy: [
+      "Bearspaw is one of the few true acreage markets within commuting distance of downtown. Inventory is highly variable — a quiet year may see 30 sales total, while a hot one clears 60+. Price-per-acre is the dominant valuation metric, with finished walkouts on Bow River frontage holding the strongest premium.",
+      "Buyers come for the privacy, the lot size, and the lower property tax base. The trade-off is well/septic maintenance, longer drives for everything, and a slower resale market than equivalent Calgary city pricing.",
+    ],
+    lifeCopy: [
+      "Bearspaw reads quiet, private, and outdoor-oriented. The buyer pool skews to established professionals and business owners who want acreage feel without leaving the Calgary commute shed.",
+    ],
+    quadrant: "surrounding",
+    zone: "Rural Rocky View County",
+    borders: {
+      north: "Township Road 264",
+      south: "Bow River",
+      east: "Calgary city limit (12 Mile Coulee)",
+      west: "Range Road 33",
+    },
+    schools: [
+      { name: "Bearspaw School", level: "K-9", area: "Bearspaw" },
+      { name: "Webber Academy", level: "JK-12 (private)", area: "Aspen Woods" },
+      { name: "Rundle College", level: "K-12 (private)", area: "Aspen Woods" },
+      { name: "Calgary Academy", level: "K-12 (private)", area: "Aspen Woods" },
+    ],
+    heroImage: HERO_BANK.westsideEstate,
+    centerLat: 51.1325,
+    centerLng: -114.247,
+    avgPrice: 2450000,
+    sortOrder: 141,
+  },
+  {
+    slug: "mckenzie-lake",
+    name: "McKenzie Lake",
+    tagline: "Established southeast lake community with a mature streetscape.",
+    story: [
+      "McKenzie Lake was Calgary's second-built lake community (the late 1980s) and the housing stock now reads as mature — large trees, established lawns, and lots running 45 to 60 feet wide. The 43-acre lake sits at the centre of the community with private beach access for all McKenzie Lake homeowners, and the original demographic of families is now cycling into a second generation of buyers.",
+      "Pricing has trended steadily upward: detached entry runs $700K-$900K, and the larger walkout homes backing onto the lake or the Bow River escarpment clear $1.4M-$1.8M. The combination of Bow River pathway access and Fish Creek Provincial Park frontage is matched only by Cranston.",
+    ],
+    outsideCopy: [
+      "Fish Creek Provincial Park borders the southern edge — Canada's second-largest urban park. The Bow River pathway runs along the west; the community lake itself is private to homeowners, with two beach areas and a residents-only clubhouse.",
+    ],
+    amenitiesCopy: [
+      "McKenzie Lake School (K-6), Mountain Park School (K-6), Bishop O'Byrne High School. The South Health Campus and YMCA at Brookfield Residential are both 6 minutes north.",
+    ],
+    shopDineCopy: [
+      "McKenzie Towne's main street and Mahogany Village Market are both close. 130 Avenue SE retail strip handles big-box needs; Seton is a seven-minute drive.",
+    ],
+    realEstateCopy: [
+      "McKenzie Lake offers established Calgary lake-community living at meaningfully lower price points than Mahogany or Auburn Bay — a function of older housing stock and smaller community lake. Walkouts backing onto the Bow escarpment or Fish Creek carry a 15-25% premium over interior lots.",
+      "Resale is steady. The community attracts second-time buyers and families who value the mature trees, the lake, and the school catchment — a stable demographic profile that supports floor pricing through soft markets.",
+    ],
+    lifeCopy: [
+      "McKenzie Lake reads suburban-quiet with strong family demographics. The lake amenity carries the community identity; the mature streetscape distinguishes it from the newer-build alternatives.",
+    ],
+    quadrant: "southeast",
+    zone: "Southeast",
+    borders: {
+      north: "McKenzie Lake Boulevard",
+      south: "Fish Creek Provincial Park",
+      east: "Stoney Trail SE",
+      west: "Bow River",
+    },
+    schools: [
+      { name: "McKenzie Lake School", level: "K-6", area: "McKenzie Lake" },
+      { name: "Mountain Park School", level: "K-6", area: "McKenzie Lake" },
+      { name: "Bishop O'Byrne High School", level: "10-12", area: "McKenzie Towne" },
+    ],
+    heroImage: HERO_BANK.riverside,
+    centerLat: 50.9268,
+    centerLng: -113.975,
+    avgPrice: 895000,
+    sortOrder: 142,
+  },
 ];
 
 // ============================================================

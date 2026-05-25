@@ -20,9 +20,14 @@ primary_region = "sea"
 [http_service]
   internal_port = 8080
   force_https = true
-  auto_stop_machines = "stop"
+  # Keep 1 machine warm. The previous `auto_stop_machines = "stop"` +
+  # `min_machines_running = 0` combo let the machine shut down between
+  # requests, and the resulting 5–15 s cold-start would time out Google's
+  # sitemap fetcher (status: "Couldn't fetch") and feel slow to real users.
+  # Costs ~$2–5/mo on shared-cpu-1x — worth it for SEO reliability.
+  auto_stop_machines = "off"
   auto_start_machines = true
-  min_machines_running = 0
+  min_machines_running = 1
   processes = ["app"]
 
   [[http_service.checks]]

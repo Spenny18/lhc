@@ -5,6 +5,17 @@ import { PublicLayout } from "@/components/public-layout";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { PublicBlogPost } from "@/lib/mls-types";
 
+// Fallback hero — used when a post has no heroImage (e.g. some of the
+// WP-migrated posts arrived with empty/broken image URLs). Brand-aligned
+// neutral Calgary architecture shot.
+const BLOG_FALLBACK_HERO =
+  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&h=900&fit=crop&q=80";
+function heroFor(post: { heroImage?: string | null }): string {
+  const h = (post.heroImage || "").trim();
+  if (!h) return BLOG_FALLBACK_HERO;
+  return h;
+}
+
 function fmtDate(iso: string) {
   if (!iso) return "";
   return new Date(iso).toLocaleDateString("en-CA", {
@@ -53,7 +64,8 @@ export default function BlogIndexPage() {
             >
               <div className="relative aspect-[4/3] lg:aspect-[5/4] rounded-sm overflow-hidden bg-secondary">
                 <img
-                  src={feature.heroImage}
+                  src={heroFor(feature)}
+                  onError={(e) => ((e.target as HTMLImageElement).src = BLOG_FALLBACK_HERO)}
                   alt={feature.title}
                   loading="lazy"
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
@@ -118,7 +130,8 @@ export default function BlogIndexPage() {
                   >
                     <div className="relative aspect-[4/3] rounded-sm overflow-hidden bg-secondary">
                       <img
-                        src={post.heroImage}
+                        src={heroFor(post)}
+                        onError={(e) => ((e.target as HTMLImageElement).src = BLOG_FALLBACK_HERO)}
                         alt={post.title}
                         loading="lazy"
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"

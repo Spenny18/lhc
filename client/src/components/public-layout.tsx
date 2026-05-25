@@ -2,9 +2,10 @@ import { ReactNode, useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Logo } from "@/components/logo";
 import { useTheme } from "@/components/theme-provider";
-import { Menu, X, Sun, Moon, Phone } from "lucide-react";
+import { Menu, X, Sun, Moon, Phone, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SPENCER_PHONE, SPENCER_PHONE_HREF } from "@/lib/format";
+import { useAccount } from "@/lib/account";
 
 interface NavItem {
   label: string;
@@ -123,6 +124,8 @@ export function PublicHeader({ transparent = false }: { transparent?: boolean })
           {SPENCER_PHONE}
         </a>
 
+        <AccountHeaderLink invert={isOverlay} />
+
         <Button
           variant="ghost"
           size="icon"
@@ -167,10 +170,53 @@ export function PublicHeader({ transparent = false }: { transparent?: boolean })
               <Phone className="w-3.5 h-3.5" strokeWidth={1.6} />
               {SPENCER_PHONE}
             </a>
+            <AccountMobileLink onClick={() => setMobileOpen(false)} />
           </div>
         </div>
       )}
     </header>
+  );
+}
+
+/** Desktop header account link. Signed out → "Sign in" link; signed in
+ *  → "Account" link to the dashboard. Hidden until the auth query resolves
+ *  to avoid a "Sign in" → "Account" flash on every page load. */
+function AccountHeaderLink({ invert }: { invert: boolean }) {
+  const { data: me, isLoading } = useAccount();
+  if (isLoading) return null;
+  const href = me ? "/account/dashboard" : "/account/login";
+  const label = me ? "Account" : "Sign in";
+  return (
+    <Link href={href} data-testid="link-account-header">
+      <a
+        className={`hidden md:inline-flex items-center gap-2 font-display text-[11px] tracking-[0.18em] ${
+          invert ? "text-white" : "text-foreground"
+        }`}
+      >
+        <User className="w-3.5 h-3.5" strokeWidth={1.6} />
+        {label}
+      </a>
+    </Link>
+  );
+}
+
+/** Mobile drawer variant of the account link. */
+function AccountMobileLink({ onClick }: { onClick: () => void }) {
+  const { data: me, isLoading } = useAccount();
+  if (isLoading) return null;
+  const href = me ? "/account/dashboard" : "/account/login";
+  const label = me ? "Account" : "Sign in";
+  return (
+    <Link href={href}>
+      <a
+        onClick={onClick}
+        className="font-display text-[11px] tracking-[0.18em] text-foreground inline-flex items-center gap-2"
+        data-testid="link-account-mobile"
+      >
+        <User className="w-3.5 h-3.5" strokeWidth={1.6} />
+        {label}
+      </a>
+    </Link>
   );
 }
 

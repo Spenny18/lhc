@@ -110,7 +110,7 @@ export function buildLeadAlertHtml(opts: {
 }): string {
   const { leadName, alertLabel, origin, newListings, priceReductions, snapshot, daysBack } = opts;
   const listingCard = (l: ListingRow, kind: "new" | "reduced") => {
-    const url = `${origin}/#/mls/${l.id}`;
+    const url = `${origin}/mls/${l.id}`;
     const photo = l.heroImage
       ? l.heroImage.startsWith("http")
         ? l.heroImage
@@ -309,7 +309,7 @@ export function buildMarketSnapshotHtml(opts: {
         </tr>
         <tr>
           <td style="padding:24px 36px 32px;border-top:1px solid ${BRAND.border};text-align:center;">
-            <a href="${origin}/#/contact" style="display:inline-block;padding:11px 22px;background:${BRAND.black};color:#fff;text-decoration:none;font-family:'Manrope',Arial,sans-serif;font-size:11px;letter-spacing:0.22em;text-transform:uppercase;">Get in touch</a>
+            <a href="${origin}/contact" style="display:inline-block;padding:11px 22px;background:${BRAND.black};color:#fff;text-decoration:none;font-family:'Manrope',Arial,sans-serif;font-size:11px;letter-spacing:0.22em;text-transform:uppercase;">Get in touch</a>
             <p style="font-family:'Manrope',Arial,sans-serif;font-size:14px;color:${BRAND.black};line-height:1.5;margin:24px 0 6px;">
               Contact Spencer 🤵
             </p>

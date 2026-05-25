@@ -282,6 +282,10 @@ export const blogPosts = sqliteTable("blog_posts", {
   authorName: text("author_name").notNull().default("Spencer Rivers"),
   authorAvatar: text("author_avatar"),
   readMinutes: integer("read_minutes").notNull().default(4),
+  // "draft" → hidden from public /blog, visible in /admin/blog only.
+  // "published" → live on the public site. Posts created by the BOFU
+  // auto-blog pipeline land as drafts for Spencer to review + publish.
+  status: text("status").notNull().default("published"),
   publishedAt: text("published_at")
     .notNull()
     .$defaultFn(() => new Date().toISOString()),
@@ -487,6 +491,10 @@ export const savedSearches = sqliteTable("saved_searches", {
   // Optional lead linkage. If set, emails address the lead; lastSentAt drives
   // cadence. If null, the search is the agent's personal browsing search.
   leadId: integer("lead_id"),
+  // Optional consumer-portal owner. Set when a row was created through
+  // /api/account/searches (vs. admin-side creation). Lets us scope CRUD to
+  // the signed-in portal user without exposing the admin search list.
+  accountUserId: integer("account_user_id"),
   // Optional override for the email recipient. If null and leadId is set, we
   // use lead.email. If null and leadId is null, we fall back to SPENCER_NOTIFY_EMAIL.
   emailRecipient: text("email_recipient"),
@@ -545,3 +553,103 @@ export const insertSocialPostSchema = createInsertSchema(socialPosts).omit({
 
 export type SocialPost = typeof socialPosts.$inferSelect;
 export type InsertSocialPost = z.infer<typeof insertSocialPostSchema>;
+
+// ===========================================================================
+// ---- CONSUMER PORTAL (/account/*) -----------------------------------------
+// ===========================================================================
+// Separate identity from the admin `users` table. Each portal user is mirrored
+// to a `leads` row on signup so Spencer manages them through the existing
+// admin CRM workflow alongside leads from contact forms / listing inquiries.
+
+// account_users — credentials for portal users. Each row maps to one lead.
+export const accountUsers = sqliteTable("account_users", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  leadId: integer("lead_id").notNull(),
+  email: text("email").notNull().unique(),
+  emailVerified: integer("email_verified", { mode: "boolean" }).notNull().default(false),
+  googleSub: text("google_sub"),
+  name: text("name"),
+  phone: text("phone"),
+  lastLoginAt: text("last_login_at"),
+  createdAt: text("created_at")
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+});
+
+export type AccountUser = typeof accountUsers.$inferSelect;
+export type InsertAccountUser = typeof accountUsers.$inferInsert;
+
+// account_sessions — cookie sessions. `id` is the random hex value stored
+// in the user's cookie.
+export const accountSessions = sqliteTable("account_sessions", {
+  id: text("id").primaryKey(),
+  accountUserId: integer("account_user_id").notNull(),
+  expiresAt: text("expires_at").notNull(),
+  createdAt: text("created_at")
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+});
+
+export type AccountSession = typeof accountSessions.$inferSelect;
+export type InsertAccountSession = typeof accountSessions.$inferInsert;
+
+// account_magic_tokens — one-time login links emailed to the user.
+export const accountMagicTokens = sqliteTable("account_magic_tokens", {
+  id: text("id").primaryKey(),
+  email: text("email").notNull(),
+  expiresAt: text("expires_at").notNull(),
+  consumedAt: text("consumed_at"),
+  createdAt: text("created_at")
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+});
+
+export type AccountMagicToken = typeof accountMagicTokens.$inferSelect;
+export type InsertAccountMagicToken = typeof accountMagicTokens.$inferInsert;
+
+// account_favorites — MLS listings the user has favorited.
+export const accountFavorites = sqliteTable("account_favorites", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  accountUserId: integer("account_user_id").notNull(),
+  mlsId: text("mls_id").notNull(),
+  createdAt: text("created_at")
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+});
+
+export type AccountFavorite = typeof accountFavorites.$inferSelect;
+export type InsertAccountFavorite = typeof accountFavorites.$inferInsert;
+
+// account_property_notes — private notes per (user, listing). Upserted.
+export const accountPropertyNotes = sqliteTable("account_property_notes", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  accountUserId: integer("account_user_id").notNull(),
+  mlsId: text("mls_id").notNull(),
+  note: text("note").notNull(),
+  createdAt: text("created_at")
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+  updatedAt: text("updated_at")
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+});
+
+export type AccountPropertyNote = typeof accountPropertyNotes.$inferSelect;
+export type InsertAccountPropertyNote = typeof accountPropertyNotes.$inferInsert;
+
+// account_market_report_subs — recurring market digest subscriptions.
+// neighbourhoodSlug null → digest spans all of the user's saved searches.
+export const accountMarketReportSubs = sqliteTable("account_market_report_subs", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  accountUserId: integer("account_user_id").notNull(),
+  neighbourhoodSlug: text("neighbourhood_slug"),
+  frequency: text("frequency").notNull().default("weekly"),
+  active: integer("active", { mode: "boolean" }).notNull().default(true),
+  lastSentAt: text("last_sent_at"),
+  createdAt: text("created_at")
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+});
+
+export type AccountMarketReportSub = typeof accountMarketReportSubs.$inferSelect;
+export type InsertAccountMarketReportSub = typeof accountMarketReportSubs.$inferInsert;

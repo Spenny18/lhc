@@ -469,10 +469,10 @@ export default function ListingPublicPage() {
       <footer className="mt-20 border-t border-border py-8 text-center text-xs text-muted-foreground">
         © 2026 Rivers Real Estate · Calgary, AB ·{" "}
         <a
-          href="https://luxuryhomescalgary.ca"
+          href="https://riversrealestate.ca"
           className="hover:text-foreground transition-colors"
         >
-          luxuryhomescalgary.ca
+          riversrealestate.ca
         </a>
       </footer>
     </div>

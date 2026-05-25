@@ -106,7 +106,7 @@ export default function CondoDetailPage() {
   // schema (which is what fuels Google "People also ask" snippets).
   const seoTitle = `${data.name} Condos Calgary - Luxury Homes Calgary`;
   const seoDesc = `Find the latest condos for sale in ${data.name} in ${data.neighbourhood}. Get access to MLS Listings up to 48 hours before Realtor.ca!`;
-  const canonicalUrl = `https://luxuryhomescalgary.ca/condos/${data.slug}`;
+  const canonicalUrl = `https://riversrealestate.ca/condos/${data.slug}`;
   const seoFaq = [
     {
       question: `Where is ${data.name} located in Calgary?`,
@@ -147,8 +147,8 @@ export default function CondoDetailPage() {
         ogType="place"
         faq={seoFaq}
         breadcrumbs={[
-          { label: "Home", url: "https://luxuryhomescalgary.ca/" },
-          { label: "Condos", url: "https://luxuryhomescalgary.ca/condos" },
+          { label: "Home", url: "https://riversrealestate.ca/" },
+          { label: "Condos", url: "https://riversrealestate.ca/condos" },
           { label: data.name, url: canonicalUrl },
         ]}
         schemas={[

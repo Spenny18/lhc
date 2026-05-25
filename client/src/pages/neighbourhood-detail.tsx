@@ -75,7 +75,7 @@ export default function NeighbourhoodDetailPage() {
 
   const seoTitle = `${data.name} Homes for Sale - Luxury Homes Calgary`;
   const seoDesc = `Browse luxury homes for sale in ${data.name}, Calgary. ${(data as any).activeCount ?? "Live"} active MLS listings, neighbourhood guide, schools, and lifestyle.`;
-  const canonicalUrl = `https://luxuryhomescalgary.ca/neighbourhoods/${data.slug}`;
+  const canonicalUrl = `https://riversrealestate.ca/neighbourhoods/${data.slug}`;
   const seoFaq = [
     {
       question: `Where is ${data.name} in Calgary?`,
@@ -103,8 +103,8 @@ export default function NeighbourhoodDetailPage() {
         ogType="place"
         faq={seoFaq}
         breadcrumbs={[
-          { label: "Home", url: "https://luxuryhomescalgary.ca/" },
-          { label: "Neighbourhoods", url: "https://luxuryhomescalgary.ca/neighbourhoods" },
+          { label: "Home", url: "https://riversrealestate.ca/" },
+          { label: "Neighbourhoods", url: "https://riversrealestate.ca/neighbourhoods" },
           { label: data.name, url: canonicalUrl },
         ]}
         schemas={[

@@ -15,6 +15,8 @@ import {
   condoBuildings,
 } from "@shared/schema";
 import { MARQUEE_NEIGHBOURHOODS, MARQUEE_CONDOS } from "./seed-marquee";
+import { MIGRATED_BLOG_POSTS } from "./seed-migrated-blog-posts";
+import { CONDO_CONTENT_PATCHES } from "./seed-migrated-condos";
 
 const SEED_LISTINGS = [
   {
@@ -514,14 +516,68 @@ export function seedDatabase() {
   }
   console.log(`[seed] Inserted ${inserted} new condo buildings (${MARQUEE_CONDOS.length - inserted} skipped — already exist; admin owns content)`);
 
-  // 5. Blog posts
-  const existingPosts = db.select().from(blogPosts).all();
-  if (existingPosts.length === 0) {
-    for (const p of SEED_BLOG_POSTS) {
-      db.insert(blogPosts).values(p).run();
+  // 4b. WP content patches — fill-only-empty-fields update for each condo
+  //
+  // CONDO_CONTENT_PATCHES is produced by `script/import-wp-condos.ts` from the
+  // WP HTML. We apply each patch field ONLY when the corresponding DB column
+  // is empty ([]). This protects content Spencer has already edited via
+  // /admin/condos while back-filling the editorial sections (dining /
+  // shopping / community / schools / gallery) that were missing on most
+  // condos before the WP migration.
+  const PATCH_FIELDS = [
+    "intro",
+    "residencesCopy",
+    "architecturalCopy",
+    "locationCopy",
+    "diningCopy",
+    "shoppingCopy",
+    "communityCopy",
+    "schoolsCopy",
+    "gallery",
+  ] as const;
+  let patchedFields = 0;
+  let patchedCondos = 0;
+  for (const [slug, patch] of Object.entries(CONDO_CONTENT_PATCHES)) {
+    const row = db.select().from(condoBuildings).where(eq(condoBuildings.slug, slug)).get();
+    if (!row) continue;
+    const updates: Record<string, string> = {};
+    for (const field of PATCH_FIELDS) {
+      const incoming = (patch as any)[field];
+      if (!Array.isArray(incoming) || incoming.length === 0) continue;
+      let existing: unknown = (row as any)[field];
+      try {
+        existing = typeof existing === "string" ? JSON.parse(existing) : existing;
+      } catch {
+        existing = null;
+      }
+      if (Array.isArray(existing) && existing.length > 0) continue; // admin filled this
+      updates[field] = JSON.stringify(incoming);
+      patchedFields++;
     }
-    console.log("[seed] Inserted " + SEED_BLOG_POSTS.length + " blog posts");
+    if (Object.keys(updates).length > 0) {
+      db.update(condoBuildings).set(updates as any).where(eq(condoBuildings.slug, slug)).run();
+      patchedCondos++;
+    }
   }
+  console.log(`[seed] Patched ${patchedFields} empty fields across ${patchedCondos} condos from WP migration`);
+
+  // 5. Blog posts — per-slug upsert so new posts (e.g. the WP-migrated set
+  // imported from luxuryhomescalgary.ca) get added on every deploy without
+  // duplicating posts that already exist. SQL "INSERT OR IGNORE" via the
+  // schema's unique slug constraint keeps this safe and idempotent.
+  const existingSlugs = new Set(
+    db.select({ slug: blogPosts.slug }).from(blogPosts).all().map((r) => r.slug),
+  );
+  const ALL_BLOG_POSTS = [...SEED_BLOG_POSTS, ...MIGRATED_BLOG_POSTS];
+  let blogInserted = 0;
+  for (const p of ALL_BLOG_POSTS) {
+    if (existingSlugs.has(p.slug!)) continue;
+    db.insert(blogPosts).values(p).run();
+    blogInserted++;
+  }
+  console.log(
+    `[seed] Inserted ${blogInserted} new blog posts (${ALL_BLOG_POSTS.length - blogInserted} skipped — already exist)`,
+  );
 
   // 6. Testimonials
   const existingTestimonials = db.select().from(testimonials).all();

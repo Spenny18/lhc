@@ -139,7 +139,7 @@ export function SeoHead({
 // Schema builders — typed and consistent so pages don't reinvent JSON-LD shape.
 // =============================================================================
 
-const SITE_ORIGIN = "https://luxuryhomescalgary.ca";
+const SITE_ORIGIN = "https://riversrealestate.ca";
 
 // Organization + Person rolled into one entity, mirroring the structure your
 // WordPress site already uses. Renders as the global "agent" entity.

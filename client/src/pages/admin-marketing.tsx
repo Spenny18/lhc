@@ -809,7 +809,7 @@ function LinkField({
         <Input
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="https://luxuryhomescalgary.ca/mls/…"
+          placeholder="https://riversrealestate.ca/mls/…"
           readOnly={readOnly}
           className={`rounded-sm h-10 ${readOnly ? "opacity-70" : ""}`}
         />
