@@ -13,3 +13,4 @@ data.db-wal
 dist/
 node_modules/
 {node_modules,dist,.vite,*.log,.DS_Store,.env,.env.*,\!.env.example,data.db*,.github/workflows/*.local}
+.vercel
