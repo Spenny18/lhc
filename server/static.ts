@@ -25,8 +25,14 @@ export function serveStatic(app: Express) {
   // cached template, but file I/O happens once.
   const indexTemplate = fs.readFileSync(indexPath, "utf-8");
 
+  // IMPORTANT: use req.originalUrl, not req.path. With `app.use("/{*path}", ...)`
+  // Express strips the matched wildcard prefix from req.path, leaving it as "/"
+  // for every request. That caused metaForPath to be called with "/" for every
+  // URL, so the homepage meta was being injected into /blog/* and /about etc.
+  // req.originalUrl preserves the unmodified incoming URL.
   app.use("/{*path}", (req: Request, res: Response) => {
-    const meta = metaForPath(req.path);
+    const rawPath = (req.originalUrl || req.url || "/").split("?")[0].split("#")[0] || "/";
+    const meta = metaForPath(rawPath);
     if (!meta) {
       // Unknown route: return 404 status with the SPA shell so the in-app
       // NotFound page still renders client-side, but Google treats it as
@@ -35,7 +41,7 @@ export function serveStatic(app: Express) {
       const fallbackHtml = injectMetaIntoHtml(indexTemplate, {
         title: "Page not found — Rivers Real Estate",
         description: "The page you're looking for doesn't exist.",
-        canonical: `${process.env.PUBLIC_ORIGIN || "https://riversrealestate.ca"}${req.path}`,
+        canonical: `${process.env.PUBLIC_ORIGIN || "https://riversrealestate.ca"}${rawPath}`,
         noindex: true,
       });
       res.set("Content-Type", "text/html; charset=utf-8").send(fallbackHtml);
