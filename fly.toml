@@ -7,7 +7,12 @@
 #   fly deploy
 
 app = "luxury-homes-calgary"
-primary_region = "sea"
+# sjc, not sea: the rivers_data volume (production SQLite) lives in sjc and
+# volumes cannot change regions. With "sea" here, any deploy that has to
+# create a machine fails with "needs an unattached volume in region 'sea'" —
+# and on 2026-08-12 that took the site down when a capacity error during a
+# deploy destroyed the old machine and no replacement could launch.
+primary_region = "sjc"
 
 [build]
   dockerfile = "Dockerfile"
