@@ -222,6 +222,9 @@ export const mlsListings = sqliteTable("mls_listings", {
   // Price change tracking (populated by sync when price changes)
   previousPrice: integer("previous_price"),
   priceChangedAt: text("price_changed_at"),
+  // Pillar 9 StatusChangeTimestamp — when the listing entered its current
+  // status. Drives "newest first" ordering on the featured rail.
+  statusChangedAt: text("status_changed_at"),
   // Removal tracking — when a listing disappears from the Pillar 9 active feed,
   // we capture the date it stopped appearing and the prior status if known.
   // removedReason values: Sold | Expired | Withdrawn | Terminated | Pending | Unknown.
@@ -279,6 +282,9 @@ export const blogPosts = sqliteTable("blog_posts", {
   body: text("body").notNull(),
   category: text("category").notNull().default("Market"),
   heroImage: text("hero_image").notNull(),
+  // SEO alt text for the hero image — the post's focus keyword. Falls back
+  // to the post title in the client when null.
+  heroImageAlt: text("hero_image_alt"),
   authorName: text("author_name").notNull().default("Spencer Rivers"),
   authorAvatar: text("author_avatar"),
   readMinutes: integer("read_minutes").notNull().default(4),
@@ -318,7 +324,14 @@ export const neighbourhoods = sqliteTable("neighbourhoods", {
   borders: text("borders").notNull().default("{}"),
   // Schools list — JSON array of {name, level, area, url}
   schools: text("schools").notNull().default("[]"),
+  // Condo & townhome buildings in the community — JSON array of
+  // {name, address?}. Buildings that also exist in condo_buildings are
+  // matched by name at the API layer and rendered as links to their pages.
+  condoBuildingsList: text("condo_buildings_list").notNull().default("[]"),
   heroImage: text("hero_image").notNull(),
+  // Photo attribution for CC-licensed heroes — JSON {author, authorUrl,
+  // license, licenseUrl, sourceUrl}, or "" for owned/stock images.
+  heroCredit: text("hero_credit").notNull().default(""),
   gallery: text("gallery").notNull().default("[]"),
   centerLat: real("center_lat").notNull(),
   centerLng: real("center_lng").notNull(),

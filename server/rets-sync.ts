@@ -99,7 +99,8 @@ function normalizeListing(row: Record<string, string>): InsertMlsListing | null 
     yearBuilt: yearBuilt && Number.isFinite(yearBuilt) ? yearBuilt : null,
     parking: null,
     garageSpaces: null,
-    listDate: null,
+    listDate: rawText(row.ListingContractDate) ?? null,
+    statusChangedAt: rawText(row.StatusChangeTimestamp) ?? null,
     daysOnMarket: null,
     description: row.PublicRemarks?.trim() || null,
     features: "[]",
@@ -171,6 +172,8 @@ const SELECT_FIELDS = [
   "PhotosCount",
   "PublicRemarks",
   "ModificationTimestamp",
+  "StatusChangeTimestamp",
+  "ListingContractDate",
   "YearBuilt",
   // ---- structured fields used by filters ----
   "StructureType",

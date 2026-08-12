@@ -64,6 +64,7 @@ import { eq, desc, and, gte, lte, like, sql, or, asc, inArray } from "drizzle-or
 // e.g. DB_PATH=/data/rivers.db.
 import fs from "node:fs";
 import nodePath from "node:path";
+import { pointInGeometry } from "./point-in-polygon";
 function openDb(): InstanceType<typeof Database> {
   const path = process.env.DB_PATH || "data.db";
   try {
@@ -443,6 +444,78 @@ try {
   console.error("[migration] blog_posts status:", e);
 }
 
+// Migration: add hero_image_alt to blog_posts — SEO alt text (focus keyword)
+// for the hero image. Nullable; client falls back to the post title.
+try {
+  const cols = sqlite.prepare("PRAGMA table_info(blog_posts)").all() as Array<{ name: string }>;
+  if (cols.length > 0 && !cols.some((c) => c.name === "hero_image_alt")) {
+    sqlite.exec("ALTER TABLE blog_posts ADD COLUMN hero_image_alt TEXT");
+    console.log("[migration] added hero_image_alt to blog_posts");
+  }
+} catch (e) {
+  console.error("[migration] blog_posts hero_image_alt:", e);
+}
+
+// One-time backfill (2026-07-31): the BOFU cluster cadence assigned one shared
+// hero image per 3-post cluster, so recent posts repeated the same 7 images.
+// Give each of the 20 most recent posts a unique, topical hero + focus-keyword
+// alt text. Guarded on hero_image_alt IS NULL so it applies exactly once per
+// row and never clobbers later manual edits from /admin/blog.
+try {
+  const heroBackfill: Array<[slug: string, photo: string, alt: string]> = [
+    ["vacant-vs-occupied-luxury-listings-which-sells-faster-in-calgary", "photo-1513694203232-719a280e022f", "vacant vs occupied luxury listings Calgary"],
+    ["luxury-home-staging-in-calgary-costs-and-real-roi", "photo-1618221195710-dd6b41faaea6", "luxury home staging Calgary"],
+    ["should-you-stage-your-luxury-calgary-home-before-listing", "photo-1616486338812-3dadae4b4ace", "staging a luxury Calgary home before listing"],
+    ["should-you-pre-inspect-your-calgary-luxury-home-before-listing", "photo-1454165804606-c3d57bc86b40", "pre-listing home inspection Calgary"],
+    ["stucco-attic-rain-and-other-calgary-specific-inspection-issues", "photo-1523217582562-09d0def993a6", "Calgary stucco and attic rain inspection issues"],
+    ["what-a-calgary-luxury-home-inspection-actually-finds", "photo-1621905251189-08b45d6a269e", "Calgary luxury home inspection"],
+    ["springbank-hill-schools-amenities-and-mountain-access", "photo-1464822759023-fed622ff2c3b", "Springbank Hill mountain access"],
+    ["springbank-hill-estate-homes-lot-sizes-views-and-walk-outs", "photo-1558036117-15d82a90b9b1", "Springbank Hill estate homes"],
+    ["living-in-springbank-hill-the-calgary-luxury-buyers-guide", "photo-1570129477492-45c003edd2be", "living in Springbank Hill Calgary"],
+    ["east-village-luxury-condos-modern-towers-and-the-true-cost-of-ownership", "photo-1460317442991-0ec209397118", "East Village Calgary luxury condos"],
+    ["eau-claire-luxury-condos-buildings-views-and-price-per-square-foot", "photo-1600210492486-724fe5c67fb0", "Eau Claire Calgary luxury condos"],
+    ["calgarys-top-luxury-condo-districts-mission-eau-claire-and-east-village-compared", "photo-1449157291145-7efd050a4d0e", "Calgary luxury condo districts"],
+    ["how-calgarys-market-cycle-affects-luxury-days-on-market", "photo-1494526585095-c41746248156", "Calgary luxury days on market"],
+    ["the-5-best-streets-in-aspen-woods-for-luxury-buyers", "photo-1600047509807-ba8f99d2cdde", "best streets in Aspen Woods Calgary"],
+    ["aspen-woods-real-estate-price-points-build-era-and-architecture", "photo-1600047509358-9dc75507daeb", "Aspen Woods real estate architecture"],
+    ["living-in-aspen-woods-the-calgary-luxury-buyers-guide", "photo-1600566753086-00f18fb6b3ea", "living in Aspen Woods Calgary"],
+    ["spring-vs-fall-luxury-listing-strategy-in-calgary", "photo-1523712999610-f77fbcfc3843", "spring vs fall home listing Calgary"],
+    ["when-to-sell-a-luxury-home-in-calgary-a-month-by-month-guide", "photo-1506784983877-45594efa4cbe", "when to sell a luxury home in Calgary"],
+    ["alberta-closing-costs-for-sellers-lawyer-fees-rpr-and-mortgage-penalties", "photo-1450101499163-c8848c66ca85", "Alberta seller closing costs"],
+    ["how-calgary-luxury-realtor-commissions-actually-work", "photo-1521791136064-7986c2920216", "Calgary luxury realtor commissions"],
+  ];
+  const applyHero = sqlite.prepare(
+    "UPDATE blog_posts SET hero_image = ?, hero_image_alt = ? WHERE slug = ? AND hero_image_alt IS NULL",
+  );
+  let heroApplied = 0;
+  for (const [slug, photo, alt] of heroBackfill) {
+    const url = `https://images.unsplash.com/${photo}?w=1600&q=85&fm=jpg&auto=format`;
+    heroApplied += applyHero.run(url, alt, slug).changes;
+  }
+  if (heroApplied > 0) console.log(`[migration] backfilled unique hero images + alt text on ${heroApplied} blog posts`);
+
+  // Correction pass for DBs that received the first (2026-07-31) backfill,
+  // which mis-assigned three photos (a Toronto skyline on the condo-districts
+  // post, and swapped inspection/estate shots). Keyed on the wrong URL, so it
+  // fires once and never touches manual edits.
+  const heroFixes: Array<[slug: string, wrongPhoto: string, photo: string]> = [
+    ["springbank-hill-estate-homes-lot-sizes-views-and-walk-outs", "photo-1454165804606", "photo-1558036117-15d82a90b9b1"],
+    ["should-you-pre-inspect-your-calgary-luxury-home-before-listing", "photo-1581092160562", "photo-1454165804606-c3d57bc86b40"],
+    ["calgarys-top-luxury-condo-districts-mission-eau-claire-and-east-village-compared", "photo-1486325212027", "photo-1449157291145-7efd050a4d0e"],
+  ];
+  const applyFix = sqlite.prepare(
+    "UPDATE blog_posts SET hero_image = ? WHERE slug = ? AND hero_image LIKE ?",
+  );
+  let heroFixed = 0;
+  for (const [slug, wrongPhoto, photo] of heroFixes) {
+    const url = `https://images.unsplash.com/${photo}?w=1600&q=85&fm=jpg&auto=format`;
+    heroFixed += applyFix.run(url, slug, `%${wrongPhoto}%`).changes;
+  }
+  if (heroFixed > 0) console.log(`[migration] corrected ${heroFixed} backfilled hero images`);
+} catch (e) {
+  console.error("[migration] blog_posts hero backfill:", e);
+}
+
 // Migration: add link_url + variants columns to existing social_posts rows.
 try {
   const cols = sqlite.prepare("PRAGMA table_info(social_posts)").all() as Array<{ name: string }>;
@@ -532,6 +605,7 @@ try {
       ["price_changed_at", "TEXT"],
       ["removed_at", "TEXT"],
       ["removed_reason", "TEXT"],
+      ["status_changed_at", "TEXT"],
     ];
     for (const [name, type] of additions) {
       if (!existing.has(name)) {
@@ -642,6 +716,12 @@ try {
       ["borders", "TEXT NOT NULL DEFAULT '{}'"],
       ["schools", "TEXT NOT NULL DEFAULT '[]'"],
       ["zone", "TEXT NOT NULL DEFAULT 'City Centre & Inner-City'"],
+      ["condo_buildings_list", "TEXT NOT NULL DEFAULT '[]'"],
+      ["hero_credit", "TEXT NOT NULL DEFAULT ''"],
+      // OSM boundary cache (see server/neighbourhood-polygons.ts):
+      // NULL = never fetched, "" = fetched-but-no-match, else GeoJSON geometry.
+      ["polygon", "TEXT"],
+      ["polygon_fetched_at", "TEXT"],
     ];
     for (const [name, type] of additions) {
       if (!existing.has(name)) {
@@ -1226,14 +1306,64 @@ export class DatabaseStorage implements IStorage {
     }));
     return { items, total };
   }
+  // Featured rail on the home page: Calgary residential $4M+, newest first —
+  // excluding the NE quadrant and vacant land. "Newest" = Pillar 9
+  // StatusChangeTimestamp (when it entered its current status), falling back
+  // to list/created dates for rows synced before the field existed. Falls
+  // back to the priciest actives city-wide if fewer than `limit` qualify,
+  // so the rail never renders half-empty.
   listFeaturedMls(limit = 6) {
+    // Quadrant lives at the end of the street name ("89 Avenue NE"); check
+    // fullAddress too for rows where the street didn't parse.
+    const notNE = sql`(
+      (${mlsListings.streetName} IS NULL OR ${mlsListings.streetName} NOT LIKE '% NE')
+      AND ${mlsListings.fullAddress} NOT LIKE '% NE'
+      AND ${mlsListings.fullAddress} NOT LIKE '% NE,%'
+    )`;
+    const notVacantLand = sql`(
+      ${mlsListings.propertySubType} IS NULL
+      OR lower(${mlsListings.propertySubType}) NOT LIKE '%vacant%'
+    )`;
     const rows = db
       .select()
       .from(mlsListings)
-      .where(eq(mlsListings.status, "Active"))
-      .orderBy(desc(mlsListings.listPrice))
-      .all()
-      .slice(0, limit);
+      .where(
+        and(
+          eq(mlsListings.status, "Active"),
+          eq(mlsListings.propertyType, "Residential"),
+          sql`lower(${mlsListings.city}) = 'calgary'`,
+          gte(mlsListings.listPrice, 4_000_000),
+          notNE,
+          notVacantLand,
+        )!,
+      )
+      .orderBy(
+        desc(
+          sql`COALESCE(${mlsListings.statusChangedAt}, ${mlsListings.listDate}, ${mlsListings.createdAt})`,
+        ),
+      )
+      .limit(limit)
+      .all();
+    if (rows.length < limit) {
+      const have = new Set(rows.map((r) => r.id));
+      const backfill = db
+        .select()
+        .from(mlsListings)
+        .where(
+          and(
+            eq(mlsListings.status, "Active"),
+            eq(mlsListings.propertyType, "Residential"),
+            notNE,
+            notVacantLand,
+          )!,
+        )
+        .orderBy(desc(mlsListings.listPrice))
+        .limit(limit * 2)
+        .all()
+        .filter((r) => !have.has(r.id))
+        .slice(0, limit - rows.length);
+      rows.push(...backfill);
+    }
     return rows.map((row) => ({
       ...row,
       gallery: safeParseArray(row.gallery),
@@ -1447,9 +1577,144 @@ export class DatabaseStorage implements IStorage {
     }
     return db.insert(neighbourhoods).values(data).returning().get();
   }
+  // The canonical active-listing match for a neighbourhood, in priority order:
+  //   1. exact `subdivision` name  (e.g. "Pump Hill")
+  //   2. legacy `neighbourhood` field
+  //   3. eponymous street prefix    (e.g. "Varsity Estates Drive NW")
+  //   4. tight GPS proximity to the stored center (last resort)
+  // Both the public detail route and the POI route call this so they agree on
+  // exactly which listings define the neighbourhood.
+  listMlsForNeighbourhood(
+    n: Neighbourhood,
+    limit = 5000,
+    // Optional OSM boundary. Used to keep the two guess-based cascade steps
+    // honest — authoritative steps (subdivision, street prefix) are trusted
+    // even when the polygon is coarse.
+    polygon?: Parameters<typeof pointInGeometry>[2] | null,
+  ): MlsListing[] {
+    const insidePolygon = (m: MlsListing) =>
+      !polygon ||
+      (typeof m.lat === "number" &&
+        typeof m.lng === "number" &&
+        pointInGeometry(m.lng, m.lat, polygon));
+    // Page names are display labels; CREB subdivision values are the
+    // authoritative community signal — but the two drift apart in spelling:
+    // "Bayside (Airdrie)" vs "Bayside", "Coopers Crossing" vs "Cooper's
+    // Crossing", "Hounsfield Heights / Briar Hill" vs "Hounsfield
+    // Heights/Briar Hill", "St. Andrews" vs "St Andrews". Compare through a
+    // normalization key (lowercase, & → and, strip all non-alphanumerics)
+    // and strip a trailing "(Qualifier)" from the display name.
+    const normKey = (s: string) =>
+      s.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "");
+    const baseName = n.name.replace(/\s*\([^)]*\)\s*$/, "").trim();
+    const keys = new Set([normKey(n.name), normKey(baseName)]);
+    // Curated CREB labels that belong to a page but can't be derived by
+    // normalization alone.
+    const SUBDIVISION_ALIASES: Record<string, string[]> = {
+      "bridgeland-riverside": ["Bridgeland/Riverside"],
+      "heritage-pointe": ["Heritage Point"],
+    };
+    for (const a of SUBDIVISION_ALIASES[n.slug] ?? []) keys.add(normKey(a));
+    // A row whose subdivision names a DIFFERENT community must never appear
+    // via the guess-based steps (stale legacy tags, GPS proximity), no
+    // matter how close it sits. (Britannia was showing Windsor Park homes;
+    // Spring Creek was showing South Canmore.)
+    const subdivisionAgrees = (m: any) =>
+      !m.subdivision || keys.has(normKey(m.subdivision));
+
+    // 1. Authoritative: rows whose CREB subdivision normalizes to this page.
+    let matches: MlsListing[] = [];
+    const matchingSubs = this.distinctMlsValues("subdivision").filter((s) =>
+      keys.has(normKey(s)),
+    );
+    for (const s of matchingSubs) {
+      matches = matches.concat(this.listMlsBySubdivision(s, limit));
+    }
+    if (matches.length === 0) {
+      // 2. The legacy `neighbourhood` column predates subdivision tagging and
+      // holds stale values on many rows. Trust it only when the row's
+      // subdivision doesn't contradict it, and — when we have a boundary —
+      // when the home is actually inside the community.
+      matches = (this.listMlsByNeighbourhood(n.name, limit) as any[]).filter(
+        (m) => subdivisionAgrees(m) && insidePolygon(m),
+      ) as any;
+    }
+    if (matches.length === 0) {
+      // 3. Eponymous streets — use the base name so "Spring Creek (Canmore)"
+      // still matches homes on "Spring Creek Drive".
+      matches = this.listMlsByStreetPrefix(baseName, limit);
+    }
+    if (matches.length === 0 && /^chestermere\b/i.test(baseName)) {
+      // 3b. Chestermere (Lakefront) — CREB's SubdivisionName can't isolate
+      // true lakefront: odd civics on East Chestermere Drive, even on West
+      // Chestermere Drive, every 4th number 97-257 on Cove Road.
+      matches = this.listMlsActiveByCity("Chestermere", limit).filter((l) => {
+        const m = (l.fullAddress || "").match(/(\d+)\s+([^,]+)/);
+        if (!m) return false;
+        const num = parseInt(m[1], 10);
+        const street = m[2].toLowerCase();
+        const onDr = /chestermere\s+dr(ive)?\b/.test(street);
+        if (onDr && /\beast\b/.test(street) && num % 2 === 1) return true;
+        if (onDr && /\bwest\b/.test(street) && num % 2 === 0) return true;
+        return (
+          /\bcove\s+r(oa)?d\b/.test(street) &&
+          num >= 97 && num <= 257 && (num - 97) % 4 === 0
+        );
+      });
+    }
+    if (matches.length === 0) {
+      // 4. Last-resort GPS proximity is a pure location guess — in small
+      // communities it happily pulls in the neighbours (Roxboro showed
+      // Mission condos). An empty result is more honest than the wrong
+      // community's homes.
+      matches = this.listMlsNearPoint(n.centerLat, n.centerLng, 800, limit).filter(
+        (m) => m.status === "Active" && subdivisionAgrees(m) && insidePolygon(m),
+      );
+    }
+    return matches;
+  }
+
+  // The center to draw the map pin / POIs around. Manually-entered
+  // center_lat/center_lng have drifted badly for some neighbourhoods (Varsity
+  // Estates was 4 km off, Pump Hill 2.5 km), so when we have geocoded listings
+  // we trust their centroid instead — it's literally where the homes are.
+  // Falls back to the stored center when nothing is geocoded.
+  neighbourhoodDisplayCenter(
+    n: Neighbourhood,
+    matches?: MlsListing[],
+  ): { lat: number; lng: number } {
+    const listings = matches ?? this.listMlsForNeighbourhood(n);
+    const geo = listings.filter((l) => l.lat != null && l.lng != null);
+    if (geo.length > 0) {
+      return {
+        lat: geo.reduce((s, l) => s + (l.lat as number), 0) / geo.length,
+        lng: geo.reduce((s, l) => s + (l.lng as number), 0) / geo.length,
+      };
+    }
+    return { lat: n.centerLat, lng: n.centerLng };
+  }
+
   // Active listings whose `subdivision` field matches the neighbourhood name
   // (case-insensitive). This is the precise match — GPS proximity was too
   // broad for tightly-defined Calgary subdivisions like Springbank Hill.
+  // Active listings in a city — used by address-level community rules
+  // (e.g. Chestermere Lakefront) that filter a whole town's inventory.
+  listMlsActiveByCity(city: string, limit = 2000): MlsListing[] {
+    if (!city) return [];
+    return db
+      .select()
+      .from(mlsListings)
+      .where(
+        and(
+          eq(mlsListings.status, "Active"),
+          sql`lower(${mlsListings.city}) = ${city.toLowerCase()}`,
+        )!,
+      )
+      .orderBy(desc(mlsListings.listPrice))
+      .limit(limit)
+      .all();
+  }
+
   listMlsBySubdivision(subdivisionName: string, limit = 100): MlsListing[] {
     if (!subdivisionName) return [];
     const target = subdivisionName.trim().toLowerCase();
@@ -1462,6 +1727,33 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(mlsListings.status, "Active"),
           sql`lower(${mlsListings.subdivision}) = ${target}`,
+        )!,
+      )
+      .orderBy(desc(mlsListings.listPrice))
+      .limit(limit)
+      .all();
+    return rows;
+  }
+
+  // Active listings whose street name is named after the neighbourhood —
+  // e.g. "Varsity Estates" matches "Varsity Estates Drive NW", "Varsity
+  // Estates Court NW", etc. Calgary sub-areas like Varsity Estates aren't a
+  // distinct MLS `subdivision` (they roll up under "Varsity"), so a name/GPS
+  // match finds nothing; the eponymous streets are the reliable signal for
+  // the physical enclave. Requires the name to be followed by a space so we
+  // match whole street prefixes, not partial words.
+  listMlsByStreetPrefix(name: string, limit = 100): MlsListing[] {
+    if (!name) return [];
+    const target = name.trim().toLowerCase();
+    if (!target) return [];
+    const pattern = `${target} %`;
+    const rows = db
+      .select()
+      .from(mlsListings)
+      .where(
+        and(
+          eq(mlsListings.status, "Active"),
+          sql`lower(${mlsListings.streetName}) LIKE ${pattern}`,
         )!,
       )
       .orderBy(desc(mlsListings.listPrice))

@@ -13,6 +13,11 @@ import { seedDatabase } from "./seed";
 import { signUpSchema, signInSchema, inquirySchema } from "@shared/schema";
 import { runSync } from "./rets-sync";
 import { fetchListingPhoto } from "./rets-photos";
+import { pushLeadToFollowUpBoss } from "./follow-up-boss";
+import { getNeighbourhoodPolygon } from "./neighbourhood-polygons";
+import { pointInGeometry } from "./point-in-polygon";
+import { fetchValuation } from "./gnowise";
+import { sendEmail, buildValuationEmailHtml } from "./email";
 
 const execFileAsync = promisify(execFile);
 
@@ -296,6 +301,13 @@ const inquiryLimiter = rateLimit({
   max: 5,
   key: "inquiry",
 });
+const valuationLimiter = rateLimit({
+  // The Gnowise calls cost real money per request, so we cap aggressively.
+  // Generous per-window to allow address-correction retries but not abuse.
+  windowMs: 60 * 60 * 1000,
+  max: 20,
+  key: "valuation",
+});
 
 async function sendInquiryEmail(opts: {
   name: string;
@@ -569,6 +581,22 @@ export async function registerRoutes(
       { loc: `${origin}/about`, priority: "0.6", changefreq: "monthly" },
       { loc: `${origin}/contact`, priority: "0.4", changefreq: "monthly" },
       { loc: `${origin}/home-evaluation`, priority: "0.7", changefreq: "monthly" },
+      { loc: `${origin}/work-with`, priority: "0.6", changefreq: "monthly" },
+      { loc: `${origin}/assignments`, priority: "0.8", changefreq: "weekly" },
+      ...[
+        "luxury-properties",
+        "first-time-home-sellers",
+        "empty-nesters",
+        "first-time-home-buyers",
+        "innercity-properties",
+        "move-ups",
+        "family-focused-properties",
+        "urban-properties",
+      ].map((slug) => ({
+        loc: `${origin}/work-with/${slug}`,
+        priority: "0.7",
+        changefreq: "monthly" as const,
+      })),
     ];
     res.set("Content-Type", "application/xml; charset=utf-8");
     res.send(renderUrlset(urls));
@@ -675,6 +703,78 @@ export async function registerRoutes(
         `\n` +
         `Sitemap: ${origin}/sitemap.xml\n`,
     );
+  });
+
+  // ---------- SEO: llms.txt ----------
+  // Emerging convention (https://llmstxt.org) — a curated, AI-friendly
+  // markdown index of the site. Anthropic / Perplexity / others honour this
+  // for content discovery. Condo section is generated from the DB so it
+  // stays in sync as Spencer adds coverage.
+  app.get("/llms.txt", (_req, res) => {
+    const HOST = process.env.PUBLIC_ORIGIN || "https://riversrealestate.ca";
+    const lines: string[] = [];
+    lines.push("# Rivers Real Estate — Luxury Homes Calgary");
+    lines.push("");
+    lines.push(
+      "> Spencer Rivers is a Calgary luxury real estate agent (Synterra Realty) specialising in inner-city and west-side communities: Springbank Hill, Aspen Woods, Upper Mount Royal, Elbow Park, Britannia, and Bel-Aire.",
+    );
+    lines.push("");
+    lines.push(
+      "Spencer holds CLHMS, CIPS, CNE, CCS, and LLS designations and is a Million Dollar Guild member. He provides hand-prepared market analyses (not algorithmic Zestimates) for sellers, and full-service buyer representation focused on $1M+ properties. Every market analysis is built personally by Spencer; typical turnaround is one business day.",
+    );
+    lines.push("");
+    lines.push("## Core pages");
+    lines.push("");
+    lines.push(`- [Home](${HOST}/): Spencer's overview, featured listings, and links into the rest of the site`);
+    lines.push(
+      `- [Home evaluation](${HOST}/home-evaluation): Request a hand-prepared market analysis or run an instant AVM estimate`,
+    );
+    lines.push(`- [About Spencer](${HOST}/about): Background, designations, market focus`);
+    lines.push(`- [Contact](${HOST}/contact): Phone, email, and inquiry form`);
+    lines.push("");
+    lines.push("## MLS search");
+    lines.push("");
+    lines.push(
+      `- [Calgary MLS search](${HOST}/mls): Searchable, filterable inventory of active Calgary listings. Updated daily from Pillar 9 (CREB feed).`,
+    );
+    lines.push(`- Individual listing pages live at \`${HOST}/mls/<MLS-NUMBER>\``);
+    lines.push("");
+    lines.push("## Focus neighbourhoods");
+    lines.push("");
+    for (const slug of ["springbank-hill", "aspen-woods", "upper-mount-royal", "elbow-park", "britannia", "bel-aire"]) {
+      const label = slug.split("-").map((w) => w[0].toUpperCase() + w.slice(1)).join(" ");
+      lines.push(`- [${label}](${HOST}/neighbourhoods/${slug})`);
+    }
+    lines.push(`- [All neighbourhoods](${HOST}/neighbourhoods): Full directory of Calgary communities covered, each with active listings, condo buildings, schools, and FAQs`);
+    lines.push("");
+    try {
+      const condos = storage.listCondoBuildings();
+      if (condos.length) {
+        lines.push("## Condo buildings");
+        lines.push("");
+        for (const c of condos.slice(0, 12)) {
+          if (!c?.slug) continue;
+          lines.push(`- [${c.name ?? c.slug}](${HOST}/condos/${c.slug})`);
+        }
+        if (condos.length > 12) lines.push(`- [All condo buildings](${HOST}/condos)`);
+        lines.push("");
+      }
+    } catch {
+      /* skip condo section on schema errors */
+    }
+    lines.push("## Content");
+    lines.push("");
+    lines.push(`- [Blog](${HOST}/blog): Articles on Calgary luxury pricing strategy, seller and buyer guides, market updates`);
+    lines.push("");
+    lines.push("## Contact");
+    lines.push("");
+    lines.push("- Phone: +1 (403) 966-9237");
+    lines.push("- Email: spencer@riversrealestate.ca");
+    lines.push("- Brokerage: Synterra Realty, Calgary, Alberta");
+    lines.push("");
+    res.set("Content-Type", "text/plain; charset=utf-8");
+    res.set("Cache-Control", "public, max-age=86400");
+    res.send(lines.join("\n"));
   });
 
   // Sessions — cookie-based, no localStorage needed.
@@ -827,6 +927,14 @@ export async function registerRoutes(
       message: listingId ? `Unlocked listing ${listingId}` : "Unlocked listings",
       source: "listing_unlock",
       status: "new",
+    });
+    pushLeadToFollowUpBoss({
+      name,
+      email,
+      message: listingId ? `Unlocked listing ${listingId}` : "Unlocked listings",
+      source: "listing_unlock",
+    }).then((r) => {
+      if (!r.ok && !r.skipped) console.warn("[unlock] FUB push failed:", r.error);
     });
     res.json({ ok: true, leadId: lead.id });
   });
@@ -1230,7 +1338,210 @@ export async function registerRoutes(
       if (!r.ok) console.warn("[inquiry] email did not send:", r.error);
     });
 
+    // Fire-and-forget push into Follow Up Boss (soft-skips without FUB_API_KEY)
+    pushLeadToFollowUpBoss({
+      name: parsed.data.name,
+      email: parsed.data.email,
+      phone: parsed.data.phone,
+      message: parsed.data.message,
+      listingTitle,
+      listingAddress,
+      source: parsed.data.source ?? "Landing page",
+    }).then((r) => {
+      if (!r.ok && !r.skipped) console.warn("[inquiry] FUB push failed:", r.error);
+    });
+
     res.json({ ok: true, leadId: lead.id });
+  });
+
+  // ---------- INSTANT VALUATION (Gnowise Unified Valuation API v2) --------
+  const valNum = (v: unknown): number | undefined => {
+    if (v == null || v === "") return undefined;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : undefined;
+  };
+  const valStr = (v: unknown): string | undefined => {
+    if (typeof v !== "string") return undefined;
+    const s = v.trim();
+    return s.length ? s : undefined;
+  };
+  // Gnowise §4 refinement attributes forwarded from the widget — these are
+  // what turn a near-empty $268K record into an accurate $1.8M+ estimate.
+  const extractAttrs = (body: any) => ({
+    propertyType: valStr(body?.propertyType),
+    style: valStr(body?.style),
+    bedrooms: valNum(body?.bedrooms),
+    den: valNum(body?.den),
+    washrooms: valNum(body?.washrooms),
+    kitchens: valNum(body?.kitchens),
+    parkingSpaces: valNum(body?.parkingSpaces),
+    pool: valStr(body?.pool),
+    basement: valStr(body?.basement),
+    roomsArea: valNum(body?.roomsArea),
+    lotArea: valNum(body?.lotArea),
+    age: valStr(body?.age),
+    ac: valStr(body?.ac),
+    garageType: valStr(body?.garageType),
+    garageSpaces: valNum(body?.garageSpaces),
+    buildingArea: valNum(body?.buildingArea),
+    maintenanceFee: valNum(body?.maintenanceFee),
+    maintenanceFeeYear: valNum(body?.maintenanceFeeYear),
+    histValue: valNum(body?.histValue),
+    histValueDate: valStr(body?.histValueDate),
+    histPropertyType: valStr(body?.histPropertyType),
+  });
+
+  // POST /api/public/valuation — Gnowise instant address-to-value proxy.
+  // The API key never leaves the server; the browser only ever sees the
+  // sanitized estimate. Rate-limited because each call costs real money.
+  app.post("/api/public/valuation", valuationLimiter, async (req, res) => {
+    const address = String(req.body?.address ?? "").trim();
+    if (address.length < 6) {
+      return res.json({
+        ok: false,
+        message: "Please enter a valid street address (with city and postal code).",
+      });
+    }
+    const aptNum = String(req.body?.aptNum ?? "").trim();
+    const isCondo = !!req.body?.isCondo || !!aptNum;
+    const condition = valNum(req.body?.condition) ?? 3;
+    const postalCode = String(req.body?.postalCode ?? "").trim();
+    const municipality = String(req.body?.municipality ?? "").trim();
+    const province = String(req.body?.province ?? "").trim();
+    const result = await fetchValuation({
+      address,
+      aptNum: aptNum || undefined,
+      isCondo,
+      condition,
+      postalCode: postalCode || undefined,
+      municipality: municipality || undefined,
+      province: province || undefined,
+      ...extractAttrs(req.body),
+    });
+    res.json(result);
+  });
+
+  // POST /api/public/valuation/email — email a valuation report. Recomputes
+  // server-side rather than trusting a client-supplied number; creates a
+  // lead, notifies Spencer, and pushes to Follow Up Boss.
+  app.post("/api/public/valuation/email", valuationLimiter, async (req, res) => {
+    const name = String(req.body?.name ?? "").trim();
+    const email = String(req.body?.email ?? "").trim();
+    const phone = String(req.body?.phone ?? "").trim();
+    const address = String(req.body?.address ?? "").trim();
+    const aptNum = String(req.body?.aptNum ?? "").trim();
+    const isCondo = !!req.body?.isCondo || !!aptNum;
+    if (!email.includes("@") || address.length < 6 || name.length < 2) {
+      return res
+        .status(400)
+        .json({ ok: false, message: "Name, email, and address are required." });
+    }
+    const postalCode = String(req.body?.postalCode ?? "").trim();
+    const municipality = String(req.body?.municipality ?? "").trim();
+    const province = String(req.body?.province ?? "").trim();
+    const result = await fetchValuation({
+      address,
+      aptNum: aptNum || undefined,
+      isCondo,
+      condition: valNum(req.body?.condition) ?? 3,
+      postalCode: postalCode || undefined,
+      municipality: municipality || undefined,
+      province: province || undefined,
+      ...extractAttrs(req.body),
+    });
+    if (!result.ok || result.estimate == null) {
+      return res.json({
+        ok: false,
+        message: result.message ?? "Couldn't generate an estimate for that address.",
+      });
+    }
+
+    const origin = process.env.PUBLIC_ORIGIN ?? "https://riversrealestate.ca";
+    const firstName = name.split(/\s+/)[0];
+
+    // 1. Email the visitor with their valuation report.
+    const visitorHtml = buildValuationEmailHtml({
+      recipientFirstName: firstName,
+      address: aptNum ? `${address} (Unit ${aptNum})` : address,
+      estimate: result.estimate,
+      valueLow: result.valueLow,
+      valueHigh: result.valueHigh,
+      confidence: result.confidence,
+      estimatedLease: result.estimatedLease,
+      capRate: result.capRate,
+      parameters: result.parameters,
+      origin,
+    });
+    const visitorEmail = await sendEmail({
+      to: email,
+      subject: `Your instant home valuation — ${address}`,
+      html: visitorHtml,
+      replyTo: "spencer@riversrealestate.ca",
+    });
+
+    // 2. Capture the visitor as a lead so it lands in /admin/leads + the
+    //    Resend notification to Spencer + the FUB push fire.
+    const messageLines = [
+      `Instant valuation requested via /home-evaluation widget.`,
+      ``,
+      `Address: ${aptNum ? `${address} (Unit ${aptNum})` : address}`,
+      `Estimate: $${Math.round(result.estimate).toLocaleString("en-CA")}`,
+      result.valueLow != null && result.valueHigh != null
+        ? `Range: $${Math.round(result.valueLow).toLocaleString("en-CA")} – $${Math.round(result.valueHigh).toLocaleString("en-CA")}`
+        : "",
+      result.confidence != null
+        ? `Confidence: ${Math.round(result.confidence * 100)}% (${result.valuationSource === "A" ? "AVM" : result.valuationSource === "H" ? "HPI" : "HPI adjusted"})`
+        : "",
+      result.estimatedLease != null
+        ? `Rent est: $${Math.round(result.estimatedLease).toLocaleString("en-CA")}/mo`
+        : "",
+      result.capRate != null ? `Cap rate: ${(result.capRate * 100).toFixed(2)}%` : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    const lead = storage.createLead({
+      listingId: null as any,
+      name,
+      email,
+      phone: phone || (null as any),
+      message: messageLines,
+      source: "Home valuation widget",
+      status: "new",
+    } as any);
+
+    // Mirror the inquiry pipeline: notify Spencer + push to FUB.
+    sendInquiryEmail({
+      name,
+      email,
+      phone: phone || undefined,
+      message: messageLines,
+      listingTitle: "Instant home valuation",
+      listingAddress: aptNum ? `${address} (Unit ${aptNum})` : address,
+    }).then((r) => {
+      if (!r.ok) console.warn("[valuation email] spencer notify failed:", r.error);
+    });
+    pushLeadToFollowUpBoss({
+      name,
+      email,
+      phone: phone || undefined,
+      message: messageLines,
+      source: "Home valuation widget",
+    }).then((r) => {
+      if (!r.ok && !r.skipped)
+        console.warn("[valuation email] FUB push failed:", r.error);
+    });
+
+    // Return the full valuation result alongside the email-send status so
+    // the widget can render the inline estimate immediately.
+    res.json({
+      ok: visitorEmail.ok,
+      leadId: lead.id,
+      result,
+      message: visitorEmail.ok
+        ? "Sent."
+        : "Couldn't deliver the email — try again or contact Spencer directly.",
+    });
   });
 
   // ---------- PUBLIC MLS / MARKETING API ----------
@@ -1675,19 +1986,36 @@ export async function registerRoutes(
   });
 
   // GET /api/public/neighbourhoods/:slug
-  app.get("/api/public/neighbourhoods/:slug", (req, res) => {
+  app.get("/api/public/neighbourhoods/:slug", async (req, res) => {
     const n = storage.getNeighbourhoodBySlug(req.params.slug);
     if (!n) return res.status(404).json({ message: "Neighbourhood not found" });
-    // Match by subdivision name. Falls through to legacy name match → tight
-    // 800m GPS as a last resort.
-    let activeMatches = storage.listMlsBySubdivision(n.name, 5000);
-    if (activeMatches.length === 0) {
-      activeMatches = storage.listMlsByNeighbourhood(n.name, 5000) as any;
+    // Canonical match cascade (subdivision → legacy name → eponymous street →
+    // tight GPS). Shared with the POI route so the two agree.
+    // OSM boundary polygon (lazy-fetched from Nominatim, cached in the row).
+    // Fetched BEFORE matching so the cascade's guess-based steps (legacy
+    // neighbourhood field, GPS proximity) can be geofenced at the source.
+    let polygon: unknown = null;
+    try {
+      polygon = await getNeighbourhoodPolygon(n.slug, n.name, n.centerLat, n.centerLng);
+    } catch (err) {
+      console.warn(`[polygons] lookup failed for ${n.slug}:`, err);
     }
-    if (activeMatches.length === 0) {
-      activeMatches = storage
-        .listMlsNearPoint(n.centerLat, n.centerLng, 800, 5000)
-        .filter((m) => m.status === "Active");
+    let activeMatches = storage.listMlsForNeighbourhood(n, 5000, polygon as any);
+    // When a boundary exists, geofence the remaining (authoritative) matches
+    // too — but never let a coarse or wrong polygon blank a community that
+    // has real inventory.
+    try {
+      if (polygon) {
+        const inside = activeMatches.filter(
+          (l: any) =>
+            typeof l.lat === "number" &&
+            typeof l.lng === "number" &&
+            pointInGeometry(l.lng, l.lat, polygon as any),
+        );
+        if (inside.length > 0) activeMatches = inside;
+      }
+    } catch (err) {
+      console.warn(`[polygons] lookup failed for ${n.slug}:`, err);
     }
     const listings = activeMatches.slice(0, 24);
     const liveActiveCount = activeMatches.length;
@@ -1695,8 +2023,46 @@ export async function registerRoutes(
       liveActiveCount > 0
         ? Math.round(activeMatches.reduce((s, l) => s + (l.listPrice || 0), 0) / liveActiveCount)
         : n.avgPrice;
+    // Use the listings' centroid as the display center — the stored
+    // center_lat/center_lng has drifted km off for several neighbourhoods, and
+    // the centroid keeps the map pin + POIs sitting on the actual homes.
+    const center = storage.neighbourhoodDisplayCenter(n, activeMatches);
+    // Condo buildings section — dedicated condo pages in this neighbourhood
+    // (linkable, listed first) merged with the researched name list stored on
+    // the row. Deduped by normalized name so a building that gains its own
+    // page later automatically upgrades from plain text to a link.
+    const condoPages = storage
+      .listCondoBuildings()
+      .filter((c) => c.neighbourhoodSlug === n.slug);
+    const normName = (s: string) =>
+      s.toLowerCase().replace(/^the\s+/, "").replace(/[^a-z0-9]+/g, "");
+    const seenNames = new Set(condoPages.map((c) => normName(c.name)));
+    const condoBuildingsMerged = [
+      ...condoPages.map((c) => ({
+        name: c.name,
+        address: c.address,
+        slug: c.slug,
+      })),
+      ...(parseJsonArr((n as any).condoBuildingsList) as Array<{ name?: string; address?: string }>)
+        .filter((b) => b && typeof b.name === "string" && b.name.trim().length > 0)
+        .filter((b) => {
+          const k = normName(b.name!);
+          if (seenNames.has(k)) return false;
+          seenNames.add(k);
+          return true;
+        })
+        .map((b) => ({ name: b.name!.trim(), address: b.address || undefined, slug: undefined })),
+    ];
+    // Photo attribution for CC-licensed heroes (JSON string in the column).
+    let heroCredit: unknown = null;
+    try { heroCredit = (n as any).heroCredit ? JSON.parse((n as any).heroCredit) : null; } catch { heroCredit = null; }
     res.json({
       ...n,
+      centerLat: center.lat,
+      centerLng: center.lng,
+      heroCredit,
+      polygon,
+      condoBuildings: condoBuildingsMerged,
       activeCount: liveActiveCount,
       avgPrice: liveAvgPrice,
       story: parseJsonArr(n.story),
@@ -1789,6 +2155,35 @@ export async function registerRoutes(
     res.json(p);
   });
 
+  // Fallback hero pool for new posts: Unsplash images verified by eye
+  // (2026-07-31 audit) and not assigned to any existing post at that time.
+  // Used when a creator submits no heroImage, or one already on another post
+  // — the old BOFU cadence shared one image per 3-post cluster, which left
+  // the blog index full of repeats. Every post keeps a unique hero.
+  const HERO_IMAGE_POOL = [
+    "photo-1615873968403-89e068629265", // styled living room, green feature wall
+    "photo-1586023492125-27b2c045efd7", // staged living room, yellow armchair
+    "photo-1600489000022-c2086d79f9d4", // modern grey kitchen
+    "photo-1505693416388-ac5ce068fe85", // staged primary bedroom
+    "photo-1522708323590-d24dbb6b0267", // furnished condo living room
+    "photo-1617806118233-18e1de247200", // formal dining room
+    "photo-1620626011761-996317b8d101", // modern bathroom, freestanding tub
+    "photo-1600607687920-4e2a09cf159d", // open-plan interior with staircase
+    "photo-1600607687939-ce8a6c25118c", // contemporary living space
+    "photo-1560518883-ce09059eeffa",    // house model with keys
+    "photo-1554224155-6726b3ff858f",    // finance paperwork and calculator
+    "photo-1469474968028-56623f02e42e", // mountain landscape at sunrise
+  ];
+  const heroUrlFor = (id: string) => `https://images.unsplash.com/${id}?w=1600&q=85&fm=jpg&auto=format`;
+  const pickUnusedHeroImage = (): string | null => {
+    const used = storage.listBlogPosts().map((p) => p.heroImage || "");
+    const id = HERO_IMAGE_POOL.find((cand) => !used.some((u) => u.includes(cand)));
+    return id ? heroUrlFor(id) : null;
+  };
+  // Focus-keyword-ish alt derived from the title (lead clause before any
+  // subtitle separator) when the creator didn't supply heroImageAlt.
+  const altFromTitle = (t: string) => t.split(/\s*[—:?]\s*/)[0].trim() || t.trim();
+
   // POST — create a new post. Defaults to status="draft" unless explicitly
   // overridden. Used by the BOFU auto-blog pipeline.
   app.post("/api/admin/blog", requireAdminOrToken, (req, res) => {
@@ -1803,13 +2198,25 @@ export async function registerRoutes(
       return res.status(400).json({ message: "title and body are required" });
     }
     try {
+      let heroImage = String(body.heroImage ?? "");
+      const heroInUse = heroImage && storage.listBlogPosts().some((p) => p.heroImage === heroImage);
+      if (!heroImage || heroInUse) {
+        const fresh = pickUnusedHeroImage();
+        if (fresh) {
+          console.log(`[blog] hero for "${body.slug}" was ${heroImage ? "already in use" : "empty"} — assigned unique pool image`);
+          heroImage = fresh;
+        } else if (heroInUse) {
+          console.warn(`[blog] hero pool exhausted — "${body.slug}" keeps a duplicate hero image`);
+        }
+      }
       const created = storage.upsertBlogPost({
         slug: String(body.slug).toLowerCase(),
         title: String(body.title),
         excerpt: String(body.excerpt ?? "").slice(0, 280),
         body: String(body.body),
         category: String(body.category ?? "Guide"),
-        heroImage: String(body.heroImage ?? ""),
+        heroImage,
+        heroImageAlt: typeof body.heroImageAlt === "string" ? body.heroImageAlt : altFromTitle(String(body.title)),
         authorName: String(body.authorName ?? "Spencer Rivers"),
         authorAvatar: body.authorAvatar ?? null,
         readMinutes: Number(body.readMinutes) || Math.max(3, Math.ceil(String(body.body).split(/\s+/).length / 220)),
@@ -1835,6 +2242,7 @@ export async function registerRoutes(
         body: typeof body.body === "string" ? body.body : existing.body,
         category: typeof body.category === "string" ? body.category : existing.category,
         heroImage: typeof body.heroImage === "string" ? body.heroImage : existing.heroImage,
+        heroImageAlt: typeof body.heroImageAlt === "string" || body.heroImageAlt === null ? body.heroImageAlt : existing.heroImageAlt,
         authorName: typeof body.authorName === "string" ? body.authorName : existing.authorName,
         authorAvatar: typeof body.authorAvatar === "string" ? body.authorAvatar : existing.authorAvatar,
         readMinutes: typeof body.readMinutes === "number" ? body.readMinutes : existing.readMinutes,
@@ -1861,6 +2269,7 @@ export async function registerRoutes(
     borders: safeJsonParse(n.borders, {}),
     schools: safeJsonParse(n.schools, []),
     gallery: safeJsonParse(n.gallery, []),
+    condoBuildingsList: safeJsonParse(n.condoBuildingsList, []),
   });
   function safeJsonParse(s: any, fallback: any) {
     if (typeof s !== "string") return s ?? fallback;
@@ -1895,6 +2304,8 @@ export async function registerRoutes(
         zone: typeof body.zone === "string" ? body.zone : existing.zone,
         borders: stringifyIfArray(body.borders, existing.borders),
         schools: stringifyIfArray(body.schools, existing.schools),
+        condoBuildingsList: stringifyIfArray(body.condoBuildingsList, existing.condoBuildingsList),
+        heroCredit: typeof body.heroCredit === "string" ? body.heroCredit : (existing as any).heroCredit,
         heroImage: typeof body.heroImage === "string" ? body.heroImage : existing.heroImage,
         gallery: stringifyIfArray(body.gallery, existing.gallery),
         centerLat: typeof body.centerLat === "number" ? body.centerLat : existing.centerLat,
@@ -2078,6 +2489,50 @@ export async function registerRoutes(
       res.json({ ...result.payload, center: { lat, lng }, radius, cached: result.cached });
     } catch (err: any) {
       console.error("[pois] condo error:", err?.message ?? err);
+      res.json({
+        center: { lat, lng },
+        radius,
+        schools: [], restaurants: [], parks: [], transit: [],
+        cached: false,
+        error: err?.message ?? "Overpass error",
+      });
+    }
+  });
+
+  // GET /api/public/neighbourhoods/:slug/pois — same shape as the MLS/condo
+  // POI routes, centered on the neighbourhood's center coordinates so the
+  // detail page can render schools / restaurants / parks / transit nearby.
+  app.get("/api/public/neighbourhoods/:slug/pois", async (req, res) => {
+    const n = storage.getNeighbourhoodBySlug(req.params.slug);
+    if (!n) return res.status(404).json({ message: "Neighbourhood not found" });
+    // Center on the listings' centroid (same as the detail route) so "what's
+    // nearby" reflects the actual homes, not a stale stored center.
+    const display = storage.neighbourhoodDisplayCenter(n);
+    const lat = Number(display.lat);
+    const lng = Number(display.lng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      return res.json({
+        center: { lat: null, lng: null },
+        radius: 1000,
+        schools: [], restaurants: [], parks: [], transit: [],
+        cached: false, message: "No coordinates for neighbourhood",
+      });
+    }
+    const radius = 1000;
+    try {
+      const result = await fetchPoisForPoint(lat, lng, radius);
+      if (!result.ok) {
+        return res.json({
+          center: { lat, lng },
+          radius,
+          schools: [], restaurants: [], parks: [], transit: [],
+          cached: false,
+          error: result.error,
+        });
+      }
+      res.json({ ...result.payload, center: { lat, lng }, radius, cached: result.cached });
+    } catch (err: any) {
+      console.error("[pois] neighbourhood error:", err?.message ?? err);
       res.json({
         center: { lat, lng },
         radius,
@@ -2325,6 +2780,21 @@ export async function registerRoutes(
 
   // ---------- ANALYTICS (auth) ----------
   // Lightweight read-only analytics derived from existing tables.
+  // GSC + GA4 traffic stats for /admin/analytics. Dynamic import + caching
+  // (1h in seo-stats.ts) so the page is snappy without burning API quota.
+  app.get("/api/analytics/seo-stats", requireAuth, async (req, res) => {
+    const days = Number(req.query.days);
+    const safeDays = Number.isFinite(days) && days > 0 ? days : 28;
+    try {
+      const { fetchSeoStats } = await import("./seo-stats");
+      const payload = await fetchSeoStats(safeDays);
+      res.json(payload);
+    } catch (err: any) {
+      console.error("[seo-stats] route error:", err?.message ?? err);
+      res.status(500).json({ ok: false, message: err?.message ?? "seo-stats failed" });
+    }
+  });
+
   app.get("/api/analytics/summary", requireAuth, (_req, res) => {
     const allListings = storage.listListings();
     const allLeads = storage.listLeads();

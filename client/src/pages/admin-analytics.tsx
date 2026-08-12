@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,6 +25,11 @@ import {
   Building2,
   Wallet,
   Target,
+  MousePointerClick,
+  SearchIcon,
+  Globe2,
+  Timer,
+  AlertTriangle,
 } from "lucide-react";
 import { formatPriceCompact } from "@/lib/format";
 
@@ -44,6 +50,25 @@ interface AnalyticsSummary {
   neighbourhoods: { name: string; leads: number }[];
 }
 
+interface SeoStats {
+  days: number;
+  range: { startDate: string; endDate: string };
+  gsc: {
+    ok: boolean;
+    message?: string;
+    summary?: { clicks: number; impressions: number; ctr: number; position: number };
+    topQueries?: { query: string; clicks: number; impressions: number; ctr: number; position: number }[];
+    topPages?: { page: string; clicks: number; impressions: number; ctr: number; position: number }[];
+  };
+  ga4: {
+    ok: boolean;
+    message?: string;
+    summary?: { users: number; sessions: number; pageviews: number; avgEngagementSeconds: number };
+    topPages?: { path: string; pageviews: number; users: number }[];
+    sources?: { source: string; sessions: number; users: number }[];
+  };
+}
+
 const SOURCE_PALETTE = ["#23412d", "#D4AF37", "#1F2937", "#6B7280", "#9CA3AF", "#374151"];
 
 const STATUS_LABELS: Record<string, string> = {
@@ -56,7 +81,18 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export default function AdminAnalyticsPage() {
+  const [seoDays, setSeoDays] = useState<7 | 28 | 90>(28);
   const { data, isLoading } = useQuery<AnalyticsSummary>({ queryKey: ["/api/analytics/summary"] });
+  const seo = useQuery<SeoStats>({
+    queryKey: ["/api/analytics/seo-stats", { days: seoDays }],
+    queryFn: async () => {
+      const r = await fetch(`/api/analytics/seo-stats?days=${seoDays}`, {
+        credentials: "include",
+      });
+      if (!r.ok) throw new Error(`seo-stats ${r.status}`);
+      return r.json();
+    },
+  });
 
   if (isLoading || !data) {
     return (
@@ -81,6 +117,15 @@ export default function AdminAnalyticsPage() {
             Where attention is going across your portfolio. Refreshes with every MLS sync and lead capture.
           </p>
         </div>
+
+        {/* SEO + Traffic section (GA4 + Google Search Console) ----------- */}
+        <SeoTrafficSection
+          data={seo.data}
+          loading={seo.isLoading}
+          error={seo.isError ? "Couldn't reach the SEO data API." : null}
+          days={seoDays}
+          onDaysChange={setSeoDays}
+        />
 
         {/* KPI grid — 6 cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
@@ -386,4 +431,414 @@ function KpiCard({
       </CardContent>
     </Card>
   );
+}
+
+// ---------- SEO + Traffic section --------------------------------------
+// Pulls live data from /api/analytics/seo-stats which queries Google Search
+// Console (Search Analytics API) and GA4 (Data API) using a server-side
+// service-account JWT. Layout: a 6-card KPI strip + two side-by-side tables
+// (top queries, top pages) + two more (top GA4 pages, traffic sources).
+// Each block degrades independently — if GSC auth is OK but GA4 isn't, you
+// still see GSC.
+
+function SeoTrafficSection({
+  data,
+  loading,
+  error,
+  days,
+  onDaysChange,
+}: {
+  data: SeoStats | undefined;
+  loading: boolean;
+  error: string | null;
+  days: 7 | 28 | 90;
+  onDaysChange: (d: 7 | 28 | 90) => void;
+}) {
+  const gsc = data?.gsc;
+  const ga4 = data?.ga4;
+
+  // GSC's "ctr" comes back as a fraction (0.024 = 2.4%); position is 1-based.
+  const fmtPct = (v: number | undefined) =>
+    typeof v === "number" ? `${(v * 100).toFixed(1)}%` : "—";
+  const fmtPos = (v: number | undefined) =>
+    typeof v === "number" && v > 0 ? v.toFixed(1) : "—";
+  const fmtSeconds = (v: number | undefined) =>
+    typeof v === "number"
+      ? v >= 60
+        ? `${Math.floor(v / 60)}m ${v % 60}s`
+        : `${v}s`
+      : "—";
+  const fmtNum = (v: number | undefined) =>
+    typeof v === "number" ? v.toLocaleString("en-CA") : "—";
+  const stripOrigin = (url: string) =>
+    url.replace(/^https?:\/\/(www\.)?riversrealestate\.ca/, "") || "/";
+
+  return (
+    <section className="mb-8">
+      <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
+        <div>
+          <div className="eyebrow text-muted-foreground">Traffic & search</div>
+          <h2
+            className="font-serif text-2xl text-foreground mt-1"
+            style={{ letterSpacing: "-0.01em" }}
+          >
+            Search Console & GA4
+          </h2>
+          <p className="text-xs text-muted-foreground mt-1">
+            {data?.range
+              ? `${data.range.startDate} → ${data.range.endDate}`
+              : `Last ${days} days`}{" "}
+            · cached for 1 hour
+          </p>
+        </div>
+        <div className="inline-flex p-1 bg-secondary rounded-sm gap-0.5">
+          {([7, 28, 90] as const).map((d) => (
+            <button
+              key={d}
+              type="button"
+              onClick={() => onDaysChange(d)}
+              className={`h-8 px-3 font-display tracking-[0.14em] text-[10px] rounded-sm ${
+                days === d
+                  ? "bg-foreground text-background"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              data-testid={`button-seo-range-${d}`}
+            >
+              {d}D
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Error banner — only when the whole endpoint failed */}
+      {error && (
+        <Card className="mb-4 border-destructive/40">
+          <CardContent className="p-4 flex items-start gap-2.5">
+            <AlertTriangle
+              className="w-4 h-4 mt-0.5 shrink-0 text-destructive"
+              strokeWidth={1.6}
+            />
+            <div className="text-sm text-foreground/80">{error}</div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* KPI strip — 6 cards */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
+        <KpiCard
+          icon={MousePointerClick}
+          label="Clicks"
+          value={loading ? "…" : fmtNum(gsc?.summary?.clicks)}
+          sub="Search Console"
+        />
+        <KpiCard
+          icon={SearchIcon}
+          label="Impressions"
+          value={loading ? "…" : fmtNum(gsc?.summary?.impressions)}
+          sub="Search Console"
+        />
+        <KpiCard
+          icon={Target}
+          label="CTR"
+          value={loading ? "…" : fmtPct(gsc?.summary?.ctr)}
+          sub="clicks ÷ impressions"
+        />
+        <KpiCard
+          icon={TrendingUp}
+          label="Avg position"
+          value={loading ? "…" : fmtPos(gsc?.summary?.position)}
+          sub="lower is better"
+        />
+        <KpiCard
+          icon={Users}
+          label="Users"
+          value={loading ? "…" : fmtNum(ga4?.summary?.users)}
+          sub="GA4 (unique)"
+        />
+        <KpiCard
+          icon={Globe2}
+          label="Sessions"
+          value={loading ? "…" : fmtNum(ga4?.summary?.sessions)}
+          sub="GA4"
+        />
+      </div>
+
+      {/* Engagement strip (1 metric on its own row) */}
+      <Card className="mb-4">
+        <CardContent className="p-4 flex items-center gap-4 flex-wrap">
+          <Timer
+            className="w-4 h-4 text-muted-foreground shrink-0"
+            strokeWidth={1.6}
+          />
+          <div>
+            <div className="eyebrow text-muted-foreground">
+              Average engagement / user
+            </div>
+            <div
+              className="font-serif text-xl text-foreground mt-0.5"
+              style={{ letterSpacing: "-0.01em" }}
+            >
+              {loading ? "…" : fmtSeconds(ga4?.summary?.avgEngagementSeconds)}
+            </div>
+          </div>
+          <div className="text-xs text-muted-foreground ml-auto">
+            Pageviews:{" "}
+            <span className="font-medium text-foreground">
+              {loading ? "…" : fmtNum(ga4?.summary?.pageviews)}
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Two-up: top queries (GSC) + top pages (GSC) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        <Card>
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="eyebrow text-muted-foreground">
+                Top search queries
+              </div>
+              <span className="text-[11px] text-muted-foreground">
+                Search Console
+              </span>
+            </div>
+            <BlockState
+              loading={loading}
+              ok={gsc?.ok}
+              message={gsc?.message}
+              empty={!gsc?.topQueries?.length}
+              emptyLabel="No queries in this range yet."
+            >
+              <table className="w-full text-xs">
+                <thead className="text-muted-foreground text-[10px] tracking-[0.1em] uppercase">
+                  <tr>
+                    <th className="text-left py-1.5 font-medium">Query</th>
+                    <th className="text-right font-medium">Clicks</th>
+                    <th className="text-right font-medium">Impr</th>
+                    <th className="text-right font-medium">CTR</th>
+                    <th className="text-right font-medium">Pos</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(gsc?.topQueries ?? []).map((r) => (
+                    <tr
+                      key={r.query}
+                      className="border-t border-border/60"
+                    >
+                      <td className="py-1.5 truncate max-w-[260px]">
+                        {r.query}
+                      </td>
+                      <td className="text-right tabular-nums">{fmtNum(r.clicks)}</td>
+                      <td className="text-right tabular-nums text-muted-foreground">
+                        {fmtNum(r.impressions)}
+                      </td>
+                      <td className="text-right tabular-nums text-muted-foreground">
+                        {fmtPct(r.ctr)}
+                      </td>
+                      <td className="text-right tabular-nums text-muted-foreground">
+                        {fmtPos(r.position)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </BlockState>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="eyebrow text-muted-foreground">
+                Top landing pages (search)
+              </div>
+              <span className="text-[11px] text-muted-foreground">
+                Search Console
+              </span>
+            </div>
+            <BlockState
+              loading={loading}
+              ok={gsc?.ok}
+              message={gsc?.message}
+              empty={!gsc?.topPages?.length}
+              emptyLabel="No landing-page data yet."
+            >
+              <table className="w-full text-xs">
+                <thead className="text-muted-foreground text-[10px] tracking-[0.1em] uppercase">
+                  <tr>
+                    <th className="text-left py-1.5 font-medium">Page</th>
+                    <th className="text-right font-medium">Clicks</th>
+                    <th className="text-right font-medium">Impr</th>
+                    <th className="text-right font-medium">Pos</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(gsc?.topPages ?? []).map((r) => (
+                    <tr key={r.page} className="border-t border-border/60">
+                      <td className="py-1.5 truncate max-w-[260px]">
+                        <a
+                          href={r.page}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:underline"
+                        >
+                          {stripOrigin(r.page)}
+                        </a>
+                      </td>
+                      <td className="text-right tabular-nums">{fmtNum(r.clicks)}</td>
+                      <td className="text-right tabular-nums text-muted-foreground">
+                        {fmtNum(r.impressions)}
+                      </td>
+                      <td className="text-right tabular-nums text-muted-foreground">
+                        {fmtPos(r.position)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </BlockState>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Two-up: top pages (GA4) + traffic sources (GA4) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card>
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="eyebrow text-muted-foreground">
+                Top pages (all traffic)
+              </div>
+              <span className="text-[11px] text-muted-foreground">GA4</span>
+            </div>
+            <BlockState
+              loading={loading}
+              ok={ga4?.ok}
+              message={ga4?.message}
+              empty={!ga4?.topPages?.length}
+              emptyLabel="GA4 hasn't recorded any pageviews yet — give it 24h."
+            >
+              <table className="w-full text-xs">
+                <thead className="text-muted-foreground text-[10px] tracking-[0.1em] uppercase">
+                  <tr>
+                    <th className="text-left py-1.5 font-medium">Path</th>
+                    <th className="text-right font-medium">Views</th>
+                    <th className="text-right font-medium">Users</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(ga4?.topPages ?? []).map((r) => (
+                    <tr key={r.path} className="border-t border-border/60">
+                      <td className="py-1.5 truncate max-w-[300px]">
+                        <a
+                          href={r.path}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:underline"
+                        >
+                          {r.path}
+                        </a>
+                      </td>
+                      <td className="text-right tabular-nums">
+                        {fmtNum(r.pageviews)}
+                      </td>
+                      <td className="text-right tabular-nums text-muted-foreground">
+                        {fmtNum(r.users)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </BlockState>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="eyebrow text-muted-foreground">
+                Traffic sources
+              </div>
+              <span className="text-[11px] text-muted-foreground">GA4</span>
+            </div>
+            <BlockState
+              loading={loading}
+              ok={ga4?.ok}
+              message={ga4?.message}
+              empty={!ga4?.sources?.length}
+              emptyLabel="No source data yet."
+            >
+              <ul className="space-y-2">
+                {(ga4?.sources ?? []).map((s) => {
+                  const max = Math.max(
+                    ...(ga4?.sources ?? []).map((x) => x.sessions),
+                  );
+                  const pct = max > 0 ? (s.sessions / max) * 100 : 0;
+                  return (
+                    <li key={s.source}>
+                      <div className="flex items-center justify-between text-xs mb-0.5">
+                        <span className="font-medium truncate">{s.source}</span>
+                        <span className="font-display tracking-[0.08em] text-[10px] text-muted-foreground tabular-nums">
+                          {fmtNum(s.sessions)} sessions
+                        </span>
+                      </div>
+                      <div className="h-2 bg-secondary rounded-sm overflow-hidden">
+                        <div
+                          className="h-full bg-foreground transition-all"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </BlockState>
+          </CardContent>
+        </Card>
+      </div>
+    </section>
+  );
+}
+
+// Per-block state wrapper. If the block returned ok:false (API auth /
+// permissions / quota issue), surfaces the server's message. If it's
+// loading or empty, shows the appropriate placeholder. Otherwise renders
+// the table/chart.
+function BlockState({
+  loading,
+  ok,
+  message,
+  empty,
+  emptyLabel,
+  children,
+}: {
+  loading: boolean;
+  ok: boolean | undefined;
+  message: string | undefined;
+  empty: boolean;
+  emptyLabel: string;
+  children: React.ReactNode;
+}) {
+  if (loading) {
+    return (
+      <div className="text-xs text-muted-foreground py-6 text-center">
+        Loading…
+      </div>
+    );
+  }
+  if (ok === false) {
+    return (
+      <div className="text-xs text-destructive/80 leading-relaxed py-2">
+        {message ?? "Couldn't load."}
+      </div>
+    );
+  }
+  if (empty) {
+    return (
+      <div className="text-xs text-muted-foreground py-6 text-center">
+        {emptyLabel}
+      </div>
+    );
+  }
+  return <>{children}</>;
 }

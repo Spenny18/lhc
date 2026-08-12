@@ -22,6 +22,7 @@ interface AdminBlogPost {
   body: string;
   category: string;
   heroImage: string;
+  heroImageAlt: string | null;
   authorName: string;
   authorAvatar: string | null;
   readMinutes: number;
@@ -306,6 +307,18 @@ export default function AdminBlogPage() {
                       />
                     </div>
                   )}
+                </div>
+
+                <div>
+                  <Label className="text-xs font-display tracking-[0.18em] text-muted-foreground">
+                    HERO IMAGE ALT TEXT (FOCUS KEYWORD)
+                  </Label>
+                  <Input
+                    value={draft.heroImageAlt || ""}
+                    onChange={(e) => setDraft({ ...draft, heroImageAlt: e.target.value || null })}
+                    className="mt-1 h-10"
+                    placeholder="e.g. Calgary luxury home staging"
+                  />
                 </div>
 
                 <div>

@@ -27,6 +27,7 @@ interface AdminNeighbourhood {
   zone: string;
   borders: Record<string, string>;
   schools: Array<{ name: string; level: string; area?: string; url?: string }>;
+  condoBuildingsList: Array<{ name: string; address?: string }>;
   heroImage: string;
   gallery: string[];
   centerLat: number;
@@ -66,6 +67,49 @@ function CopyArea({
         className="mt-1 text-[14px] leading-relaxed"
         placeholder="One paragraph per blank line"
       />
+    </div>
+  );
+}
+
+// Condo buildings editor — one building per line, "Name | Address" (address
+// optional). Stored as [{name, address?}] and rendered as the "Condo
+// buildings" section on the public page. Buildings that also have a condo
+// page are matched by name automatically and shown as links there.
+function CondoBuildingsArea({
+  value,
+  onChange,
+}: {
+  value: Array<{ name: string; address?: string }>;
+  onChange: (v: Array<{ name: string; address?: string }>) => void;
+}) {
+  const text = (value || [])
+    .map((b) => (b.address ? `${b.name} | ${b.address}` : b.name))
+    .join("\n");
+  return (
+    <div>
+      <Label className="text-xs font-display tracking-[0.18em] text-muted-foreground">
+        CONDO BUILDINGS
+      </Label>
+      <Textarea
+        rows={8}
+        value={text}
+        onChange={(e) =>
+          onChange(
+            e.target.value.split("\n").flatMap((line) => {
+              const [name, address] = line.split("|").map((s) => s.trim());
+              if (!name) return [];
+              return [address ? { name, address } : { name }];
+            }),
+          )
+        }
+        className="mt-1 text-[14px] leading-relaxed font-mono"
+        placeholder={"One building per line: Name | Address (address optional)\ne.g. Valmont at Aspen Stone | 10 Aspen Stone Blvd SW"}
+      />
+      <p className="mt-1 text-[11px] text-muted-foreground">
+        Buildings that also exist under /admin/condos are linked to their page
+        automatically (matched by name) and always appear — no need to repeat
+        them here.
+      </p>
     </div>
   );
 }
@@ -286,6 +330,10 @@ export default function AdminNeighbourhoodsPage() {
                   label="Life / family"
                   value={draft.lifeCopy}
                   onChange={(v) => setDraft({ ...draft, lifeCopy: v })}
+                />
+                <CondoBuildingsArea
+                  value={draft.condoBuildingsList}
+                  onChange={(v) => setDraft({ ...draft, condoBuildingsList: v })}
                 />
               </div>
             </div>

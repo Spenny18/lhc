@@ -15,6 +15,8 @@ import {
   condoBuildings,
 } from "@shared/schema";
 import { MARQUEE_NEIGHBOURHOODS, MARQUEE_CONDOS } from "./seed-marquee";
+import { NEIGHBOURHOOD_CONDO_BUILDINGS } from "./neighbourhood-condo-buildings";
+import { applyNeighbourhoodImages } from "./neighbourhood-images";
 import { MIGRATED_BLOG_POSTS } from "./seed-migrated-blog-posts";
 import { CONDO_CONTENT_PATCHES } from "./seed-migrated-condos";
 
@@ -406,6 +408,87 @@ export function seedDatabase() {
       }
       console.log(`[migration] re-zoned ${swRows.length} Southwest -> South`);
     }
+    // NOTE (July 2026): a since-removed "repair" migration briefly pointed 16
+    // rows at WP/stock heroes while their real photos were missing from the
+    // deployed bundle. The photos (curated CC photography, committed under
+    // client/public/img/neighbourhoods/) are back in the tree, and the
+    // HERO_RESTORES migration below moves those rows back to them.
+    // Upgrade generic stock heroes to the real community heroes that already
+    // exist in the luxuryhomescalgary.ca WP media library (found via the WP
+    // REST media API, July 2026). The old Unsplash placeholders were visibly
+    // wrong — several cards shared an identical palm-tree villa, Parkhill
+    // showed a kitchen. Guarded so it only ever replaces an Unsplash URL
+    // (or Elbow Park's 275px thumbnail) — never an admin-set hero.
+    const WP = "https://luxuryhomescalgary.ca/wp-content/uploads/";
+    const HERO_UPGRADES: Record<string, string> = {
+      "bankview": WP + "2026/02/bankview-hero.png",
+      "parkhill": WP + "2025/11/parkhill-hero.png",
+      "rosedale": WP + "2025/02/rosedale-hero.png",
+      "parkdale": WP + "2025/11/parkdale-hero.png",
+      "south-calgary": WP + "2026/02/south-calgary-hero.png",
+      "richmond": WP + "2026/02/richmond-hero.png",
+      "kelvin-grove": WP + "2026/02/kelvin-grove-hero.png",
+      "windsor-park": WP + "2026/02/windsor-park-hero.png",
+      "elboya": WP + "2025/07/elboya-hero.png",
+      "meadowlark-park": WP + "2026/02/meadowlark-park-hero.png",
+      "ramsay": WP + "2025/11/ramsay-hero.png",
+      "hamptons": WP + "2026/02/hamptons-hero.png",
+      "evanston": WP + "2025/02/evanston-hero.png",
+      "signal-hill": WP + "2026/02/signal-hill-hero.png",
+      "north-glenmore-park": WP + "2026/02/north-glenmore-park-hero.png",
+      "wildwood": WP + "2026/02/wildwood-hero.png",
+      "canyon-meadows": WP + "2026/02/canyon-meadows-hero.png",
+      "willow-park": WP + "2026/02/willow-park-hero.png",
+      "lake-bonavista": WP + "2026/02/lake-bonavista-hero.png",
+      "chaparral": WP + "2026/02/chaparral-hero.png",
+      "cranston": WP + "2025/08/cranston-hero.png",
+      "alpine-park": WP + "2026/02/alpine-park-hero.png",
+      "pine-creek": WP + "2026/02/pine-creek-hero.png",
+      "coopers-crossing": WP + "2026/02/coopers-crossing-hero.png",
+      "bayside": WP + "2026/02/bayside-hero.png",
+      "chestermere": WP + "2025/02/chestermere-hero.png",
+      "st-andrews-heights": WP + "2025/12/st.-andrews-heights-hero.png",
+      "hounsfield-heights-briar-hill": WP + "2026/02/hounsfield-heightsbriar-hill-hero.png",
+      "bridgeland-riverside": WP + "2026/02/bridgelandriverside-hero.png",
+      "varsity-estates": WP + "2026/02/varsity-hero.png",
+      "lakeview": WP + "2026/02/lakeview-landing-hero.png",
+      "mahogany": WP + "2025/02/lake-mahogany.png",
+      "watermark": WP + "2025/11/watermark-bearspaw.png",
+      "bearspaw": WP + "2025/02/bearspaw-acreage-home-1.jpeg",
+      // No community-specific WP hero exists for these; swap the palm-villa /
+      // kitchen stock for the neutral dusk-estate stock the neighbouring
+      // communities already use. (beltline keeps its downtown-towers stock —
+      // it suits the community.)
+      "mckenzie-lake": "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=1600&h=900&fit=crop",
+      "elbow-valley": "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=1600&h=900&fit=crop",
+      "elbow-valley-west": "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=1600&h=900&fit=crop",
+    };
+    let heroesUpgraded = 0;
+    for (const [slug, url] of Object.entries(HERO_UPGRADES)) {
+      const row = db.select().from(neighbourhoods).where(eq(neighbourhoods.slug, slug)).get() as any;
+      const current = String(row?.heroImage || "");
+      if (!row || !current.startsWith("https://images.unsplash.com/") || current === url) continue;
+      db.update(neighbourhoods).set({ heroImage: url } as any).where(eq(neighbourhoods.slug, slug)).run();
+      heroesUpgraded++;
+    }
+    // Elbow Park's WP image is a 275x183 thumbnail — swap for the full-size
+    // render of the same subject that exists in the media library.
+    const ep = db.select().from(neighbourhoods).where(eq(neighbourhoods.slug, "elbow-park")).get() as any;
+    if (ep && ep.heroImage === WP + "2024/06/elbow-park.jpg") {
+      db.update(neighbourhoods)
+        .set({ heroImage: WP + "2024/06/dalle-2024-06-02-132305-a-luxurious-modern-home-overlooking-the-elbow-river-valley-in-elbow-park-calgary-the-house-features-sleek-contemporary-architecture-with-large-glas.jpg" } as any)
+        .where(eq(neighbourhoods.slug, "elbow-park"))
+        .run();
+      heroesUpgraded++;
+    }
+    if (heroesUpgraded > 0) {
+      console.log(`[migration] upgraded ${heroesUpgraded} stock neighbourhood heroes to community images`);
+    }
+    // Curated real-photo heroes + CC attribution are applied by
+    // applyNeighbourhoodImages() (server/neighbourhood-images.ts, ported from
+    // the Neuroforge fork) at the end of seedDatabase(). Its isReplaceable
+    // guard covers every interim state (unsplash, luxuryhomescalgary.ca WP
+    // renders, /img/ paths) while leaving CMS-set heroes alone.
   } catch (err) {
     console.error("[migration] neighbourhood cleanups failed:", err);
   }
@@ -470,6 +553,35 @@ export function seedDatabase() {
     nhoodsInserted++;
   }
   console.log(`[seed] Inserted ${nhoodsInserted} new neighbourhoods (${MARQUEE_NEIGHBOURHOODS.length - nhoodsInserted} skipped — already exist), patched zone on ${zonePatched}`);
+
+  // 4a. Condo-buildings list — FILL-IF-EMPTY ONLY.
+  // Backfill the researched building list into any neighbourhood whose
+  // condo_buildings_list is still the '[]' default. Rows Spencer has edited
+  // via the admin keep their value; rows he cleared on purpose would be
+  // refilled, so clearing should be done by replacing with a placeholder in
+  // the admin rather than emptying (documented in the admin field hint).
+  try {
+    let condoListFilled = 0;
+    for (const [slug, buildings] of Object.entries(NEIGHBOURHOOD_CONDO_BUILDINGS)) {
+      if (!buildings.length) continue;
+      const row = db.select().from(neighbourhoods).where(eq(neighbourhoods.slug, slug)).get() as any;
+      if (!row) continue;
+      const current = (row.condoBuildingsList ?? "[]").trim();
+      let isEmpty = true;
+      try { isEmpty = !Array.isArray(JSON.parse(current)) || JSON.parse(current).length === 0; } catch { isEmpty = true; }
+      if (!isEmpty) continue;
+      db.update(neighbourhoods)
+        .set({ condoBuildingsList: JSON.stringify(buildings) } as any)
+        .where(eq(neighbourhoods.slug, slug))
+        .run();
+      condoListFilled++;
+    }
+    if (condoListFilled > 0) {
+      console.log(`[seed] Filled condo_buildings_list on ${condoListFilled} neighbourhoods`);
+    }
+  } catch (err) {
+    console.error("[seed] condo_buildings_list backfill failed:", err);
+  }
 
   // 4b. Condo buildings — INSERT-IF-MISSING ONLY.
   //
@@ -634,6 +746,14 @@ export function seedDatabase() {
     }
     console.log("[seed] Inserted " + SEED_LISTINGS.length + " fallback MLS listings");
     storage.refreshNeighbourhoodActiveCounts();
+  }
+
+  // Curated CC photo heroes + attribution (fill/repair only — never clobbers
+  // a CMS-set hero; see server/neighbourhood-images.ts).
+  try {
+    applyNeighbourhoodImages();
+  } catch (err) {
+    console.error("[seed] applyNeighbourhoodImages failed:", err);
   }
 }
 

@@ -64,6 +64,22 @@ export interface PublicNeighbourhood {
 
 export interface PublicNeighbourhoodDetail extends PublicNeighbourhood {
   listings: PublicMlsListing[];
+  /** Condo & townhome buildings in the community. Entries with a slug have
+   *  a dedicated /condos/:slug page; the rest render as plain names. */
+  condoBuildings?: Array<{ name: string; address?: string; slug?: string }>;
+  /** OSM boundary polygon (GeoJSON geometry), when OSM has a match. */
+  polygon?:
+    | { type: "Polygon"; coordinates: number[][][] }
+    | { type: "MultiPolygon"; coordinates: number[][][][] }
+    | null;
+  /** CC-photo attribution for the hero, when the hero is a licensed photo. */
+  heroCredit?: {
+    author: string;
+    authorUrl?: string;
+    license: string;
+    licenseUrl: string;
+    sourceUrl: string;
+  } | null;
 }
 
 export interface PublicBlogPost {
@@ -74,6 +90,7 @@ export interface PublicBlogPost {
   body: string;
   category: string;
   heroImage: string;
+  heroImageAlt: string | null;
   authorName: string;
   authorAvatar: string | null;
   readMinutes: number;

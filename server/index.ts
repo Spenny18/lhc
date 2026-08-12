@@ -29,6 +29,15 @@ app.use(
 
 app.use(express.urlencoded({ extended: false, limit: "12mb" }));
 
+// 301 www → apex. Both hostnames resolve to this app; without the redirect
+// Google indexes duplicate content across the two hosts.
+app.use((req, res, next) => {
+  if (req.hostname === "www.riversrealestate.ca") {
+    return res.redirect(301, `https://riversrealestate.ca${req.originalUrl}`);
+  }
+  next();
+});
+
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
     hour: "numeric",
@@ -112,7 +121,8 @@ app.use((req, res, next) => {
     {
       port,
       host: "0.0.0.0",
-      reusePort: true,
+      // reusePort is Linux-only; macOS throws ENOTSUP so skip it in local dev.
+      ...(process.platform === "linux" ? { reusePort: true } : {}),
     },
     () => {
       log(`serving on port ${port}`);
