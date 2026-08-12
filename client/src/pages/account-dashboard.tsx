@@ -109,9 +109,7 @@ export default function AccountDashboardPage() {
             const Icon = card.icon;
             const isFavorites = card.href === "/account/favorites";
             return (
-              <Link key={card.href} href={card.href}>
-                <a
-                  className={`group block rounded-sm border border-border p-6 transition-colors ${
+              <Link key={card.href} href={card.href} className={`group block rounded-sm border border-border p-6 transition-colors ${
                     card.phase === "live"
                       ? "hover:border-foreground hover:bg-muted/30"
                       : "opacity-60 cursor-not-allowed"
@@ -119,8 +117,7 @@ export default function AccountDashboardPage() {
                   onClick={(e) => {
                     if (card.phase !== "live") e.preventDefault();
                   }}
-                  data-testid={`card-${card.href.replace("/account/", "")}`}
-                >
+                  data-testid={`card-${card.href.replace("/account/", "")}`}>
                   <div className="flex items-center justify-between">
                     <Icon className="w-5 h-5" strokeWidth={1.5} />
                     {card.phase === "soon" && (
@@ -158,7 +155,7 @@ export default function AccountDashboardPage() {
                       {activeReports} ACTIVE
                     </div>
                   )}
-                </a>
+                
               </Link>
             );
           })}

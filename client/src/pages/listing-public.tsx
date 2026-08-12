@@ -98,13 +98,12 @@ export default function ListingPublicPage() {
       {/* Top bar */}
       <header className="sticky top-0 z-30 bg-background/85 backdrop-blur border-b border-border">
         <div className="max-w-7xl mx-auto px-6 lg:px-10 h-16 flex items-center justify-between">
-          <Link href="/" data-testid="link-home">
-            <a className="flex items-center gap-3">
+          <Link href="/" data-testid="link-home" className="flex items-center gap-3">
               <Logo />
               <span className="hidden md:inline-flex items-center text-xs text-muted-foreground gap-1.5 ml-2 pl-3 border-l border-border eyebrow">
                 Luxury Homes Calgary
               </span>
-            </a>
+            
           </Link>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" className="rounded-full" data-testid="button-favorite">

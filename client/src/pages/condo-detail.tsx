@@ -6,6 +6,7 @@ import "leaflet/dist/leaflet.css";
 import { ChevronLeft, MapPin, ArrowRight, Building2, Layers, Calendar } from "lucide-react";
 import { PublicLayout } from "@/components/public-layout";
 import { NeighbourhoodPois } from "@/components/neighbourhood-pois";
+import { ClientOnly } from "@/components/client-only";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice, formatSqft } from "@/lib/format";
 import { apiUrl } from "@/lib/queryClient";
@@ -90,10 +91,9 @@ export default function CondoDetailPage() {
             BUILDING NOT FOUND
           </div>
           <h1 className="mt-4 font-serif text-4xl">That building isn't on the list yet</h1>
-          <Link href="/condos">
-            <a className="inline-block mt-8 font-display text-[11px] tracking-[0.22em] underline">
+          <Link href="/condos" className="inline-block mt-8 font-display text-[11px] tracking-[0.22em] underline">
               ← BACK TO CONDO BUILDINGS
-            </a>
+            
           </Link>
         </div>
       </PublicLayout>
@@ -173,11 +173,10 @@ export default function CondoDetailPage() {
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-black/85" />
         <div className="relative h-full flex flex-col justify-end max-w-[1400px] mx-auto px-6 lg:px-10 pb-20 lg:pb-28 text-white">
-          <Link href="/condos">
-            <a className="inline-flex items-center gap-1.5 font-display text-[11px] tracking-[0.22em] text-white/70 hover:text-white mb-8 self-start">
+          <Link href="/condos" className="inline-flex items-center gap-1.5 font-display text-[11px] tracking-[0.22em] text-white/70 hover:text-white mb-8 self-start">
               <ChevronLeft className="w-3.5 h-3.5" strokeWidth={1.6} />
               BACK TO CONDO BUILDINGS
-            </a>
+            
           </Link>
           <div className="font-display text-[11px] tracking-[0.22em] text-white/80 mb-3">
             BUILDING GUIDE
@@ -383,10 +382,9 @@ export default function CondoDetailPage() {
                 Currently for sale at {data.name}
               </h2>
             </div>
-            <Link href={`/mls?q=${encodeURIComponent(data.address.split(",")[0])}`}>
-              <a className="font-display text-[11px] tracking-[0.22em] text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5">
+            <Link href={`/mls?q=${encodeURIComponent(data.address.split(",")[0])}`} className="font-display text-[11px] tracking-[0.22em] text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5">
                 FULL MLS RESULTS <ArrowRight className="w-3 h-3" strokeWidth={1.6} />
-              </a>
+              
             </Link>
           </div>
 
@@ -398,8 +396,7 @@ export default function CondoDetailPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {data.listings.map((l) => (
-                <Link key={l.id} href={`/mls/${l.id}`}>
-                  <a className="group block">
+                <Link key={l.id} href={`/mls/${l.id}`} className="group block">
                     <div className="relative aspect-[4/3] rounded-sm overflow-hidden bg-secondary">
                       <img
                         src={l.heroImage ? apiUrl(l.heroImage) : data.heroImage}
@@ -429,7 +426,7 @@ export default function CondoDetailPage() {
                         <span>{formatSqft(l.sqft)}</span>
                       </div>
                     </div>
-                  </a>
+                  
                 </Link>
               ))}
             </div>
@@ -445,19 +442,23 @@ export default function CondoDetailPage() {
         <h2 className="font-serif text-3xl lg:text-4xl mb-8" style={{ letterSpacing: "-0.01em" }}>
           {data.address}
         </h2>
-        <div className="rounded-sm overflow-hidden border border-border h-[460px]">
-          <MapContainer
-            center={[data.lat, data.lng]}
-            zoom={16}
-            scrollWheelZoom={false}
-            style={{ height: "100%", width: "100%" }}
-          >
-            <TileLayer
-              attribution="&copy; OpenStreetMap, &copy; CARTO"
-              url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-            />
-            <Marker position={[data.lat, data.lng]} icon={propertyIcon} />
-          </MapContainer>
+        <div className="rounded-sm overflow-hidden border border-border h-[460px] bg-secondary">
+          {/* ClientOnly: Leaflet can't render server-side; the sized parent
+              div is SSR'd so the layout doesn't shift when the map mounts. */}
+          <ClientOnly>
+            <MapContainer
+              center={[data.lat, data.lng]}
+              zoom={16}
+              scrollWheelZoom={false}
+              style={{ height: "100%", width: "100%" }}
+            >
+              <TileLayer
+                attribution="&copy; OpenStreetMap, &copy; CARTO"
+                url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+              />
+              <Marker position={[data.lat, data.lng]} icon={propertyIcon} />
+            </MapContainer>
+          </ClientOnly>
         </div>
         <div className="mt-4 flex items-center gap-3 flex-wrap">
           <a
@@ -468,11 +469,10 @@ export default function CondoDetailPage() {
           >
             GET DIRECTIONS <ArrowRight className="w-3 h-3" strokeWidth={1.6} />
           </a>
-          <Link href={`/neighbourhoods/${data.neighbourhoodSlug}`}>
-            <a className="inline-flex items-center gap-1.5 font-display text-[11px] tracking-[0.18em] underline hover:no-underline">
+          <Link href={`/neighbourhoods/${data.neighbourhoodSlug}`} className="inline-flex items-center gap-1.5 font-display text-[11px] tracking-[0.18em] underline hover:no-underline">
               {data.neighbourhood.toUpperCase()} NEIGHBOURHOOD GUIDE
               <ArrowRight className="w-3 h-3" strokeWidth={1.6} />
-            </a>
+            
           </Link>
         </div>
       </section>
@@ -505,10 +505,9 @@ export default function CondoDetailPage() {
             I work this building regularly. Get on the early-look list for new
             inventory, or ask about specific units coming up for sale.
           </p>
-          <Link href="/contact">
-            <a className="inline-flex items-center gap-2 mt-7 px-6 py-3 bg-background text-foreground font-display text-[11px] tracking-[0.22em] hover:bg-background/90 transition-colors">
+          <Link href="/contact" className="inline-flex items-center gap-2 mt-7 px-6 py-3 bg-background text-foreground font-display text-[11px] tracking-[0.22em] hover:bg-background/90 transition-colors">
               CONTACT SPENCER 🤵 <ArrowRight className="w-3.5 h-3.5" strokeWidth={1.6} />
-            </a>
+            
           </Link>
         </div>
       </section>

@@ -293,7 +293,6 @@ export default function AboutPage() {
               {SPENCER_EMAIL.toUpperCase()}
             </a>
             <Link href="/contact">
-              <a>
                 <Button
                   variant="outline"
                   className="bg-background text-foreground hover:bg-background/90 border-background h-11 rounded-sm font-display text-[11px] tracking-[0.22em] gap-2"
@@ -302,7 +301,7 @@ export default function AboutPage() {
                   SEND A NOTE
                   <ArrowRight className="w-3.5 h-3.5" strokeWidth={1.8} />
                 </Button>
-              </a>
+              
             </Link>
           </div>
         </div>

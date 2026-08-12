@@ -106,6 +106,7 @@ interface Filters {
   views: string;
   subdivisions: string; // free-text csv (substring match)
   districts: string; // free-text csv
+  neighbourhood: string; // exact match on mls_listings.neighbourhood (deep links from neighbourhood pages)
   condoFeeMax: string;
   keywords: string;
   statuses: string; // multi (csv)
@@ -120,7 +121,9 @@ const DEFAULT_FILTERS: Filters = {
   baths: "any",
   propertyType: "any",
   propertySubTypes: "",
-  cities: "",
+  // The marketing site is explicitly Calgary-only, so default the city
+  // filter to Calgary (a ?neighbourhood= deep link clears it — see initialFilters).
+  cities: "Calgary",
   postalCode: "",
   minSqft: "",
   maxSqft: "",
@@ -150,6 +153,7 @@ const DEFAULT_FILTERS: Filters = {
   views: "",
   subdivisions: "",
   districts: "",
+  neighbourhood: "",
   condoFeeMax: "",
   keywords: "",
   statuses: "Active",
@@ -372,7 +376,7 @@ function parseQuery(qs: string): Partial<Filters> {
     "basements", "basementDevelopments", "parkingFeatures", "lotFeatures",
     "laundryFeatures", "appliances", "levels", "structureTypes",
     "architecturalStyles", "accessibilityFeatures", "associationAmenities",
-    "views", "subdivisions", "districts", "condoFeeMax", "keywords", "statuses", "sort",
+    "views", "subdivisions", "districts", "neighbourhood", "condoFeeMax", "keywords", "statuses", "sort",
   ];
   for (const k of map) {
     const v = params.get(k);
@@ -541,7 +545,15 @@ export default function MlsSearchPage() {
   const initialFilters = useMemo<Filters>(() => {
     const search = typeof window !== "undefined" ? window.location.search : "";
     const qs = search.startsWith("?") ? search.slice(1) : search;
-    return { ...DEFAULT_FILTERS, ...parseQuery(qs) };
+    const parsed = parseQuery(qs);
+    // A neighbourhood deep link (from a neighbourhood page's "SEE ALL")
+    // targets a specific community — drop the Calgary city default so
+    // out-of-Calgary communities (Chestermere, Canmore, Airdrie) still show,
+    // unless the URL explicitly set a city.
+    if (parsed.neighbourhood && parsed.cities === undefined) {
+      return { ...DEFAULT_FILTERS, ...parsed, cities: "" };
+    }
+    return { ...DEFAULT_FILTERS, ...parsed };
   }, []);
 
   const [filters, setFilters] = useState<Filters>(initialFilters);
@@ -631,6 +643,7 @@ export default function MlsSearchPage() {
       p.set("propertyType", filters.propertyType);
     if (filters.propertySubTypes) p.set("propertySubTypes", filters.propertySubTypes);
     if (filters.cities) p.set("cities", filters.cities);
+    if (filters.neighbourhood) p.set("neighbourhood", filters.neighbourhood);
     if (filters.postalCode) p.set("postalCode", filters.postalCode);
     if (filters.minSqft) p.set("minSqft", filters.minSqft);
     if (filters.maxSqft) p.set("maxSqft", filters.maxSqft);
@@ -824,11 +837,8 @@ export default function MlsSearchPage() {
                   data-testid="map-popup-card"
                 >
                   {/* Photo */}
-                  <Link href={`/mls/${popupListing.id}`}>
-                    <a
-                      className="w-[140px] h-[140px] shrink-0 bg-secondary block"
-                      style={{ textDecoration: "none" }}
-                    >
+                  <Link href={`/mls/${popupListing.id}`} className="w-[140px] h-[140px] shrink-0 bg-secondary block"
+                      style={{ textDecoration: "none" }}>
                       {popupListing.heroImage ? (
                         <img
                           src={popupListing.heroImage}
@@ -840,14 +850,11 @@ export default function MlsSearchPage() {
                           <MapPin className="w-6 h-6" />
                         </div>
                       )}
-                    </a>
+                    
                   </Link>
                   {/* Details */}
-                  <Link href={`/mls/${popupListing.id}`}>
-                    <a
-                      className="flex-1 p-3.5 pr-9 block min-w-0"
-                      style={{ textDecoration: "none", color: "#0a0a0a" }}
-                    >
+                  <Link href={`/mls/${popupListing.id}`} className="flex-1 p-3.5 pr-9 block min-w-0"
+                      style={{ textDecoration: "none", color: "#0a0a0a" }}>
                       <div
                         style={{
                           fontWeight: 800,
@@ -899,7 +906,7 @@ export default function MlsSearchPage() {
                           Listed by {popupListing.listOffice}
                         </div>
                       )}
-                    </a>
+                    
                   </Link>
                   {/* Close */}
                   <button
@@ -1738,12 +1745,9 @@ function ResultCard({
   onHover?: () => void;
 }) {
   return (
-    <Link href={`/mls/${listing.id}`}>
-      <a
-        onMouseEnter={onHover}
+    <Link href={`/mls/${listing.id}`} onMouseEnter={onHover}
         className={`flex gap-4 px-5 py-4 hover:bg-secondary/40 transition cursor-pointer ${selected ? "bg-secondary/60" : ""}`}
-        data-testid={`result-card-${listing.id}`}
-      >
+        data-testid={`result-card-${listing.id}`}>
         <div className="w-[150px] h-[110px] shrink-0 rounded-lg overflow-hidden bg-secondary relative">
           {listing.heroImage ? (
             <img
@@ -1811,7 +1815,7 @@ function ResultCard({
             </div>
           )}
         </div>
-      </a>
+      
     </Link>
   );
 }

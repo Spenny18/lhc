@@ -87,8 +87,7 @@ export default function CondosIndexPage() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {list.map((b) => (
-                  <Link key={b.slug} href={`/condos/${b.slug}`}>
-                    <a className="group block">
+                  <Link key={b.slug} href={`/condos/${b.slug}`} className="group block">
                       <div className="relative aspect-[4/3] rounded-sm overflow-hidden bg-secondary">
                         <img
                           src={b.heroImage}
@@ -112,7 +111,7 @@ export default function CondosIndexPage() {
                           {b.builtIn != null && <span>{b.builtIn}</span>}
                         </div>
                       </div>
-                    </a>
+                    
                   </Link>
                 ))}
               </div>
@@ -132,11 +131,10 @@ export default function CondosIndexPage() {
             don't see what you're looking for, ask — pre-list and pocket
             inventory regularly comes through.
           </p>
-          <Link href="/contact">
-            <a className="inline-flex items-center gap-2 mt-7 px-6 py-3 bg-foreground text-background font-display text-[11px] tracking-[0.22em] hover:bg-foreground/90 transition-colors">
+          <Link href="/contact" className="inline-flex items-center gap-2 mt-7 px-6 py-3 bg-foreground text-background font-display text-[11px] tracking-[0.22em] hover:bg-foreground/90 transition-colors">
               GET IN TOUCH
               <ArrowRight className="w-3.5 h-3.5" strokeWidth={1.6} />
-            </a>
+            
           </Link>
         </div>
       </section>

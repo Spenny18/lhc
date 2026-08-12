@@ -44,6 +44,8 @@ import BlogIndexPage from "@/pages/blog-index";
 import BlogDetailPage from "@/pages/blog-detail";
 import ContactPage from "@/pages/contact";
 import HomeEvaluationPage from "@/pages/home-evaluation";
+import WorkWithDetailPage, { WorkWithIndexPage } from "@/pages/work-with";
+import AssignmentsPage from "@/pages/assignments";
 
 // Admin (existing dashboard) pages — mounted under /admin/*
 import NotFound from "@/pages/not-found";
@@ -120,6 +122,9 @@ function AppRouter() {
       <Route path="/blog/:slug" component={BlogDetailPage} />
       <Route path="/contact" component={ContactPage} />
       <Route path="/home-evaluation" component={HomeEvaluationPage} />
+      <Route path="/work-with" component={WorkWithIndexPage} />
+      <Route path="/work-with/:slug" component={WorkWithDetailPage} />
+      <Route path="/assignments" component={AssignmentsPage} />
 
       {/* Public-facing single-listing page (slug-based, agent's own listings) */}
       <Route path="/p/:slug" component={ListingPublicPage} />
@@ -194,13 +199,25 @@ function AppRouter() {
   );
 }
 
-function App() {
+// `ssrPath`/`ssrSearch` pin wouter to the requested URL during server
+// rendering; `client` lets the server pass a per-request QueryClient (the
+// browser keeps using the module singleton). Both are undefined in the
+// browser, so client behaviour is unchanged.
+function App({
+  ssrPath,
+  ssrSearch,
+  client = queryClient,
+}: {
+  ssrPath?: string;
+  ssrSearch?: string;
+  client?: typeof queryClient;
+} = {}) {
   return (
-    <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={client}>
       <ThemeProvider>
         <TooltipProvider>
           <Toaster />
-          <Router>
+          <Router ssrPath={ssrPath} ssrSearch={ssrSearch}>
             <AuthProvider>
               <AppRouter />
             </AuthProvider>

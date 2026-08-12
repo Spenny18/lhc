@@ -58,10 +58,9 @@ export default function AccountToursPage() {
   return (
     <PublicLayout>
       <section className="max-w-4xl mx-auto px-6 lg:px-10 pt-12 pb-24">
-        <Link href="/account/dashboard">
-          <a className="inline-flex items-center gap-1 text-xs font-display tracking-[0.22em] text-muted-foreground hover:text-foreground">
+        <Link href="/account/dashboard" className="inline-flex items-center gap-1 text-xs font-display tracking-[0.22em] text-muted-foreground hover:text-foreground">
             <ChevronLeft className="w-3 h-3" /> BACK TO DASHBOARD
-          </a>
+          
         </Link>
 
         <div className="mt-6">
@@ -85,10 +84,9 @@ export default function AccountToursPage() {
               On any listing detail page, click "Request a showing" to ask
               Spencer to walk you through the property in person.
             </p>
-            <Link href="/mls">
-              <a className="mt-6 inline-flex items-center font-display text-[11px] tracking-[0.22em] underline">
+            <Link href="/mls" className="mt-6 inline-flex items-center font-display text-[11px] tracking-[0.22em] underline">
                 BROWSE MLS LISTINGS
-              </a>
+              
             </Link>
           </div>
         ) : (
@@ -99,8 +97,7 @@ export default function AccountToursPage() {
               const isCancellable = t.status === "requested" || t.status === "confirmed";
               return (
                 <div key={t.id} className="border border-border rounded-sm p-5 flex flex-col md:flex-row gap-5">
-                  <Link href={`/mls/${t.listingId}`}>
-                    <a className="md:w-48 md:flex-shrink-0 block bg-muted h-32">
+                  <Link href={`/mls/${t.listingId}`} className="md:w-48 md:flex-shrink-0 block bg-muted h-32">
                       {listing?.heroImage ? (
                         <img
                           src={listing.heroImage}
@@ -112,12 +109,11 @@ export default function AccountToursPage() {
                           No image
                         </div>
                       )}
-                    </a>
+                    
                   </Link>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-3 flex-wrap">
-                      <Link href={`/mls/${t.listingId}`}>
-                        <a className="block group min-w-0">
+                      <Link href={`/mls/${t.listingId}`} className="block group min-w-0">
                           <div className="font-serif text-xl group-hover:underline truncate">
                             {listing ? formatPriceCompact(listing.listPrice) : "—"}
                           </div>
@@ -125,7 +121,7 @@ export default function AccountToursPage() {
                             <MapPin className="w-3.5 h-3.5" strokeWidth={1.5} />
                             <span className="truncate">{listing?.fullAddress ?? t.listingId}</span>
                           </div>
-                        </a>
+                        
                       </Link>
                       <span className={`px-2.5 py-1 font-display text-[10px] tracking-[0.22em] rounded-sm ${status.tone}`}>
                         {status.label.toUpperCase()}

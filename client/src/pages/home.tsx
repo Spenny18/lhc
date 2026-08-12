@@ -247,14 +247,11 @@ function FeaturedListings({
               Featured Calgary luxury listings.
             </h2>
           </div>
-          <Link href="/mls">
-            <a
-              className="hidden md:inline-flex items-center gap-2 font-display text-[11px] tracking-[0.22em] text-foreground hover:gap-3 transition-all"
-              data-testid="link-view-all-listings"
-            >
+          <Link href="/mls" className="hidden md:inline-flex items-center gap-2 font-display text-[11px] tracking-[0.22em] text-foreground hover:gap-3 transition-all"
+              data-testid="link-view-all-listings">
               VIEW ALL LISTINGS
               <ArrowRight className="w-3.5 h-3.5" strokeWidth={1.6} />
-            </a>
+            
           </Link>
         </div>
 
@@ -283,11 +280,10 @@ function FeaturedListings({
         )}
 
         <div className="mt-10 md:hidden text-center">
-          <Link href="/mls">
-            <a className="inline-flex items-center gap-2 font-display text-[11px] tracking-[0.22em] text-foreground">
+          <Link href="/mls" className="inline-flex items-center gap-2 font-display text-[11px] tracking-[0.22em] text-foreground">
               VIEW ALL LISTINGS
               <ArrowRight className="w-3.5 h-3.5" strokeWidth={1.6} />
-            </a>
+            
           </Link>
         </div>
       </div>
@@ -322,11 +318,8 @@ function NeighbourhoodPicker({
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
           {neighbourhoods.map((n) => (
-            <Link key={n.slug} href={`/neighbourhoods/${n.slug}`}>
-              <a
-                className="group relative block aspect-[5/6] overflow-hidden rounded-sm bg-black"
-                data-testid={`card-neighbourhood-${n.slug}`}
-              >
+            <Link key={n.slug} href={`/neighbourhoods/${n.slug}`} className="group relative block aspect-[5/6] overflow-hidden rounded-sm bg-black"
+                data-testid={`card-neighbourhood-${n.slug}`}>
                 <img
                   src={n.heroImage}
                   alt={n.name}
@@ -349,7 +342,7 @@ function NeighbourhoodPicker({
                     <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" strokeWidth={1.8} />
                   </div>
                 </div>
-              </a>
+              
             </Link>
           ))}
         </div>
@@ -394,14 +387,11 @@ function WhyUs() {
             branded swag — they want a transaction handled with judgment, by
             someone who actually answers the phone. That's what I do.
           </p>
-          <Link href="/about">
-            <a
-              className="mt-10 inline-flex items-center gap-2 font-display text-[11px] tracking-[0.22em] text-foreground hover:gap-3 transition-all"
-              data-testid="link-about-spencer"
-            >
+          <Link href="/about" className="mt-10 inline-flex items-center gap-2 font-display text-[11px] tracking-[0.22em] text-foreground hover:gap-3 transition-all"
+              data-testid="link-about-spencer">
               READ MORE ABOUT SPENCER
               <ArrowRight className="w-3.5 h-3.5" strokeWidth={1.6} />
-            </a>
+            
           </Link>
         </div>
 
@@ -443,24 +433,18 @@ function BlogTeaser({ posts }: { posts: PublicBlogPost[] }) {
               Notes from the Calgary luxury market.
             </h2>
           </div>
-          <Link href="/blog">
-            <a
-              className="hidden md:inline-flex items-center gap-2 font-display text-[11px] tracking-[0.22em] text-foreground hover:gap-3 transition-all"
-              data-testid="link-all-posts"
-            >
+          <Link href="/blog" className="hidden md:inline-flex items-center gap-2 font-display text-[11px] tracking-[0.22em] text-foreground hover:gap-3 transition-all"
+              data-testid="link-all-posts">
               ALL ENTRIES
               <ArrowRight className="w-3.5 h-3.5" strokeWidth={1.6} />
-            </a>
+            
           </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-10">
           {posts.slice(0, 6).map((p) => (
-            <Link key={p.slug} href={`/blog/${p.slug}`}>
-              <a
-                className="group block"
-                data-testid={`card-blog-${p.slug}`}
-              >
+            <Link key={p.slug} href={`/blog/${p.slug}`} className="group block"
+                data-testid={`card-blog-${p.slug}`}>
                 <div className="aspect-[4/3] overflow-hidden rounded-sm bg-secondary">
                   <img
                     src={p.heroImage}
@@ -478,7 +462,7 @@ function BlogTeaser({ posts }: { posts: PublicBlogPost[] }) {
                 <p className="mt-3 text-[14px] text-muted-foreground leading-relaxed line-clamp-3">
                   {p.excerpt}
                 </p>
-              </a>
+              
             </Link>
           ))}
         </div>
@@ -749,20 +733,22 @@ function ContactCTA() {
 
 // --- A1: Recent Sales (3-up sold listings) ----------------------------
 function RecentSales() {
+  // Real listing photography for Spencer's actual sales (same images the
+  // old WordPress homepage used) — not stock stand-ins.
   const sales = [
     {
       address: "102 Malibou Road SW",
-      img: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1600&h=1200&fit=crop&q=80",
+      img: "https://luxuryhomescalgary.ca/wp-content/uploads/2024/12/005-102-Malibou-rd-TW-2-scaled-1.jpg",
       caption: "Sold · Mayfair / Bel-Aire",
     },
     {
       address: "1105 East Chestermere Drive",
-      img: "https://images.unsplash.com/photo-1613977257363-707ba9348227?w=1600&h=1200&fit=crop&q=80",
+      img: "https://luxuryhomescalgary.ca/wp-content/uploads/2025/12/029-1105-E-chestermere-DR-14-scaled-1-scaled.jpg",
       caption: "Sold · East Chestermere",
     },
     {
       address: "43 Red Willow Crescent West",
-      img: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1600&h=1200&fit=crop&q=80",
+      img: "https://luxuryhomescalgary.ca/wp-content/uploads/2025/12/dg_006.jpeg",
       caption: "Sold · Heritage Pointe",
     },
   ];
@@ -781,14 +767,11 @@ function RecentSales() {
               Recent sales.
             </h2>
           </div>
-          <Link href="/sold">
-            <a
-              className="hidden md:inline-flex items-center gap-2 font-display text-[11px] tracking-[0.22em] text-foreground hover:gap-3 transition-all"
-              data-testid="link-view-more-sold"
-            >
+          <Link href="/contact" className="hidden md:inline-flex items-center gap-2 font-display text-[11px] tracking-[0.22em] text-foreground hover:gap-3 transition-all"
+              data-testid="link-view-more-sold">
               VIEW MORE RECENT SALES
               <ArrowRight className="w-3.5 h-3.5" strokeWidth={1.6} />
-            </a>
+            
           </Link>
         </div>
 
@@ -817,11 +800,10 @@ function RecentSales() {
         </div>
 
         <div className="mt-10 md:hidden text-center">
-          <Link href="/sold">
-            <a className="inline-flex items-center gap-2 font-display text-[11px] tracking-[0.22em] text-foreground">
+          <Link href="/contact" className="inline-flex items-center gap-2 font-display text-[11px] tracking-[0.22em] text-foreground">
               VIEW MORE RECENT SALES
               <ArrowRight className="w-3.5 h-3.5" strokeWidth={1.6} />
-            </a>
+            
           </Link>
         </div>
       </div>
@@ -840,7 +822,7 @@ function AuthorityBlock() {
         <div className="lg:col-span-5 order-2 lg:order-1">
           <div className="aspect-[4/5] overflow-hidden rounded-sm bg-secondary">
             <img
-              src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&h=1500&fit=crop&q=80"
+              src="https://luxuryhomescalgary.ca/wp-content/uploads/2024/10/006-102-Malibou-rd-1-1-scaled.jpg"
               alt="Calgary luxury home sold by Spencer Rivers"
               loading="lazy"
               className="w-full h-full object-cover"
@@ -861,22 +843,16 @@ function AuthorityBlock() {
             Calgary's six prestige communities.
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
-            <Link href="/about">
-              <a
-                className="inline-flex items-center gap-2 px-6 h-12 bg-foreground text-background font-display text-[11px] tracking-[0.22em]"
-                data-testid="link-authority-about"
-              >
+            <Link href="/about" className="inline-flex items-center gap-2 px-6 h-12 bg-foreground text-background font-display text-[11px] tracking-[0.22em]"
+                data-testid="link-authority-about">
                 ABOUT SPENCER
                 <ArrowRight className="w-3.5 h-3.5" strokeWidth={1.6} />
-              </a>
+              
             </Link>
-            <Link href="/contact">
-              <a
-                className="inline-flex items-center gap-2 px-6 h-12 border border-foreground font-display text-[11px] tracking-[0.22em]"
-                data-testid="link-authority-contact"
-              >
+            <Link href="/contact" className="inline-flex items-center gap-2 px-6 h-12 border border-foreground font-display text-[11px] tracking-[0.22em]"
+                data-testid="link-authority-contact">
                 CONTACT SPENCER
-              </a>
+              
             </Link>
           </div>
         </div>
@@ -923,14 +899,11 @@ function NoFluffProcess() {
         </div>
 
         <div className="mt-12">
-          <Link href="/contact">
-            <a
-              className="inline-flex items-center gap-2 px-6 h-12 bg-foreground text-background font-display text-[11px] tracking-[0.22em]"
-              data-testid="link-nofluff-contact"
-            >
+          <Link href="/contact" className="inline-flex items-center gap-2 px-6 h-12 bg-foreground text-background font-display text-[11px] tracking-[0.22em]"
+              data-testid="link-nofluff-contact">
               CONTACT SPENCER
               <ArrowRight className="w-3.5 h-3.5" strokeWidth={1.6} />
-            </a>
+            
           </Link>
         </div>
       </div>
@@ -986,14 +959,11 @@ function CalgaryZones() {
               We know them all — from the prestige streets of the inner
               southwest to the new-construction communities of the northeast.
             </p>
-            <Link href="/neighbourhoods">
-              <a
-                className="mt-8 inline-flex items-center gap-2 font-display text-[11px] tracking-[0.22em] text-foreground hover:gap-3 transition-all"
-                data-testid="link-view-all-zones"
-              >
+            <Link href="/neighbourhoods" className="mt-8 inline-flex items-center gap-2 font-display text-[11px] tracking-[0.22em] text-foreground hover:gap-3 transition-all"
+                data-testid="link-view-all-zones">
                 VIEW ALL AREAS
                 <ArrowRight className="w-3.5 h-3.5" strokeWidth={1.6} />
-              </a>
+              
             </Link>
           </div>
 
@@ -1319,14 +1289,11 @@ function BuyerSellerTabs() {
         </Tabs>
 
         <div className="mt-12 lg:mt-16 text-center">
-          <Link href="/home-evaluation">
-            <a
-              className="inline-flex items-center gap-2 px-7 h-12 bg-foreground text-background font-display text-[11px] tracking-[0.22em]"
-              data-testid="link-tabs-home-eval"
-            >
+          <Link href="/home-evaluation" className="inline-flex items-center gap-2 px-7 h-12 bg-foreground text-background font-display text-[11px] tracking-[0.22em]"
+              data-testid="link-tabs-home-eval">
               GET YOUR CUSTOM HOME VALUATION
               <ArrowRight className="w-3.5 h-3.5" strokeWidth={1.6} />
-            </a>
+            
           </Link>
         </div>
       </div>
@@ -1378,49 +1345,49 @@ function AudienceSegments() {
       icon: Sparkles,
       title: "Luxury Properties",
       body: "Shop Calgary's finest estates, penthouses, and villas. Private showings, VIP off-market access, and expert negotiation for $1M+ buyers.",
-      href: "/mls?minPrice=1500000",
+      href: "/work-with/luxury-properties",
     },
     {
       icon: Home,
       title: "First-Time Home Sellers",
       body: "Sell your first home with confidence. We walk you through pricing, timing, prep, and every form so nothing gets missed.",
-      href: "/home-evaluation",
+      href: "/work-with/first-time-home-sellers",
     },
     {
       icon: Heart,
       title: "Empty Nesters",
       body: "Right-size without compromise. Downsize into a luxury condo, lock-and-leave bungalow, or curated build — without losing equity in the move.",
-      href: "/condos",
+      href: "/work-with/empty-nesters",
     },
     {
       icon: Compass,
       title: "First-Time Home Buyers",
       body: "Buy smart, not fast. We coach you through financing, inspections, and the Calgary submarkets where your budget goes furthest.",
-      href: "/mls",
+      href: "/work-with/first-time-home-buyers",
     },
     {
       icon: Building2,
       title: "Innercity Properties",
       body: "Upper Mount Royal, Elbow Park, Roxboro, Mission, Beltline — Calgary's most walkable luxury submarkets.",
-      href: "/neighbourhoods",
+      href: "/work-with/innercity-properties",
     },
     {
       icon: TrendingUp,
       title: "Move-Ups",
       body: "Trading up to your forever home? We coordinate the sell-and-buy sequence so you're not stuck between two mortgages.",
-      href: "/home-evaluation",
+      href: "/work-with/move-ups",
     },
     {
       icon: Users,
       title: "Family-Focused Properties",
       body: "School zones, cul-de-sacs, oversized lots, basement suites — the Calgary submarkets built for growing families.",
-      href: "/neighbourhoods",
+      href: "/work-with/family-focused-properties",
     },
     {
       icon: Briefcase,
       title: "Urban Properties",
       body: "Loft condos, executive townhomes, and walkable inner-city neighbourhoods for professionals and downsizers.",
-      href: "/condos",
+      href: "/work-with/urban-properties",
     },
   ];
   return (
@@ -1439,11 +1406,8 @@ function AudienceSegments() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6">
           {segments.map(({ icon: Icon, title, body, href }) => (
-            <Link key={title} href={href}>
-              <a
-                className="group block border border-border rounded-sm p-7 lg:p-8 bg-card hover:border-foreground/40 transition-colors"
-                data-testid={`card-segment-${title.toLowerCase().replace(/\s/g, "-")}`}
-              >
+            <Link key={title} href={href} className="group block border border-border rounded-sm p-7 lg:p-8 bg-card hover:border-foreground/40 transition-colors"
+                data-testid={`card-segment-${title.toLowerCase().replace(/\s/g, "-")}`}>
                 <Icon className="w-6 h-6 text-foreground" strokeWidth={1.4} />
                 <h3 className="mt-5 font-serif text-[20px] leading-tight">
                   {title}
@@ -1455,7 +1419,7 @@ function AudienceSegments() {
                   LEARN MORE
                   <ArrowRight className="w-3 h-3" strokeWidth={1.8} />
                 </div>
-              </a>
+              
             </Link>
           ))}
         </div>
@@ -1504,11 +1468,8 @@ function NeighbourhoodLinkGrid() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-border border border-border">
           {nbhds.map((n) => (
-            <Link key={n.slug} href={`/neighbourhoods/${n.slug}`}>
-              <a
-                className="group flex items-center justify-between px-6 py-5 lg:py-6 bg-background hover:bg-secondary/40 transition-colors"
-                data-testid={`link-nbhd-${n.slug}`}
-              >
+            <Link key={n.slug} href={`/neighbourhoods/${n.slug}`} className="group flex items-center justify-between px-6 py-5 lg:py-6 bg-background hover:bg-secondary/40 transition-colors"
+                data-testid={`link-nbhd-${n.slug}`}>
                 <span className="font-serif text-[20px] lg:text-[22px]">
                   {n.name}
                 </span>
@@ -1516,20 +1477,17 @@ function NeighbourhoodLinkGrid() {
                   className="w-4 h-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all"
                   strokeWidth={1.4}
                 />
-              </a>
+              
             </Link>
           ))}
         </div>
 
         <div className="mt-10 text-center">
-          <Link href="/neighbourhoods">
-            <a
-              className="inline-flex items-center gap-2 font-display text-[11px] tracking-[0.22em] text-foreground hover:gap-3 transition-all"
-              data-testid="link-view-all-nbhds"
-            >
+          <Link href="/neighbourhoods" className="inline-flex items-center gap-2 font-display text-[11px] tracking-[0.22em] text-foreground hover:gap-3 transition-all"
+              data-testid="link-view-all-nbhds">
               VIEW ALL AREAS
               <ArrowRight className="w-3.5 h-3.5" strokeWidth={1.6} />
-            </a>
+            
           </Link>
         </div>
       </div>
@@ -1592,30 +1550,21 @@ function LuxuryMarketOverview() {
         </div>
 
         <div className="mt-14 lg:mt-20 flex flex-wrap justify-center gap-4">
-          <Link href="/mls">
-            <a
-              className="inline-flex items-center gap-2 px-6 h-12 bg-foreground text-background font-display text-[11px] tracking-[0.22em]"
-              data-testid="link-vip-listings"
-            >
+          <Link href="/mls" className="inline-flex items-center gap-2 px-6 h-12 bg-foreground text-background font-display text-[11px] tracking-[0.22em]"
+              data-testid="link-vip-listings">
               ACCESS VIP LISTINGS
               <ArrowRight className="w-3.5 h-3.5" strokeWidth={1.6} />
-            </a>
+            
           </Link>
-          <Link href="/contact">
-            <a
-              className="inline-flex items-center gap-2 px-6 h-12 border border-foreground font-display text-[11px] tracking-[0.22em]"
-              data-testid="link-off-market"
-            >
+          <Link href="/contact" className="inline-flex items-center gap-2 px-6 h-12 border border-foreground font-display text-[11px] tracking-[0.22em]"
+              data-testid="link-off-market">
               OFF-MARKET LISTINGS
-            </a>
+            
           </Link>
-          <Link href="/home-evaluation">
-            <a
-              className="inline-flex items-center gap-2 px-6 h-12 border border-foreground font-display text-[11px] tracking-[0.22em]"
-              data-testid="link-custom-insight"
-            >
+          <Link href="/home-evaluation" className="inline-flex items-center gap-2 px-6 h-12 border border-foreground font-display text-[11px] tracking-[0.22em]"
+              data-testid="link-custom-insight">
               GET CUSTOM MARKET INSIGHT
-            </a>
+            
           </Link>
         </div>
       </div>

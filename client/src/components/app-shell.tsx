@@ -96,15 +96,11 @@ export function AppShell({
               <Link
                 key={item.href}
                 href={item.href}
-                data-testid={`nav-${item.label.toLowerCase().replace(/\s/g, "-")}`}
-              >
-                <a
-                  className={`flex items-center gap-3 px-3 py-2 rounded-sm transition-all group ${
+                data-testid={`nav-${item.label.toLowerCase().replace(/\s/g, "-")}`} className={`flex items-center gap-3 px-3 py-2 rounded-sm transition-all group ${
                     active
                       ? "bg-sidebar-accent text-sidebar-accent-foreground"
                       : "text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
-                  }`}
-                >
+                  }`}>
                   <Icon className="w-4 h-4 shrink-0" strokeWidth={1.6} />
                   <span
                     className="flex-1 font-display text-[11px] tracking-[0.16em]"
@@ -117,7 +113,7 @@ export function AppShell({
                       {item.badge}
                     </span>
                   ) : null}
-                </a>
+                
               </Link>
             );
           })}
@@ -129,14 +125,11 @@ export function AppShell({
             const active = location === item.href;
             const Icon = item.icon;
             return (
-              <Link key={item.href} href={item.href} data-testid={`nav-${item.label.toLowerCase()}`}>
-                <a
-                  className={`flex items-center gap-3 px-3 py-2 rounded-sm transition-all ${
+              <Link key={item.href} href={item.href} data-testid={`nav-${item.label.toLowerCase()}`} className={`flex items-center gap-3 px-3 py-2 rounded-sm transition-all ${
                     active
                       ? "bg-sidebar-accent text-sidebar-accent-foreground"
                       : "text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
-                  }`}
-                >
+                  }`}>
                   <Icon className="w-4 h-4 shrink-0" strokeWidth={1.6} />
                   <span
                     className="font-display text-[11px] tracking-[0.16em]"
@@ -144,7 +137,7 @@ export function AppShell({
                   >
                     {item.label.toUpperCase()}
                   </span>
-                </a>
+                
               </Link>
             );
           })}

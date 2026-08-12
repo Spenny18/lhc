@@ -20,6 +20,7 @@ import {
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { apiUrl } from "@/lib/queryClient";
+import { ClientOnly } from "@/components/client-only";
 
 const propertyIcon = L.divIcon({
   className: "rivers-detail-marker",
@@ -120,7 +121,18 @@ export interface NeighbourhoodPoisProps {
   caption?: string;
 }
 
-export function NeighbourhoodPois({
+// Gated behind ClientOnly at the export so every usage site (neighbourhood,
+// condo, and MLS detail pages) skips it during SSR/hydration in one place —
+// the whole component is Leaflet-centric and can only run in a browser.
+export function NeighbourhoodPois(props: NeighbourhoodPoisProps) {
+  return (
+    <ClientOnly>
+      <NeighbourhoodPoisInner {...props} />
+    </ClientOnly>
+  );
+}
+
+function NeighbourhoodPoisInner({
   lat,
   lng,
   poiUrl,

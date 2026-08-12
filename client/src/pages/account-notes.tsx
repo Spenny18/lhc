@@ -47,10 +47,9 @@ export default function AccountNotesPage() {
   return (
     <PublicLayout>
       <section className="max-w-4xl mx-auto px-6 lg:px-10 pt-12 pb-24">
-        <Link href="/account/dashboard">
-          <a className="inline-flex items-center gap-1 text-xs font-display tracking-[0.22em] text-muted-foreground hover:text-foreground">
+        <Link href="/account/dashboard" className="inline-flex items-center gap-1 text-xs font-display tracking-[0.22em] text-muted-foreground hover:text-foreground">
             <ChevronLeft className="w-3 h-3" /> BACK TO DASHBOARD
-          </a>
+          
         </Link>
 
         <div className="mt-6">
@@ -82,8 +81,7 @@ export default function AccountNotesPage() {
               const listing = listingQueries[idx]?.data;
               return (
                 <div key={n.id} className="border border-border rounded-sm overflow-hidden flex flex-col md:flex-row">
-                  <Link href={`/mls/${n.mlsId}`}>
-                    <a className="md:w-56 md:flex-shrink-0 block bg-muted">
+                  <Link href={`/mls/${n.mlsId}`} className="md:w-56 md:flex-shrink-0 block bg-muted">
                       {listing?.heroImage ? (
                         <img
                           src={listing.heroImage}
@@ -95,11 +93,10 @@ export default function AccountNotesPage() {
                           No image
                         </div>
                       )}
-                    </a>
+                    
                   </Link>
                   <div className="p-5 flex-1 min-w-0">
-                    <Link href={`/mls/${n.mlsId}`}>
-                      <a className="block group">
+                    <Link href={`/mls/${n.mlsId}`} className="block group">
                         <div className="font-serif text-xl group-hover:underline">
                           {listing ? formatPriceCompact(listing.listPrice) : "—"}
                         </div>
@@ -107,7 +104,7 @@ export default function AccountNotesPage() {
                           <MapPin className="w-3.5 h-3.5" strokeWidth={1.5} />
                           <span className="truncate">{listing?.fullAddress ?? n.mlsId}</span>
                         </div>
-                      </a>
+                      
                     </Link>
                     <div className="mt-3 text-[14px] whitespace-pre-line leading-relaxed">
                       {n.note}

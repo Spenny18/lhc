@@ -1,6 +1,7 @@
 import { build as esbuild } from "esbuild";
 import { build as viteBuild } from "vite";
 import { rm, readFile } from "node:fs/promises";
+import path from "node:path";
 
 // server deps to bundle to reduce openat(2) syscalls
 // which helps cold start times
@@ -35,6 +36,24 @@ async function buildAll() {
 
   console.log("building client...");
   await viteBuild();
+
+  // SSR render bundle (client/src/entry-server.tsx → dist/ssr/entry-server.cjs).
+  // noExternal bundles every dependency into one self-contained CJS file, so
+  // the express bundle (also CJS) can require() it without touching the
+  // ESM/CJS interop of individual packages, and the Dockerfile needs no
+  // changes — dist/ is copied wholesale.
+  console.log("building ssr bundle...");
+  await viteBuild({
+    build: {
+      ssr: "src/entry-server.tsx",
+      outDir: path.resolve("dist/ssr"),
+      emptyOutDir: true,
+      rollupOptions: {
+        output: { format: "cjs", entryFileNames: "entry-server.cjs" },
+      },
+    },
+    ssr: { noExternal: true },
+  });
 
   console.log("building server...");
   const pkg = JSON.parse(await readFile("package.json", "utf-8"));

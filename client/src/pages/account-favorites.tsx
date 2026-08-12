@@ -42,10 +42,9 @@ export default function AccountFavoritesPage() {
   return (
     <PublicLayout>
       <section className="max-w-5xl mx-auto px-6 lg:px-10 pt-12 pb-24">
-        <Link href="/account/dashboard">
-          <a className="inline-flex items-center gap-1 text-xs font-display tracking-[0.22em] text-muted-foreground hover:text-foreground">
+        <Link href="/account/dashboard" className="inline-flex items-center gap-1 text-xs font-display tracking-[0.22em] text-muted-foreground hover:text-foreground">
             <ChevronLeft className="w-3 h-3" /> BACK TO DASHBOARD
-          </a>
+          
         </Link>
 
         <div className="mt-6 flex items-end justify-between gap-6 flex-wrap">
@@ -70,10 +69,9 @@ export default function AccountFavoritesPage() {
               Browse the MLS and tap the heart on any listing to save it here.
               We'll keep an eye on price changes for you.
             </p>
-            <Link href="/mls">
-              <a className="mt-6 inline-flex items-center font-display text-[11px] tracking-[0.22em] underline">
+            <Link href="/mls" className="mt-6 inline-flex items-center font-display text-[11px] tracking-[0.22em] underline">
                 BROWSE MLS LISTINGS
-              </a>
+              
             </Link>
           </div>
         ) : (
@@ -82,8 +80,7 @@ export default function AccountFavoritesPage() {
               const listing = listingQueries[idx]?.data;
               return (
                 <div key={f.id} className="border border-border rounded-sm overflow-hidden group relative">
-                  <Link href={`/mls/${f.mlsId}`}>
-                    <a className="block">
+                  <Link href={`/mls/${f.mlsId}`} className="block">
                       {listing?.heroImage ? (
                         <div className="aspect-[4/3] bg-muted overflow-hidden">
                           <img
@@ -115,7 +112,7 @@ export default function AccountFavoritesPage() {
                           </div>
                         )}
                       </div>
-                    </a>
+                    
                   </Link>
                   <button
                     onClick={() => removeFavorite.mutate(f.mlsId)}
