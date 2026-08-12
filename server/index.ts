@@ -2,6 +2,7 @@ import "dotenv/config";
 import express, { Response, NextFunction } from 'express';
 import type { Request } from 'express';
 import { registerRoutes } from "./routes";
+import { redirectForPath } from "./redirects";
 import { serveStatic } from "./static";
 import { createServer } from "node:http";
 import { startSyncCron } from "./rets-sync";
@@ -35,6 +36,15 @@ app.use((req, res, next) => {
   if (req.hostname === "www.riversrealestate.ca") {
     return res.redirect(301, `https://riversrealestate.ca${req.originalUrl}`);
   }
+  next();
+});
+
+// 301s for legacy WordPress-era URLs (see server/redirects.ts for the
+// audited map). Sits before all routes so dev and prod behave identically.
+app.use((req, res, next) => {
+  if (req.method !== "GET" && req.method !== "HEAD") return next();
+  const target = redirectForPath(req.path);
+  if (target && target !== req.path) return res.redirect(301, target);
   next();
 });
 
