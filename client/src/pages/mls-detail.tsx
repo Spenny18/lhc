@@ -29,11 +29,7 @@ import { ListingCard } from "@/components/listing-card";
 import { NeighbourhoodPois } from "@/components/neighbourhood-pois";
 import { useAccount, useNote, useSaveNote, useRequestTour } from "@/lib/account";
 import { Lock, FileText, CalendarPlus } from "lucide-react";
-import {
-  SeoHead,
-  buildOrgPersonSchema,
-  buildRealEstateListingSchema,
-} from "@/components/seo-head";
+import { SeoHead } from "@/components/seo-head";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -127,33 +123,14 @@ export default function MlsDetailPage() {
 
   return (
     <>
+      {/* Schema (RealEstateListing, breadcrumbs) is server-emitted by
+          metaForPath — this only keeps title/meta current on SPA nav. */}
       <SeoHead
         title={seoTitle}
         description={seoDesc}
         canonical={canonicalUrl}
         ogImage={heroImg}
         ogType="article"
-        breadcrumbs={[
-          { label: "Home", url: "https://riversrealestate.ca/" },
-          { label: "MLS Search", url: "https://riversrealestate.ca/mls" },
-          { label: data.fullAddress, url: canonicalUrl },
-        ]}
-        schemas={[
-          buildOrgPersonSchema(),
-          buildRealEstateListingSchema({
-            url: canonicalUrl,
-            name: data.fullAddress,
-            description: seoDesc,
-            address: data.fullAddress,
-            lat: data.lat ?? undefined,
-            lng: data.lng ?? undefined,
-            price: data.listPrice,
-            beds: data.beds ?? undefined,
-            baths: data.baths ?? undefined,
-            sqft: data.sqft ?? undefined,
-            image: heroImg,
-          }),
-        ]}
       />
       <MlsDetailBody listing={data} />
     </>

@@ -26,11 +26,7 @@ import {
   buildSubjectPin,
   FitBoundsOnce,
 } from "@/components/rivers-map";
-import {
-  SeoHead,
-  buildOrgPersonSchema,
-  buildPlaceSchema,
-} from "@/components/seo-head";
+import { SeoHead } from "@/components/seo-head";
 
 export default function NeighbourhoodDetailPage() {
   const [, params] = useRoute<{ slug: string }>("/neighbourhoods/:slug");
@@ -84,8 +80,11 @@ export default function NeighbourhoodDetailPage() {
   const heroCredit = data.heroCredit ?? null;
 
   const seoTitle = `${data.name} Homes for Sale - Luxury Homes Calgary`;
-  const seoDesc = `Browse luxury homes for sale in ${data.name}, Calgary. ${(data as any).activeCount ?? "Live"} active MLS listings, neighbourhood guide, schools, and lifestyle.`;
+  const seoDesc = `Browse luxury homes for sale in ${data.name}, Calgary. Active MLS listings, neighbourhood guide, schools, and lifestyle.`;
   const canonicalUrl = `https://riversrealestate.ca/neighbourhoods/${data.slug}`;
+  // Visible on-page FAQ content (rendered in <FaqAccordion> below). No longer
+  // emitted as FAQPage JSON-LD — Google dropped FAQ rich results in May 2026,
+  // and all schema is server-emitted now.
   const seoFaq = [
     {
       question: `Where is ${data.name} in Calgary?`,
@@ -127,30 +126,15 @@ export default function NeighbourhoodDetailPage() {
 
   return (
     <PublicLayout transparentHeader>
+      {/* Schema (Place, breadcrumbs) is server-emitted by metaForPath —
+          this only keeps title/meta current on SPA nav. Keep these strings
+          in sync with the /neighbourhoods/:slug branch there. */}
       <SeoHead
         title={seoTitle}
         description={seoDesc}
         canonical={canonicalUrl}
         ogImage={(data as any).heroImage}
         ogType="place"
-        faq={seoFaq}
-        breadcrumbs={[
-          { label: "Home", url: "https://riversrealestate.ca/" },
-          { label: "Neighbourhoods", url: "https://riversrealestate.ca/neighbourhoods" },
-          { label: data.name, url: canonicalUrl },
-        ]}
-        schemas={[
-          buildOrgPersonSchema(),
-          buildPlaceSchema({
-            name: data.name,
-            description: story[0],
-            url: canonicalUrl,
-            address: `${data.name}, Calgary, AB`,
-            lat: data.centerLat,
-            lng: data.centerLng,
-            image: (data as any).heroImage,
-          }),
-        ]}
       />
       {/* Hero */}
       <section className="relative h-[80vh] min-h-[560px] w-full overflow-hidden -mt-16 lg:-mt-20">
@@ -370,8 +354,8 @@ export default function NeighbourhoodDetailPage() {
         </div>
       </section>
 
-      {/* FAQ — mirrors the FAQPage JSON-LD emitted via SeoHead above, so the
-          on-page answers match what Google can show as rich results. */}
+      {/* FAQ — visible content only; no FAQPage JSON-LD (Google dropped FAQ
+          rich results May 2026). */}
       <FaqAccordion
         items={seoFaq.map((f) => ({ q: f.question, a: f.answer }))}
         eyebrow={`FAQ · ${data.name.toUpperCase()}`}
