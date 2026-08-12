@@ -225,11 +225,10 @@ export default function AdminCondosPage() {
       {/* Header */}
       <header className="border-b border-border bg-background sticky top-0 z-30">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-8 h-14 flex items-center gap-4">
-          <Link href="/admin/dashboard">
-            <a className="inline-flex items-center gap-1.5 text-[11px] font-display tracking-[0.18em] text-muted-foreground hover:text-foreground">
+          <Link href="/admin/dashboard" className="inline-flex items-center gap-1.5 text-[11px] font-display tracking-[0.18em] text-muted-foreground hover:text-foreground">
               <ChevronLeft className="w-3.5 h-3.5" />
               DASHBOARD
-            </a>
+            
           </Link>
           <div className="font-display text-[11px] tracking-[0.22em]">CONDO CMS</div>
           <div className="flex-1" />
@@ -335,13 +334,10 @@ export default function AdminCondosPage() {
                   </h1>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Link href={`/condos/${draft.slug}`}>
-                    <a
-                      target="_blank"
-                      className="text-[11px] font-display tracking-[0.18em] text-muted-foreground hover:text-foreground border border-border rounded-sm px-3 py-2"
-                    >
+                  <Link href={`/condos/${draft.slug}`} target="_blank"
+                      className="text-[11px] font-display tracking-[0.18em] text-muted-foreground hover:text-foreground border border-border rounded-sm px-3 py-2">
                       VIEW LIVE
-                    </a>
+                    
                   </Link>
                   <Button
                     type="submit"

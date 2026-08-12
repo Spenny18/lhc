@@ -43,11 +43,8 @@ export function ListingCard({ listing, variant = "default" }: Props) {
   }
 
   return (
-    <Link href={`/mls/${listing.id}`}>
-      <a
-        className="group block"
-        data-testid={`card-listing-${listing.id}`}
-      >
+    <Link href={`/mls/${listing.id}`} className="group block"
+        data-testid={`card-listing-${listing.id}`}>
         <div
           className={`relative overflow-hidden rounded-sm border border-border bg-card ${
             isCompact ? "" : "transition-all hover:border-foreground/20"
@@ -137,7 +134,7 @@ export function ListingCard({ listing, variant = "default" }: Props) {
             )}
           </div>
         </div>
-      </a>
+      
     </Link>
   );
 }

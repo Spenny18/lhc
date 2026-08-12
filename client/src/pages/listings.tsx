@@ -131,8 +131,7 @@ export default function ListingsPage() {
         ) : view === "grid" ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
             {filtered.map((l) => (
-              <Link key={l.id} href={`/admin/listings/${l.id}`} data-testid={`listing-card-${l.id}`}>
-                <a className="block group">
+              <Link key={l.id} href={`/admin/listings/${l.id}`} data-testid={`listing-card-${l.id}`} className="block group">
                   <Card className="overflow-hidden hover:shadow-md transition-shadow rounded-sm">
                     <div className="aspect-[4/3] relative overflow-hidden bg-secondary">
                       <img
@@ -171,7 +170,7 @@ export default function ListingsPage() {
                       </div>
                     </CardContent>
                   </Card>
-                </a>
+                
               </Link>
             ))}
           </div>
@@ -194,14 +193,13 @@ export default function ListingsPage() {
                   {filtered.map((l) => (
                     <tr key={l.id} className="border-t border-border hover:bg-secondary/40 transition-colors">
                       <td className="px-5 py-3">
-                        <Link href={`/admin/listings/${l.id}`} data-testid={`listing-row-${l.id}`}>
-                          <a className="flex items-center gap-3">
+                        <Link href={`/admin/listings/${l.id}`} data-testid={`listing-row-${l.id}`} className="flex items-center gap-3">
                             <img src={l.heroImage} alt="" className="w-12 h-9 rounded-sm object-cover" />
                             <div className="min-w-0">
                               <div className="font-serif text-[15px] truncate text-foreground">{l.title}</div>
                               <div className="text-xs text-muted-foreground truncate">{l.address}</div>
                             </div>
-                          </a>
+                          
                         </Link>
                       </td>
                       <td className="px-3 py-3">

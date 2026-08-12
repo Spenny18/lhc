@@ -215,9 +215,7 @@ export default function DashboardPage() {
                       <Link
                         key={listing.id}
                         href={`/admin/listings/${listing.id}`}
-                        data-testid={`listing-row-${listing.id}`}
-                      >
-                        <a className="flex items-center gap-4 p-3 -mx-3 rounded-sm hover:bg-secondary/60 transition-colors">
+                        data-testid={`listing-row-${listing.id}`} className="flex items-center gap-4 p-3 -mx-3 rounded-sm hover:bg-secondary/60 transition-colors">
                           <img
                             src={listing.heroImage}
                             alt={listing.title}
@@ -240,7 +238,7 @@ export default function DashboardPage() {
                             </div>
                           </div>
                           <ArrowUpRight className="w-4 h-4 text-muted-foreground shrink-0 hidden md:block" />
-                        </a>
+                        
                       </Link>
                     ))}
               </div>

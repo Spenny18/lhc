@@ -138,11 +138,8 @@ export default function NeighbourhoodsIndexPage() {
               {/* Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {list.map((n) => (
-                  <Link key={n.slug} href={`/neighbourhoods/${n.slug}`}>
-                    <a
-                      className="group block"
-                      data-testid={`card-neighbourhood-${n.slug}`}
-                    >
+                  <Link key={n.slug} href={`/neighbourhoods/${n.slug}`} className="group block"
+                      data-testid={`card-neighbourhood-${n.slug}`}>
                       <div className="relative aspect-[4/3] overflow-hidden rounded-sm bg-secondary">
                         <img
                           src={n.heroImage}
@@ -179,7 +176,7 @@ export default function NeighbourhoodsIndexPage() {
                           <ArrowRight className="w-3 h-3" strokeWidth={1.8} />
                         </span>
                       </div>
-                    </a>
+                    
                   </Link>
                 ))}
               </div>

@@ -85,10 +85,9 @@ export default function AccountCalendarPage() {
   return (
     <PublicLayout>
       <section className="max-w-5xl mx-auto px-6 lg:px-10 pt-12 pb-24">
-        <Link href="/account/dashboard">
-          <a className="inline-flex items-center gap-1 text-xs font-display tracking-[0.22em] text-muted-foreground hover:text-foreground">
+        <Link href="/account/dashboard" className="inline-flex items-center gap-1 text-xs font-display tracking-[0.22em] text-muted-foreground hover:text-foreground">
             <ChevronLeft className="w-3 h-3" /> BACK TO DASHBOARD
-          </a>
+          
         </Link>
 
         <div className="mt-6 flex items-end justify-between gap-4 flex-wrap">
@@ -103,8 +102,7 @@ export default function AccountCalendarPage() {
               Your tour requests and confirmed showings, month by month.
             </p>
           </div>
-          <Link href="/account/tours">
-            <a className="text-sm underline">View as list</a>
+          <Link href="/account/tours" className="text-sm underline">View as list
           </Link>
         </div>
 
@@ -209,16 +207,14 @@ export default function AccountCalendarPage() {
             {selectedTours.length === 0 ? (
               <div className="mt-4 text-sm text-muted-foreground">
                 Nothing scheduled this day. Request a tour from any{" "}
-                <Link href="/mls">
-                  <a className="underline">MLS listing</a>
+                <Link href="/mls" className="underline">MLS listing
                 </Link>
                 .
               </div>
             ) : (
               <div className="mt-4 space-y-3">
                 {selectedTours.map((t) => (
-                  <Link key={t.id} href={`/mls/${t.listingId}`}>
-                    <a className="block rounded-sm border border-border p-4 hover:bg-muted/30 transition-colors">
+                  <Link key={t.id} href={`/mls/${t.listingId}`} className="block rounded-sm border border-border p-4 hover:bg-muted/30 transition-colors">
                       <div className="flex items-center gap-2 text-sm">
                         <span
                           className={`w-2 h-2 rounded-full ${STATUS_DOT[t.status] ?? "bg-foreground"}`}
@@ -238,7 +234,7 @@ export default function AccountCalendarPage() {
                       {t.notes && (
                         <div className="mt-1 text-sm text-muted-foreground">{t.notes}</div>
                       )}
-                    </a>
+                    
                   </Link>
                 ))}
               </div>

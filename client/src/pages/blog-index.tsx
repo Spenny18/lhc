@@ -57,16 +57,13 @@ export default function BlogIndexPage() {
         </section>
       ) : feature ? (
         <section className="max-w-[1300px] mx-auto px-6 lg:px-10 pb-16">
-          <Link href={`/blog/${feature.slug}`}>
-            <a
-              className="group grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center"
-              data-testid={`feature-post-${feature.slug}`}
-            >
+          <Link href={`/blog/${feature.slug}`} className="group grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center"
+              data-testid={`feature-post-${feature.slug}`}>
               <div className="relative aspect-[4/3] lg:aspect-[5/4] rounded-sm overflow-hidden bg-secondary">
                 <img
                   src={heroFor(feature)}
                   onError={(e) => ((e.target as HTMLImageElement).src = BLOG_FALLBACK_HERO)}
-                  alt={feature.title}
+                  alt={feature.heroImageAlt || feature.title}
                   loading="lazy"
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                 />
@@ -94,7 +91,7 @@ export default function BlogIndexPage() {
                   <ArrowRight className="w-3.5 h-3.5" strokeWidth={1.8} />
                 </span>
               </div>
-            </a>
+            
           </Link>
         </section>
       ) : null}
@@ -123,16 +120,13 @@ export default function BlogIndexPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
               {rest.map((post) => (
-                <Link key={post.slug} href={`/blog/${post.slug}`}>
-                  <a
-                    className="group block"
-                    data-testid={`post-card-${post.slug}`}
-                  >
+                <Link key={post.slug} href={`/blog/${post.slug}`} className="group block"
+                    data-testid={`post-card-${post.slug}`}>
                     <div className="relative aspect-[4/3] rounded-sm overflow-hidden bg-secondary">
                       <img
                         src={heroFor(post)}
                         onError={(e) => ((e.target as HTMLImageElement).src = BLOG_FALLBACK_HERO)}
-                        alt={post.title}
+                        alt={post.heroImageAlt || post.title}
                         loading="lazy"
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
                       />
@@ -156,7 +150,7 @@ export default function BlogIndexPage() {
                         </span>
                       </div>
                     </div>
-                  </a>
+                  
                 </Link>
               ))}
             </div>

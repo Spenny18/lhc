@@ -151,10 +151,9 @@ export default function BlogDetailPage() {
           <h1 className="mt-4 font-serif text-4xl">
             That post has been moved or unpublished
           </h1>
-          <Link href="/blog">
-            <a className="inline-block mt-8 font-display text-[11px] tracking-[0.22em] underline">
+          <Link href="/blog" className="inline-block mt-8 font-display text-[11px] tracking-[0.22em] underline">
               ← BACK TO THE JOURNAL
-            </a>
+            
           </Link>
         </div>
       </PublicLayout>
@@ -170,14 +169,11 @@ export default function BlogDetailPage() {
       <article>
         {/* Editorial header */}
         <section className="max-w-[800px] mx-auto px-6 pt-12 lg:pt-16">
-          <Link href="/blog">
-            <a
-              className="inline-flex items-center gap-1.5 font-display text-[11px] tracking-[0.22em] text-muted-foreground hover:text-foreground"
-              data-testid="link-back-to-journal"
-            >
+          <Link href="/blog" className="inline-flex items-center gap-1.5 font-display text-[11px] tracking-[0.22em] text-muted-foreground hover:text-foreground"
+              data-testid="link-back-to-journal">
               <ChevronLeft className="w-3 h-3" strokeWidth={1.8} />
               BACK TO THE JOURNAL
-            </a>
+            
           </Link>
           <div className="mt-8 font-display text-[11px] tracking-[0.32em] text-muted-foreground">
             {post.category.toUpperCase()}
@@ -209,7 +205,7 @@ export default function BlogDetailPage() {
             <img
               src={heroFor(post)}
               onError={(e) => ((e.target as HTMLImageElement).src = BLOG_FALLBACK_HERO)}
-              alt={post.title}
+              alt={post.heroImageAlt || post.title}
               className="w-full h-full object-cover"
             />
           </div>
@@ -249,14 +245,13 @@ export default function BlogDetailPage() {
                 EMAIL SPENCER
               </a>
               <Link href="/contact">
-                <a>
                   <Button
                     className="h-[42px] rounded-sm font-display text-[11px] tracking-[0.22em]"
                     data-testid="button-blog-cta-contact"
                   >
                     GET IN TOUCH
                   </Button>
-                </a>
+                
               </Link>
             </div>
           </div>
@@ -274,16 +269,13 @@ export default function BlogDetailPage() {
           </h2>
           <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
             {related.map((p) => (
-              <Link key={p.slug} href={`/blog/${p.slug}`}>
-                <a
-                  className="group block"
-                  data-testid={`related-post-${p.slug}`}
-                >
+              <Link key={p.slug} href={`/blog/${p.slug}`} className="group block"
+                  data-testid={`related-post-${p.slug}`}>
                   <div className="relative aspect-[4/3] rounded-sm overflow-hidden bg-secondary">
                     <img
                       src={heroFor(p)}
                       onError={(e) => ((e.target as HTMLImageElement).src = BLOG_FALLBACK_HERO)}
-                      alt={p.title}
+                      alt={p.heroImageAlt || p.title}
                       loading="lazy"
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
                     />
@@ -296,7 +288,7 @@ export default function BlogDetailPage() {
                       {p.title}
                     </h3>
                   </div>
-                </a>
+                
               </Link>
             ))}
           </div>

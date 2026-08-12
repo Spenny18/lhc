@@ -1,11 +1,16 @@
 import { useState } from "react";
 import { Link, useRoute } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { MapContainer, TileLayer, Marker } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Polygon, useMap } from "react-leaflet";
+import { useEffect } from "react";
+import type * as L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { ArrowRight, ChevronLeft, MapPin, Home as HomeIcon } from "lucide-react";
 import { PublicLayout } from "@/components/public-layout";
 import { ListingCard } from "@/components/listing-card";
+import { FaqAccordion } from "@/components/faq-accordion";
+import { NeighbourhoodPois } from "@/components/neighbourhood-pois";
+import { ClientOnly } from "@/components/client-only";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { formatPriceCompact } from "@/lib/format";
@@ -59,10 +64,9 @@ export default function NeighbourhoodDetailPage() {
           <h1 className="mt-4 font-serif text-4xl">
             That community isn't on the list yet
           </h1>
-          <Link href="/neighbourhoods">
-            <a className="inline-block mt-8 font-display text-[11px] tracking-[0.22em] underline">
+          <Link href="/neighbourhoods" className="inline-block mt-8 font-display text-[11px] tracking-[0.22em] underline">
               ← BACK TO NEIGHBOURHOODS
-            </a>
+            
           </Link>
         </div>
       </PublicLayout>
@@ -72,6 +76,12 @@ export default function NeighbourhoodDetailPage() {
   const story = parseJsonArray(data.story);
   const galleryImgs = parseJsonArray(data.gallery);
   const listings = data.listings ?? [];
+  const condoBuildings = data.condoBuildings ?? [];
+  const schools = ((data as any).schools ?? []) as Array<{
+    name: string;
+    level?: string;
+  }>;
+  const heroCredit = data.heroCredit ?? null;
 
   const seoTitle = `${data.name} Homes for Sale - Luxury Homes Calgary`;
   const seoDesc = `Browse luxury homes for sale in ${data.name}, Calgary. ${(data as any).activeCount ?? "Live"} active MLS listings, neighbourhood guide, schools, and lifestyle.`;
@@ -91,6 +101,28 @@ export default function NeighbourhoodDetailPage() {
           answer: `The average asking price across active listings in ${data.name} is approximately $${Math.round(((data as any).avgPrice as number) / 1000).toLocaleString()}K.`,
         }
       : null,
+    condoBuildings.length > 0
+      ? {
+          question: `What condo buildings are in ${data.name}?`,
+          answer: `Condo and townhome buildings in ${data.name} include ${condoBuildings
+            .slice(0, 12)
+            .map((b) => b.name)
+            .join(", ")}${condoBuildings.length > 12 ? ", and more" : ""}.`,
+        }
+      : null,
+    schools.length > 0
+      ? {
+          question: `What schools are in ${data.name}?`,
+          answer: `Schools serving ${data.name} include ${schools
+            .slice(0, 6)
+            .map((s) => (s.level ? `${s.name} (${s.level})` : s.name))
+            .join(", ")}.`,
+        }
+      : null,
+    {
+      question: `Who can help me buy or sell a home in ${data.name}?`,
+      answer: `Spencer Rivers of Rivers Real Estate specializes in ${data.name} and Calgary's luxury communities, representing both buyers and sellers — including off-market opportunities that never reach the public MLS. Call or text +1 (403) 966-9237.`,
+    },
   ].filter(Boolean) as Array<{ question: string; answer: string }>;
 
   return (
@@ -129,14 +161,11 @@ export default function NeighbourhoodDetailPage() {
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-black/85" />
         <div className="relative h-full flex flex-col justify-end max-w-[1400px] mx-auto px-6 lg:px-10 pb-20 lg:pb-28 text-white">
-          <Link href="/neighbourhoods">
-            <a
-              className="inline-flex items-center gap-1.5 font-display text-[11px] tracking-[0.22em] text-white/70 hover:text-white mb-8 self-start"
-              data-testid="link-back-to-neighbourhoods"
-            >
+          <Link href="/neighbourhoods" className="inline-flex items-center gap-1.5 font-display text-[11px] tracking-[0.22em] text-white/70 hover:text-white mb-8 self-start"
+              data-testid="link-back-to-neighbourhoods">
               <ChevronLeft className="w-3 h-3" strokeWidth={1.8} />
               ALL NEIGHBOURHOODS
-            </a>
+            
           </Link>
           <div className="font-display text-[11px] tracking-[0.32em] text-white/70 inline-flex items-center gap-2">
             <MapPin className="w-3 h-3" strokeWidth={1.8} />
@@ -155,6 +184,19 @@ export default function NeighbourhoodDetailPage() {
             <Stat label="Community" value={data.name} />
           </div>
         </div>
+
+        {/* CC photo attribution — required by the licenses on curated heroes */}
+        {heroCredit && heroCredit.author && (
+          <a
+            href={heroCredit.sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer nofollow"
+            className="absolute bottom-3 right-4 z-10 text-[10px] tracking-wide text-white/45 hover:text-white/75 transition-colors"
+            data-testid="hero-credit"
+          >
+            Photo: {heroCredit.author.split(",")[0]} · {heroCredit.license}
+          </a>
+        )}
       </section>
 
       {/* Story body */}
@@ -208,7 +250,73 @@ export default function NeighbourhoodDetailPage() {
           Where {data.name} sits
         </h2>
         <NeighbourhoodAirbnbMap data={data} listings={listings} />
+
+        {/* What's nearby — schools, restaurants, parks, transit overlaid on
+            the map, centered on the neighbourhood. Same component used on the
+            MLS detail + condo pages. */}
+        {Number.isFinite(data.centerLat) && Number.isFinite(data.centerLng) && (
+          <NeighbourhoodPois
+            lat={data.centerLat}
+            lng={data.centerLng}
+            poiUrl={`/api/public/neighbourhoods/${data.slug}/pois`}
+            cacheKey={`neighbourhood:${data.slug}`}
+            eyebrow="WHAT'S NEARBY"
+            caption={`Schools, restaurants, parks, and transit around ${data.name}.`}
+          />
+        )}
       </section>
+
+      {/* Condo & townhome buildings */}
+      {condoBuildings.length > 0 && (
+        <section className="max-w-[1400px] mx-auto px-4 lg:px-8 pb-20">
+          <div className="font-display text-xs tracking-[0.22em] text-muted-foreground">
+            CONDO LIVING
+          </div>
+          <h2 className="mt-3 font-serif text-3xl lg:text-4xl">
+            Condo buildings in {data.name}
+          </h2>
+          <p className="mt-4 max-w-2xl text-muted-foreground text-[15px] leading-[1.7]">
+            The condominium and townhome buildings that call {data.name} home.
+            Buildings with a full profile link through to floor plans, amenities,
+            and current listings.
+          </p>
+          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {condoBuildings.map((b) =>
+              b.slug ? (
+                <Link key={b.slug} href={`/condos/${b.slug}`} className="group flex items-center justify-between gap-4 border border-border p-5 transition-colors duration-300 hover:border-foreground"
+                    data-testid={`link-condo-building-${b.slug}`}>
+                    <div className="min-w-0">
+                      <div className="font-serif text-lg leading-snug transition-transform duration-300 group-hover:translate-x-2">
+                        {b.name}
+                      </div>
+                      <div className="mt-1 font-display text-[10px] tracking-[0.22em] text-muted-foreground uppercase truncate">
+                        {b.address || "BUILDING PROFILE"}
+                      </div>
+                    </div>
+                    <ArrowRight
+                      className="w-4 h-4 shrink-0 text-muted-foreground transition-colors duration-300 group-hover:text-foreground"
+                      strokeWidth={1.8}
+                    />
+                  
+                </Link>
+              ) : (
+                <div
+                  key={b.name}
+                  className="border border-border p-5"
+                  data-testid={`condo-building-${b.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
+                >
+                  <div className="font-serif text-lg leading-snug">{b.name}</div>
+                  {b.address && (
+                    <div className="mt-1 font-display text-[10px] tracking-[0.22em] text-muted-foreground uppercase truncate">
+                      {b.address}
+                    </div>
+                  )}
+                </div>
+              ),
+            )}
+          </div>
+        </section>
+      )}
 
       {/* Active listings */}
       <section className="bg-secondary/40 py-20">
@@ -223,15 +331,11 @@ export default function NeighbourhoodDetailPage() {
               </h2>
             </div>
             <Link
-              href={`/mls?neighbourhood=${encodeURIComponent(data.name)}`}
-            >
-              <a
-                className="inline-flex items-center gap-1.5 font-display text-[11px] tracking-[0.22em]"
-                data-testid="link-search-neighbourhood"
-              >
+              href={`/mls?neighbourhood=${encodeURIComponent(data.name)}`} className="inline-flex items-center gap-1.5 font-display text-[11px] tracking-[0.22em]"
+                data-testid="link-search-neighbourhood">
                 SEE ALL
                 <ArrowRight className="w-3.5 h-3.5" strokeWidth={1.8} />
-              </a>
+              
             </Link>
           </div>
 
@@ -250,11 +354,10 @@ export default function NeighbourhoodDetailPage() {
                 looking for.
               </p>
               <Link href="/contact">
-                <a>
                   <Button className="mt-6" data-testid="button-contact-spencer">
                     Get in touch
                   </Button>
-                </a>
+                
               </Link>
             </div>
           ) : (
@@ -266,6 +369,13 @@ export default function NeighbourhoodDetailPage() {
           )}
         </div>
       </section>
+
+      {/* FAQ — mirrors the FAQPage JSON-LD emitted via SeoHead above, so the
+          on-page answers match what Google can show as rich results. */}
+      <FaqAccordion
+        items={seoFaq.map((f) => ({ q: f.question, a: f.answer }))}
+        eyebrow={`FAQ · ${data.name.toUpperCase()}`}
+      />
 
       {/* CTA */}
       <section className="max-w-[1100px] mx-auto px-6 lg:px-10 py-24 lg:py-32 text-center">
@@ -280,14 +390,13 @@ export default function NeighbourhoodDetailPage() {
           share off-market opportunities that never make the public MLS.
         </p>
         <Link href="/contact">
-          <a>
             <Button
               className="mt-8 h-12 px-8 rounded-sm font-display text-[11px] tracking-[0.22em]"
               data-testid="button-detail-cta-contact"
             >
               CALL OR TEXT SPENCER DIRECTLY
             </Button>
-          </a>
+          
         </Link>
       </section>
     </PublicLayout>
@@ -326,11 +435,44 @@ function CopyBlock({ label, body }: { label: string; body: string }) {
 // page. Tiles are CARTO's neutral light basemap so the map reads B&W on
 // brand.
 // =============================================================================
+type PolygonGeometry =
+  | { type: "Polygon"; coordinates: number[][][] }
+  | { type: "MultiPolygon"; coordinates: number[][][][] };
+
+// GeoJSON stores coordinates as [lng, lat]; Leaflet's <Polygon> expects
+// [lat, lng]. Swaps and unwraps Polygon / MultiPolygon nesting into the
+// array-of-rings shape Leaflet wants.
+function geoJsonToLeafletRings(geom: PolygonGeometry): [number, number][][][] {
+  const polygons = geom.type === "Polygon" ? [geom.coordinates] : geom.coordinates;
+  return polygons.map((rings) =>
+    rings.map((ring) => ring.map(([lng, lat]) => [lat, lng] as [number, number])),
+  );
+}
+
+// Fits the map to the polygon's bounding box on mount so the community
+// always frames cleanly. Takes precedence over FitBoundsOnce when a
+// boundary exists.
+function FitToPolygon({ rings }: { rings: [number, number][][][] }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!rings.length) return;
+    const all = rings.flat(2);
+    if (!all.length) return;
+    map.fitBounds(all as L.LatLngBoundsExpression, { padding: [24, 24], animate: false });
+  }, [rings, map]);
+  return null;
+}
+
 function NeighbourhoodAirbnbMap({
   data,
   listings,
 }: {
-  data: { name: string; centerLat: number; centerLng: number };
+  data: {
+    name: string;
+    centerLat: number;
+    centerLng: number;
+    polygon?: PolygonGeometry | null;
+  };
   listings: Array<{
     id: string;
     fullAddress: string;
@@ -349,6 +491,7 @@ function NeighbourhoodAirbnbMap({
   const visible = listings.filter(
     (l) => typeof l.lat === "number" && typeof l.lng === "number",
   );
+  const rings = data.polygon ? geoJsonToLeafletRings(data.polygon) : [];
   const points: Array<[number, number]> = [
     [data.centerLat, data.centerLng],
     ...visible.map((l) => [l.lat as number, l.lng as number] as [number, number]),
@@ -360,6 +503,9 @@ function NeighbourhoodAirbnbMap({
       className="relative mt-6 aspect-[16/9] rounded-sm overflow-hidden border border-border bg-secondary"
       data-testid="neighbourhood-map"
     >
+      {/* ClientOnly: Leaflet is browser-only; the sized parent div above is
+          SSR'd so layout holds until the map mounts. */}
+      <ClientOnly>
       <MapContainer
         center={[data.centerLat, data.centerLng]}
         zoom={14}
@@ -371,7 +517,22 @@ function NeighbourhoodAirbnbMap({
           url={RIVERS_TILE_URL}
           subdomains={RIVERS_TILE_SUBDOMAINS}
         />
-        <FitBoundsOnce points={points} />
+        {rings.length > 0 ? <FitToPolygon rings={rings} /> : <FitBoundsOnce points={points} />}
+
+        {/* Community boundary from OSM, when available */}
+        {rings.map((polygonRings, i) => (
+          <Polygon
+            key={i}
+            positions={polygonRings}
+            pathOptions={{
+              color: "#23412d",
+              weight: 2,
+              opacity: 0.85,
+              fillColor: "#23412d",
+              fillOpacity: 0.08,
+            }}
+          />
+        ))}
 
         {/* Subject pin = the neighbourhood center */}
         <Marker position={[data.centerLat, data.centerLng]} icon={buildSubjectPin()} />
@@ -393,6 +554,7 @@ function NeighbourhoodAirbnbMap({
           );
         })}
       </MapContainer>
+      </ClientOnly>
 
       {/* Neighbourhood name chip — top-left, doesn't block map controls */}
       <div className="pointer-events-none absolute top-3 left-3 px-3 py-1.5 rounded-full bg-background/90 backdrop-blur border border-border text-xs font-display tracking-[0.18em] z-[400] flex items-center gap-1.5">
@@ -415,10 +577,9 @@ function NeighbourhoodAirbnbMap({
               )}
               <div className="flex-1 min-w-0 p-3">
                 <div className="flex items-start justify-between gap-2">
-                  <Link href={`/mls/${selectedListing.id}`}>
-                    <a className="font-serif text-sm leading-snug hover:underline truncate block">
+                  <Link href={`/mls/${selectedListing.id}`} className="font-serif text-sm leading-snug hover:underline truncate block">
                       {selectedListing.fullAddress}
-                    </a>
+                    
                   </Link>
                   <button
                     onClick={(e) => {

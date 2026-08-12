@@ -83,10 +83,9 @@ export default function AccountReportsPage() {
   return (
     <PublicLayout>
       <section className="max-w-4xl mx-auto px-6 lg:px-10 pt-12 pb-24">
-        <Link href="/account/dashboard">
-          <a className="inline-flex items-center gap-1 text-xs font-display tracking-[0.22em] text-muted-foreground hover:text-foreground">
+        <Link href="/account/dashboard" className="inline-flex items-center gap-1 text-xs font-display tracking-[0.22em] text-muted-foreground hover:text-foreground">
             <ChevronLeft className="w-3 h-3" /> BACK TO DASHBOARD
-          </a>
+          
         </Link>
 
         <div className="mt-6">

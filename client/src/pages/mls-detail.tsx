@@ -28,7 +28,7 @@ import { PublicLayout } from "@/components/public-layout";
 import { ListingCard } from "@/components/listing-card";
 import { NeighbourhoodPois } from "@/components/neighbourhood-pois";
 import { useAccount, useNote, useSaveNote, useRequestTour } from "@/lib/account";
-import { Lock, FileText, CalendarPlus, Check } from "lucide-react";
+import { Lock, FileText, CalendarPlus } from "lucide-react";
 import {
   SeoHead,
   buildOrgPersonSchema,
@@ -109,10 +109,9 @@ export default function MlsDetailPage() {
           <p className="mt-4 text-muted-foreground">
             It may have been sold or removed from the MLS.
           </p>
-          <Link href="/mls">
-            <a className="inline-block mt-8 font-display text-[11px] tracking-[0.22em] underline">
+          <Link href="/mls" className="inline-block mt-8 font-display text-[11px] tracking-[0.22em] underline">
               ← BROWSE ACTIVE LISTINGS
-            </a>
+            
           </Link>
         </div>
       </PublicLayout>
@@ -519,14 +518,11 @@ function MlsDetailBody({ listing }: { listing: PublicMlsListingDetail }) {
     <PublicLayout>
       {/* Breadcrumb */}
       <div className="max-w-[1400px] mx-auto px-4 lg:px-8 pt-6">
-        <Link href="/mls">
-          <a
-            className="inline-flex items-center gap-1.5 font-display text-[11px] tracking-[0.22em] text-muted-foreground hover:text-foreground"
-            data-testid="link-back-to-search"
-          >
+        <Link href="/mls" className="inline-flex items-center gap-1.5 font-display text-[11px] tracking-[0.22em] text-muted-foreground hover:text-foreground"
+            data-testid="link-back-to-search">
             <ChevronLeft className="w-3 h-3" strokeWidth={1.8} />
             BACK TO SEARCH
-          </a>
+          
         </Link>
       </div>
 
