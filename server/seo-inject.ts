@@ -17,6 +17,7 @@
  * /mls/:id) we hit the storage layer to look up the actual page data.
  */
 import { storage } from "./storage";
+import { buildGraph, IDS, type SchemaNode } from "./schema/entities";
 
 const ORIGIN = (process.env.PUBLIC_ORIGIN || "https://riversrealestate.ca").replace(
   /\/$/,
@@ -36,50 +37,13 @@ export interface SeoMeta {
   ogImage?: string;
   ogType?: "website" | "article" | "profile";
   noindex?: boolean;
-  // Schema.org JSON-LD blocks to inject into the page <head>. Each entry
-  // becomes its own <script type="application/ld+json"> tag. Used by
-  // Google rich results, Perplexity, and ChatGPT browsing to understand
-  // what kind of entity this page describes.
-  jsonLd?: Array<Record<string, any>>;
+  // Page-specific schema.org nodes (BlogPosting, Place, BreadcrumbList...).
+  // Emitted as ONE JSON-LD block per page: buildGraph() wraps these together
+  // with the core entity graph (WebSite/agent/person/brokerage/communities,
+  // see server/schema/entities.ts) in a single @graph, deduped by @id.
+  // Reference shared entities by @id — never restate them inline.
+  jsonLd?: SchemaNode[];
 }
-
-// Shared organization/agent identity reused across schemas. Treating Spencer
-// as a Person who is the principal of a RealEstateAgent organization is the
-// shape Google tends to render most reliably.
-const PERSON_SCHEMA = {
-  "@type": "Person",
-  "@id": "https://riversrealestate.ca/#spencer",
-  name: "Spencer Rivers",
-  jobTitle: "Luxury Real Estate Agent",
-  telephone: "+1-403-966-9237",
-  email: "spencer@riversrealestate.ca",
-  url: "https://riversrealestate.ca/",
-  sameAs: [
-    "https://luxuryhomescalgary.ca/",
-    "https://www.facebook.com/SpencerRiversRealEstate/",
-    "https://www.realtor.ca/agent/2135685/spencer-rivers-700-1816-crowchild-trail-nw-calgary-alberta-t2m3y7",
-  ],
-};
-
-const REAL_ESTATE_AGENT_SCHEMA = {
-  "@type": "RealEstateAgent",
-  "@id": "https://riversrealestate.ca/#agent",
-  name: "Rivers Real Estate — Spencer Rivers",
-  url: "https://riversrealestate.ca/",
-  telephone: "+1-403-966-9237",
-  email: "spencer@riversrealestate.ca",
-  areaServed: { "@type": "City", name: "Calgary", addressRegion: "AB", addressCountry: "CA" },
-  priceRange: "$1M+",
-  address: {
-    "@type": "PostalAddress",
-    streetAddress: "38 Elmont Cove SW",
-    addressLocality: "Calgary",
-    addressRegion: "Alberta",
-    postalCode: "T3H 6A5",
-    addressCountry: "CA",
-  },
-  founder: PERSON_SCHEMA,
-};
 
 function escapeHtml(s: string): string {
   return s
@@ -179,22 +143,8 @@ export function metaForPath(path: string): SeoMeta | null {
         "Calgary's top luxury real estate agent. Spencer Rivers represents buyers and sellers in Springbank Hill, Aspen Woods, Upper Mount Royal, Elbow Park, Britannia, and Bel-Aire.",
       canonical: `${ORIGIN}/`,
       ogType: "website",
-      jsonLd: [
-        {
-          "@context": "https://schema.org",
-          "@type": "WebSite",
-          "@id": `${ORIGIN}/#website`,
-          url: `${ORIGIN}/`,
-          name: SITE_NAME,
-          publisher: REAL_ESTATE_AGENT_SCHEMA,
-          potentialAction: {
-            "@type": "SearchAction",
-            target: `${ORIGIN}/mls?q={search_term_string}`,
-            "query-input": "required name=search_term_string",
-          },
-        },
-        { "@context": "https://schema.org", ...REAL_ESTATE_AGENT_SCHEMA },
-      ],
+      // WebSite + agent + person all live in the core graph — nothing
+      // page-specific to add.
     };
   }
   if (p === "/mls") {
@@ -230,18 +180,10 @@ export function metaForPath(path: string): SeoMeta | null {
       ogType: "profile",
       jsonLd: [
         {
-          "@context": "https://schema.org",
-          ...PERSON_SCHEMA,
-          worksFor: REAL_ESTATE_AGENT_SCHEMA,
-          knowsAbout: [
-            "Calgary luxury real estate",
-            "Upper Mount Royal",
-            "Elbow Park",
-            "Britannia",
-            "Aspen Woods",
-            "Springbank Hill",
-            "Bel-Aire",
-          ],
+          "@type": "ProfilePage",
+          "@id": `${ORIGIN}/about#page`,
+          url: `${ORIGIN}/about`,
+          mainEntity: { "@id": IDS.person },
         },
       ],
     };
@@ -337,24 +279,27 @@ export function metaForPath(path: string): SeoMeta | null {
         ogType: "article",
         jsonLd: [
           {
-            "@context": "https://schema.org",
             "@type": "BlogPosting",
             "@id": `${blogUrl}#article`,
             headline: post.title,
             description: post.excerpt || "",
             image: heroImage,
+            // publishedAt is the only real timestamp the CMS stores — no
+            // dateModified rather than a synthesized one.
             datePublished: post.publishedAt,
-            dateModified: post.publishedAt,
             inLanguage: "en-CA",
             url: blogUrl,
             mainEntityOfPage: { "@type": "WebPage", "@id": blogUrl },
             articleSection: post.category || "Calgary Real Estate",
             wordCount: typeof post.body === "string" ? post.body.replace(/<[^>]+>/g, "").split(/\s+/).filter(Boolean).length : undefined,
-            author: { ...PERSON_SCHEMA, name: post.authorName || "Spencer Rivers" },
-            publisher: REAL_ESTATE_AGENT_SCHEMA,
+            // Single-author site; guard in case a guest byline ever appears.
+            author:
+              !post.authorName || post.authorName === "Spencer Rivers"
+                ? { "@id": IDS.person }
+                : { "@type": "Person", name: post.authorName },
+            publisher: { "@id": IDS.agent },
           },
           {
-            "@context": "https://schema.org",
             "@type": "BreadcrumbList",
             itemListElement: [
               { "@type": "ListItem", position: 1, name: "Home", item: `${ORIGIN}/` },
@@ -385,7 +330,8 @@ export function metaForPath(path: string): SeoMeta | null {
         ogImage: n.heroImage || DEFAULT_IMAGE,
         jsonLd: [
           {
-            "@context": "https://schema.org",
+            // Same @id the areaServed stubs use for marquee communities —
+            // buildGraph merges this richer node over the stub.
             "@type": "Place",
             "@id": `${nUrl}#place`,
             name: `${n.name}, Calgary`,
@@ -395,15 +341,9 @@ export function metaForPath(path: string): SeoMeta | null {
             ...(n.centerLat && n.centerLng
               ? { geo: { "@type": "GeoCoordinates", latitude: n.centerLat, longitude: n.centerLng } }
               : {}),
-            containedInPlace: {
-              "@type": "City",
-              name: "Calgary",
-              addressRegion: "AB",
-              addressCountry: "CA",
-            },
+            containedInPlace: { "@id": IDS.calgary },
           },
           {
-            "@context": "https://schema.org",
             "@type": "BreadcrumbList",
             itemListElement: [
               { "@type": "ListItem", position: 1, name: "Home", item: `${ORIGIN}/` },
@@ -535,18 +475,20 @@ export function injectMetaIntoHtml(html: string, meta: SeoMeta): string {
     tags.push(`<meta name="robots" content="noindex,nofollow" />`);
   }
 
-  // JSON-LD structured data. Inject each schema block as its own script tag.
-  // Escaping `</` inside JSON is required to prevent the closing-script
-  // sequence appearing inside the JSON payload from prematurely terminating
-  // the script tag.
-  if (meta.jsonLd && meta.jsonLd.length > 0) {
-    for (const block of meta.jsonLd) {
-      try {
-        const json = JSON.stringify(block).replace(/<\/(script)/gi, "<\\/$1");
-        tags.push(`<script type="application/ld+json">${json}</script>`);
-      } catch {
-        // Skip a malformed schema block rather than failing the whole page.
-      }
+  // JSON-LD structured data: exactly ONE script tag per page holding a
+  // single @graph — core entity nodes + page nodes, deduped by @id (see
+  // server/schema/entities.ts). noindex pages (drafts, account/admin
+  // shells) describe entities we don't want indexed from those URLs, so
+  // they emit no schema at all.
+  // Escaping `</` inside JSON prevents a closing-script sequence in the
+  // payload from prematurely terminating the tag.
+  if (!meta.noindex) {
+    try {
+      const graph = buildGraph(meta.jsonLd ?? []);
+      const json = JSON.stringify(graph).replace(/<\/(script)/gi, "<\\/$1");
+      tags.push(`<script type="application/ld+json">${json}</script>`);
+    } catch {
+      // Skip malformed schema rather than failing the whole page.
     }
   }
 
