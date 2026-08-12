@@ -85,7 +85,9 @@ async function prefetch(keys: unknown[][]): Promise<SeedEntry[]> {
       const url = `${origin}${key.join("/")}`;
       try {
         const res = await fetch(url, {
-          signal: AbortSignal.timeout(4000),
+          // Generous: the shared-cpu Fly machine can be slow right after a
+          // deploy while crons and the first requests contend for the CPU.
+          signal: AbortSignal.timeout(10000),
           headers: { accept: "application/json" },
         });
         if (!res.ok) return null;
@@ -167,7 +169,13 @@ export function createSsrPipeline(opts: SsrPipelineOptions) {
       ]);
       const { html, dehydratedState } = await render(rawPath, search, seed);
       const page = injectAppHtml(template, html, dehydratedState);
-      if (ttl > 0 && cacheable) {
+      // Only cache complete renders. If any prefetch failed (cold start,
+      // timeout), the page rendered its loading skeleton — serving that once
+      // is fine (the client fetches and renders), but caching it would pin
+      // an empty body on the URL for a full TTL. This exact failure shipped
+      // the first deploy: /neighbourhoods/* cached skeletons for 5 minutes.
+      const complete = seed.length === keys.length;
+      if (ttl > 0 && cacheable && complete) {
         if (cache.size >= maxEntries) {
           // Drop the oldest entry (Map preserves insertion order).
           const oldest = cache.keys().next().value;
