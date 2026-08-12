@@ -793,17 +793,13 @@ export default function WorkWithDetailPage() {
 
   return (
     <PublicLayout>
+      {/* Schema (breadcrumbs) is server-emitted by metaForPath — this only
+          keeps title/meta current on SPA nav. */}
       <SeoHead
         title={segment.seoTitle}
         description={segment.seoDescription}
         canonical={canonical}
         ogImage={segment.image}
-        faq={segment.faq.map((f) => ({ question: f.q, answer: f.a }))}
-        breadcrumbs={[
-          { label: "Home", url: `${SITE_ORIGIN}/` },
-          { label: "Who We Work With", url: `${SITE_ORIGIN}/work-with` },
-          { label: segment.title, url: canonical },
-        ]}
       />
 
       {/* Hero */}
@@ -983,10 +979,6 @@ export function WorkWithIndexPage() {
         title="Who We Work With | Spencer Rivers, Rivers Real Estate Calgary"
         description="Luxury buyers, first-time sellers, empty nesters, move-up families, and urban professionals — see how Spencer Rivers works with each, across Calgary's best communities."
         canonical={`${SITE_ORIGIN}/work-with`}
-        breadcrumbs={[
-          { label: "Home", url: `${SITE_ORIGIN}/` },
-          { label: "Who We Work With", url: `${SITE_ORIGIN}/work-with` },
-        ]}
       />
 
       <section className="max-w-[1400px] mx-auto px-6 lg:px-10 pt-12 lg:pt-16 pb-24">

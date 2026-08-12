@@ -10,11 +10,7 @@ import { ClientOnly } from "@/components/client-only";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice, formatSqft } from "@/lib/format";
 import { apiUrl } from "@/lib/queryClient";
-import {
-  SeoHead,
-  buildOrgPersonSchema,
-  buildPlaceSchema,
-} from "@/components/seo-head";
+import { SeoHead } from "@/components/seo-head";
 
 interface CondoDetail {
   slug: string;
@@ -102,11 +98,12 @@ export default function CondoDetailPage() {
 
   // Per-condo SEO. Title/description mirror the WordPress page format so
   // the new page inherits the search query "the river condos calgary" etc.
-  // FAQs are baked from the building stats so each condo gets a FAQPage
-  // schema (which is what fuels Google "People also ask" snippets).
   const seoTitle = `${data.name} Condos Calgary - Luxury Homes Calgary`;
   const seoDesc = `Find the latest condos for sale in ${data.name} in ${data.neighbourhood}. Get access to MLS Listings up to 48 hours before Realtor.ca!`;
   const canonicalUrl = `https://riversrealestate.ca/condos/${data.slug}`;
+  // Visible on-page FAQ content (rendered in the "FREQUENTLY ASKED" section
+  // below). No longer emitted as FAQPage JSON-LD — Google dropped FAQ rich
+  // results in May 2026, and all schema is server-emitted now.
   const seoFaq = [
     {
       question: `Where is ${data.name} located in Calgary?`,
@@ -139,30 +136,15 @@ export default function CondoDetailPage() {
 
   return (
     <PublicLayout transparentHeader>
+      {/* Schema (Place, breadcrumbs) is server-emitted by metaForPath —
+          this only keeps title/meta current on SPA nav. Keep these strings
+          in sync with the /condos/:slug branch there. */}
       <SeoHead
         title={seoTitle}
         description={seoDesc}
         canonical={canonicalUrl}
         ogImage={data.heroImage}
         ogType="place"
-        faq={seoFaq}
-        breadcrumbs={[
-          { label: "Home", url: "https://riversrealestate.ca/" },
-          { label: "Condos", url: "https://riversrealestate.ca/condos" },
-          { label: data.name, url: canonicalUrl },
-        ]}
-        schemas={[
-          buildOrgPersonSchema(),
-          buildPlaceSchema({
-            name: data.name,
-            description: data.intro?.[0],
-            url: canonicalUrl,
-            address: data.address,
-            lat: data.lat,
-            lng: data.lng,
-            image: data.heroImage,
-          }),
-        ]}
       />
       {/* Hero */}
       <section className="relative h-[80vh] min-h-[560px] w-full overflow-hidden -mt-16 lg:-mt-20">

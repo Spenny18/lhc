@@ -395,16 +395,13 @@ export default function AssignmentsPage() {
 
   return (
     <PublicLayout>
+      {/* Schema (breadcrumbs) is server-emitted by metaForPath — this only
+          keeps title/meta current on SPA nav. */}
       <SeoHead
         title={SEO_TITLE}
         description={SEO_DESCRIPTION}
         canonical={canonical}
         ogImage={`${SITE_ORIGIN}${ASSIGNMENT_UNITS[0].image}`}
-        faq={FAQ_ITEMS.map((f) => ({ question: f.q, answer: f.a }))}
-        breadcrumbs={[
-          { label: "Home", url: `${SITE_ORIGIN}/` },
-          { label: "Assignment Sales", url: canonical },
-        ]}
       />
 
       {/* Hero */}

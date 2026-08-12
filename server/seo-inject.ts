@@ -60,7 +60,7 @@ function escapeHtml(s: string): string {
  */
 // Audience-segment landing pages (/work-with/:slug). Titles/descriptions must
 // stay in sync with client/src/pages/work-with.tsx, which owns the full page
-// content (FAQ schema included — injected client-side by SeoHead).
+// content. (All schema — breadcrumbs included — is server-emitted here.)
 const WORK_WITH_META: Record<
   string,
   { title: string; description: string; image: string }
@@ -127,6 +127,113 @@ const WORK_WITH_META: Record<
   },
 };
 
+/** BreadcrumbList node. Every page except the homepage emits one (a
+ * single-crumb list on "/" is noise, so home is skipped by convention). */
+const HOME_CRUMB: [string, string] = ["Home", `${ORIGIN}/`];
+function crumbs(...items: Array<[name: string, url: string]>): SchemaNode {
+  return {
+    "@type": "BreadcrumbList",
+    itemListElement: items.map(([name, item], i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name,
+      item,
+    })),
+  };
+}
+
+/** Map a Pillar 9 property (sub)type string to the schema.org residence type. */
+function residenceType(subOrType: string | null | undefined): string {
+  const s = (subOrType || "").toLowerCase();
+  if (s.includes("apartment") || s.includes("condo")) return "Apartment";
+  if (s.includes("detached") && !s.includes("semi")) return "SingleFamilyResidence";
+  if (
+    s.includes("semi") ||
+    s.includes("row") ||
+    s.includes("town") ||
+    s.includes("duplex") ||
+    s.includes("house")
+  )
+    return "House";
+  return "Residence";
+}
+
+/** RealEstateListing node wrapping the residence + Offer, provider → #agent.
+ * Every property is optional-guarded: emit only what the page really shows —
+ * mismatched or invented markup is treated as misleading. */
+function listingSchema(o: {
+  url: string;
+  name: string;
+  description?: string | null;
+  streetAddress: string;
+  city?: string | null;
+  region?: string | null;
+  postalCode?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+  beds?: number | null;
+  baths?: number | null;
+  sqft?: number | null;
+  yearBuilt?: number | null;
+  image?: string | null;
+  price?: number | null;
+  active: boolean;
+  datePosted?: string | null;
+  subType?: string | null;
+}): SchemaNode {
+  return {
+    "@type": "RealEstateListing",
+    "@id": `${o.url}#listing`,
+    url: o.url,
+    name: o.name,
+    ...(o.description ? { description: o.description } : {}),
+    ...(o.datePosted ? { datePosted: o.datePosted } : {}),
+    provider: { "@id": IDS.agent },
+    mainEntity: {
+      "@type": residenceType(o.subType),
+      "@id": `${o.url}#home`,
+      name: o.name,
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: o.streetAddress,
+        addressLocality: o.city || "Calgary",
+        addressRegion: o.region || "AB",
+        ...(o.postalCode ? { postalCode: o.postalCode } : {}),
+        addressCountry: "CA",
+      },
+      ...(o.lat && o.lng
+        ? { geo: { "@type": "GeoCoordinates", latitude: o.lat, longitude: o.lng } }
+        : {}),
+      ...(o.beds ? { numberOfBedrooms: o.beds } : {}),
+      ...(o.baths ? { numberOfBathroomsTotal: o.baths } : {}),
+      ...(o.sqft
+        ? {
+            floorSize: {
+              "@type": "QuantitativeValue",
+              value: o.sqft,
+              unitCode: "FTK",
+              unitText: "sq ft",
+            },
+          }
+        : {}),
+      ...(o.yearBuilt ? { yearBuilt: o.yearBuilt } : {}),
+      ...(o.image ? { image: o.image } : {}),
+    },
+    ...(o.price
+      ? {
+          offers: {
+            "@type": "Offer",
+            price: o.price,
+            priceCurrency: "CAD",
+            availability: o.active
+              ? "https://schema.org/InStock"
+              : "https://schema.org/SoldOut",
+          },
+        }
+      : {}),
+  };
+}
+
 export function metaForPath(path: string): SeoMeta | null {
   if (!path || path.startsWith("/api/") || path.startsWith("/assets/")) return null;
   if (/\.[a-z0-9]{1,8}$/i.test(path) && !path.endsWith(".html")) return null;
@@ -153,6 +260,7 @@ export function metaForPath(path: string): SeoMeta | null {
       description:
         "Browse live Calgary MLS® listings from the Pillar 9 feed. Filter by neighbourhood, price, type. Spencer Rivers represents buyers across the city.",
       canonical: `${ORIGIN}/mls`,
+      jsonLd: [crumbs(HOME_CRUMB, ["MLS Search", `${ORIGIN}/mls`])],
     };
   }
   if (p === "/neighbourhoods") {
@@ -161,6 +269,7 @@ export function metaForPath(path: string): SeoMeta | null {
       description:
         "Block-by-block expertise across Calgary's prestige communities: Upper Mount Royal, Elbow Park, Britannia, Aspen Woods, Springbank Hill, Bel-Aire, and more.",
       canonical: `${ORIGIN}/neighbourhoods`,
+      jsonLd: [crumbs(HOME_CRUMB, ["Neighbourhoods", `${ORIGIN}/neighbourhoods`])],
     };
   }
   if (p === "/condos") {
@@ -169,6 +278,7 @@ export function metaForPath(path: string): SeoMeta | null {
       description:
         "Calgary's most-asked-about luxury condo buildings — The Royal, The Concord, The River, Eau Claire, Belle Aire — pricing, inventory, and resale insight.",
       canonical: `${ORIGIN}/condos`,
+      jsonLd: [crumbs(HOME_CRUMB, ["Condo Buildings", `${ORIGIN}/condos`])],
     };
   }
   if (p === "/about") {
@@ -185,6 +295,7 @@ export function metaForPath(path: string): SeoMeta | null {
           url: `${ORIGIN}/about`,
           mainEntity: { "@id": IDS.person },
         },
+        crumbs(HOME_CRUMB, ["About Spencer Rivers", `${ORIGIN}/about`]),
       ],
     };
   }
@@ -194,14 +305,17 @@ export function metaForPath(path: string): SeoMeta | null {
       description:
         "Get in touch with Spencer Rivers — direct line (403) 966-9237. Every inquiry gets a personal reply within one business day.",
       canonical: `${ORIGIN}/contact`,
+      jsonLd: [crumbs(HOME_CRUMB, ["Contact", `${ORIGIN}/contact`])],
     };
   }
   if (p === "/home-evaluation") {
     return {
-      title: "What's Your Calgary Home Worth? — Free Home Valuation",
+      // Must match client/src/pages/home-evaluation.tsx <SeoHead> strings.
+      title: "What's your Calgary home worth? | Rivers Real Estate",
       description:
-        "Get an instant AI-powered estimate based on recent comparable sales, plus a follow-up from Spencer to refine the number with what data alone can't see.",
+        "Free instant home valuation for Calgary properties — powered by Gnowise AVM with property-detail refinement — plus a hand-prepared market analysis from Spencer Rivers.",
       canonical: `${ORIGIN}/home-evaluation`,
+      jsonLd: [crumbs(HOME_CRUMB, ["Home Valuation", `${ORIGIN}/home-evaluation`])],
     };
   }
   if (p === "/blog") {
@@ -210,6 +324,7 @@ export function metaForPath(path: string): SeoMeta | null {
       description:
         "Notes, market analyses, and neighbourhood deep-dives from Calgary's top luxury real estate agent.",
       canonical: `${ORIGIN}/blog`,
+      jsonLd: [crumbs(HOME_CRUMB, ["Journal", `${ORIGIN}/blog`])],
     };
   }
   if (p === "/sold" || p === "/sold-listings") {
@@ -218,6 +333,7 @@ export function metaForPath(path: string): SeoMeta | null {
       description:
         "Selected recently sold Calgary luxury homes represented by Spencer Rivers.",
       canonical: `${ORIGIN}/sold`,
+      jsonLd: [crumbs(HOME_CRUMB, ["Recently Sold", `${ORIGIN}/sold`])],
     };
   }
   if (p === "/assignments") {
@@ -230,6 +346,7 @@ export function metaForPath(path: string): SeoMeta | null {
         "Buy or sell a pre-construction condo assignment in Calgary with Spencer Rivers. Current assignments at the Lincoln (Beltline) and Sovereign (Mission), plus developer consent, deposits, and GST handled properly.",
       canonical: `${ORIGIN}/assignments`,
       ogImage: `${ORIGIN}/img/assignments/lincoln-exterior.jpg`,
+      jsonLd: [crumbs(HOME_CRUMB, ["Assignment Sales", `${ORIGIN}/assignments`])],
     };
   }
   if (p === "/work-with") {
@@ -238,6 +355,7 @@ export function metaForPath(path: string): SeoMeta | null {
       description:
         "Luxury buyers, first-time sellers, empty nesters, move-up families, and urban professionals — see how Spencer Rivers works with each, across Calgary's best communities.",
       canonical: `${ORIGIN}/work-with`,
+      jsonLd: [crumbs(HOME_CRUMB, ["Who We Work With", `${ORIGIN}/work-with`])],
     };
   }
   if (p.startsWith("/work-with/")) {
@@ -250,6 +368,13 @@ export function metaForPath(path: string): SeoMeta | null {
       // Deliberately not m.image — those are Unsplash stock, and OG/Twitter
       // cards must never resolve to a stock-photo domain. Falls back to the
       // brand card until per-segment brand photography exists.
+      jsonLd: [
+        crumbs(
+          HOME_CRUMB,
+          ["Who We Work With", `${ORIGIN}/work-with`],
+          [m.title.split("|")[0].trim(), canonical],
+        ),
+      ],
     };
   }
 
@@ -322,10 +447,10 @@ export function metaForPath(path: string): SeoMeta | null {
       if (!n) return null;
       const nUrl = `${ORIGIN}/neighbourhoods/${slug}`;
       return {
-        title: `${n.name} Calgary Real Estate Guide — ${SITE_NAME}`,
-        description:
-          n.tagline ||
-          `Spencer Rivers' insider guide to ${n.name}, Calgary — homes, pricing, market trends.`,
+        // Must match client/src/pages/neighbourhood-detail.tsx <SeoHead>
+        // strings (WP-inherited title format that carries the rankings).
+        title: `${n.name} Homes for Sale - Luxury Homes Calgary`,
+        description: `Browse luxury homes for sale in ${n.name}, Calgary. Active MLS listings, neighbourhood guide, schools, and lifestyle.`,
         canonical: nUrl,
         ogImage: n.heroImage || DEFAULT_IMAGE,
         jsonLd: [
@@ -362,15 +487,38 @@ export function metaForPath(path: string): SeoMeta | null {
   if (p.startsWith("/condos/")) {
     const slug = p.slice("/condos/".length);
     try {
-      const c = storage.getCondoBuildingBySlug(slug);
+      const c = storage.getCondoBuildingBySlug(slug) as any;
       if (!c) return null;
+      const cUrl = `${ORIGIN}/condos/${slug}`;
       return {
-        title: `${(c as any).name} — Calgary Luxury Condos | ${SITE_NAME}`,
-        description:
-          (c as any).tagline ||
-          `Pricing, inventory, and resale data for ${(c as any).name} in Calgary.`,
-        canonical: `${ORIGIN}/condos/${slug}`,
-        ogImage: (c as any).heroImage || DEFAULT_IMAGE,
+        // Must match client/src/pages/condo-detail.tsx <SeoHead> strings
+        // (WP-inherited title format that carries the rankings).
+        title: `${c.name} Condos Calgary - Luxury Homes Calgary`,
+        description: `Find the latest condos for sale in ${c.name} in ${c.neighbourhood}. Get access to MLS Listings up to 48 hours before Realtor.ca!`,
+        canonical: cUrl,
+        ogImage: c.heroImage || DEFAULT_IMAGE,
+        jsonLd: [
+          {
+            "@type": "Place",
+            "@id": `${cUrl}#building`,
+            name: c.name,
+            description: c.tagline || undefined,
+            url: cUrl,
+            image: c.heroImage || undefined,
+            address: {
+              "@type": "PostalAddress",
+              streetAddress: c.address,
+              addressLocality: "Calgary",
+              addressRegion: "AB",
+              addressCountry: "CA",
+            },
+            ...(c.lat && c.lng
+              ? { geo: { "@type": "GeoCoordinates", latitude: c.lat, longitude: c.lng } }
+              : {}),
+            containedInPlace: { "@id": IDS.calgary },
+          },
+          crumbs(HOME_CRUMB, ["Condo Buildings", `${ORIGIN}/condos`], [c.name, cUrl]),
+        ],
       };
     } catch {
       return null;
@@ -383,24 +531,53 @@ export function metaForPath(path: string): SeoMeta | null {
     try {
       const l: any = storage.getMlsListingById(id);
       if (!l) return null;
-      const addr =
-        l.unparsedAddress ||
-        [l.streetNumber, l.streetName, l.streetSuffix, l.city].filter(Boolean).join(" ") ||
-        l.address ||
-        "Calgary";
-      const price = l.listPrice
-        ? `$${Number(l.listPrice).toLocaleString()}`
-        : null;
-      const beds = l.bedrooms ? `${l.bedrooms} bed` : null;
-      const baths = l.bathrooms ? `${l.bathrooms} bath` : null;
-      const summary = [price, beds, baths].filter(Boolean).join(" · ");
+      const lUrl = `${ORIGIN}/mls/${id}`;
+      const addr = l.fullAddress || "Calgary";
+      const heroImg = l.heroImage
+        ? l.heroImage.startsWith("http")
+          ? l.heroImage
+          : `${ORIGIN}${l.heroImage}`
+        : undefined;
+      // Must match client/src/pages/mls-detail.tsx <SeoHead> strings —
+      // including the description strip/fallback — so JS-executing and
+      // non-JS crawlers see identical metadata.
+      const desc = l.description
+        ? String(l.description)
+            .replace(/<[^>]+>/g, "")
+            .replace(/&[#a-zA-Z0-9]+;/g, "")
+            .slice(0, 200)
+        : `${l.beds ?? "—"} bed · ${l.baths ?? "—"} bath · ${l.sqft ? l.sqft.toLocaleString("en-CA") + " sqft" : ""} home for sale at ${addr}, Calgary.`;
       return {
-        title: `${addr} — ${price ?? "Calgary Luxury Listing"} | ${SITE_NAME}`,
-        description: summary
-          ? `${addr}. ${summary}. Calgary MLS®. Represented or shown by Spencer Rivers.`
-          : `${addr}. Calgary MLS® listing represented or shown by Spencer Rivers.`,
-        canonical: `${ORIGIN}/mls/${id}`,
-        ogImage: l.heroImage || (l.photos && l.photos[0]) || DEFAULT_IMAGE,
+        title: l.listPrice
+          ? `${addr} - $${(l.listPrice / 1000).toFixed(0)}K | Luxury Homes Calgary`
+          : `${addr} | Luxury Homes Calgary`,
+        description: desc,
+        canonical: lUrl,
+        ogImage: heroImg || DEFAULT_IMAGE,
+        ogType: "article",
+        jsonLd: [
+          listingSchema({
+            url: lUrl,
+            name: addr,
+            description: desc,
+            streetAddress: addr,
+            city: l.city,
+            region: l.province,
+            postalCode: l.postalCode,
+            lat: l.lat,
+            lng: l.lng,
+            beds: l.beds,
+            baths: l.baths,
+            sqft: l.sqft,
+            yearBuilt: l.yearBuilt,
+            image: heroImg,
+            price: l.listPrice,
+            active: l.status === "Active",
+            datePosted: l.listDate,
+            subType: l.propertySubType || l.propertyType,
+          }),
+          crumbs(HOME_CRUMB, ["MLS Search", `${ORIGIN}/mls`], [addr, lUrl]),
+        ],
       };
     } catch {
       return null;
@@ -416,15 +593,36 @@ export function metaForPath(path: string): SeoMeta | null {
     try {
       const l = storage.getListingBySlug(slug) as any;
       if (!l) return null;
+      const pUrl = `${ORIGIN}/p/${slug}`;
       const price =
         typeof l.price === "number" ? `$${Number(l.price).toLocaleString()}` : null;
+      const name = l.title || l.address;
       return {
-        title: `${l.title || l.address} — ${SITE_NAME}`,
+        title: `${name} — ${SITE_NAME}`,
         description: [l.address, price, l.beds ? `${l.beds} bed` : null, l.baths ? `${l.baths} bath` : null]
           .filter(Boolean)
           .join(" · ") || `Calgary listing represented by Spencer Rivers.`,
-        canonical: `${ORIGIN}/p/${slug}`,
+        canonical: pUrl,
         ogImage: l.heroImage || (Array.isArray(l.photos) && l.photos[0]) || undefined,
+        jsonLd: [
+          listingSchema({
+            url: pUrl,
+            name,
+            description: typeof l.description === "string" ? l.description.slice(0, 300) : undefined,
+            streetAddress: l.address,
+            lat: l.lat,
+            lng: l.lng,
+            beds: l.beds,
+            baths: l.baths,
+            sqft: l.sqft,
+            yearBuilt: l.yearBuilt,
+            image: l.heroImage,
+            price: l.price,
+            active: l.status === "active",
+            subType: l.type,
+          }),
+          crumbs(HOME_CRUMB, [name, pUrl]),
+        ],
       };
     } catch {
       return null;
