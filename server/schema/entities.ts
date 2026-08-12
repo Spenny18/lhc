@@ -33,10 +33,12 @@ export const IDS = {
   place: (slug: string) => `${ORIGIN}/neighbourhoods/${slug}#place`,
 } as const;
 
-/** Owner-verified external profiles (2026-08). The share.google link is the
- * canonical Google Business Profile share URL Spencer provided; swap for a
- * maps CID URL if one is ever surfaced. LinkedIn intentionally absent —
- * not yet verified. */
+/** Owner-verified external profiles (2026-08). The maps.google.com/?cid=
+ * link is the stable Google Business Profile entity URL (CID
+ * 14326037006691820499 = ftid 0xc6d04ec146f763d3, KG mid /g/11nnvl15kj),
+ * resolved from Spencer's share.google link and verified to open "Spencer
+ * Rivers Top Calgary REALTOR - Luxury Homes Calgary". LinkedIn
+ * intentionally absent — not yet verified. */
 const SAME_AS = [
   "https://luxuryhomescalgary.ca/",
   "https://www.facebook.com/SpencerRiversRealEstate",
@@ -44,7 +46,7 @@ const SAME_AS = [
   "https://www.youtube.com/@riversrealtor",
   "https://www.rew.ca/agents/230822/spencer-rivers",
   "https://www.realtor.ca/agent/2135685/spencer-rivers-700-1816-crowchild-trail-nw-calgary-alberta-t2m3y7",
-  "https://share.google/BdElvwmEa0eNYWVmf",
+  "https://maps.google.com/?cid=14326037006691820499",
 ];
 
 /** The six marquee communities (slugs must match the neighbourhoods table). */
