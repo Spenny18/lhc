@@ -1,5 +1,7 @@
-import { createRoot } from "react-dom/client";
+import { createRoot, hydrateRoot } from "react-dom/client";
+import { hydrate } from "@tanstack/react-query";
 import App from "./App";
+import { queryClient } from "./lib/queryClient";
 import "./index.css";
 
 // Migration safety net: anyone arriving with an old hash-style URL
@@ -11,4 +13,18 @@ if (window.location.hash.startsWith("#/")) {
   window.history.replaceState(null, "", cleanPath || "/");
 }
 
-createRoot(document.getElementById("root")!).render(<App />);
+const root = document.getElementById("root")!;
+
+// Server-rendered pages ship their React Query cache in __RRE_STATE__ and
+// mark the root with data-ssr. Hydrate those; everything else (admin,
+// /mls search, any SSR fallback) client-renders as before.
+const ssrState = (window as any).__RRE_STATE__;
+if (ssrState) {
+  hydrate(queryClient, ssrState);
+}
+
+if (root.hasAttribute("data-ssr")) {
+  hydrateRoot(root, <App />);
+} else {
+  createRoot(root).render(<App />);
+}

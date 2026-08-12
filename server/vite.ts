@@ -6,6 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { nanoid } from "nanoid";
 import { metaForPath, injectMetaIntoHtml } from "./seo-inject";
+import { createSsrPipeline, type RenderFn } from "./ssr";
 
 const viteLogger = createLogger();
 
@@ -32,6 +33,15 @@ export async function setupVite(server: Server, app: Express) {
 
   app.use(vite.middlewares);
 
+  // Dev SSR: same pipeline as production, but the render module is loaded
+  // through vite.ssrLoadModule on every request (keeps HMR live) and nothing
+  // is cached. SSR failures log and fall back to the CSR shell.
+  const ssrPipeline = createSsrPipeline({
+    getRender: async () =>
+      (await vite.ssrLoadModule("/src/entry-server.tsx")).render as RenderFn,
+    cacheTtlMs: 0,
+  });
+
   app.use("/{*path}", async (req, res, next) => {
     const url = req.originalUrl;
 
@@ -53,19 +63,27 @@ export async function setupVite(server: Server, app: Express) {
       // Inject per-route SEO meta tags so Googlebot gets full HEAD
       // metadata even without executing JS. Same logic as production
       // (server/static.ts). Unknown routes return 404.
-      const meta = metaForPath(req.path);
+      // originalUrl, not req.path — inside app.use("/{*path}") Express
+      // strips the matched wildcard, so req.path is "/" for every request
+      // (same bug static.ts fixed in d56aaab).
+      const rawPath = url.split("?")[0].split("#")[0] || "/";
+      const meta = metaForPath(rawPath);
       if (!meta) {
         const fallbackHtml = injectMetaIntoHtml(page, {
           title: "Page not found — Rivers Real Estate",
           description: "The page you're looking for doesn't exist.",
-          canonical: `${process.env.PUBLIC_ORIGIN || "https://riversrealestate.ca"}${req.path}`,
+          canonical: `${process.env.PUBLIC_ORIGIN || "https://riversrealestate.ca"}${rawPath}`,
           noindex: true,
         });
         res.status(404).set({ "Content-Type": "text/html" }).end(fallbackHtml);
         return;
       }
       page = injectMetaIntoHtml(page, meta);
-      res.status(200).set({ "Content-Type": "text/html" }).end(page);
+      const search = url.split("?")[1] || "";
+      const rendered = await ssrPipeline.renderInto(page, rawPath, search, {
+        cacheable: false,
+      });
+      res.status(200).set({ "Content-Type": "text/html" }).end(rendered ?? page);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);
       next(e);
