@@ -17,8 +17,9 @@ import {
   SPENCER_EMAIL_HREF,
 } from "@/lib/format";
 
-const PORTRAIT =
-  "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=1400&h=1800&fit=crop";
+// Real photo of Spencer (was an Unsplash stock portrait of a stranger).
+// Source: Copy of DSC_5711.JPG from the Dec 2023 shoot, resized to 1400w.
+const PORTRAIT = "/img/top-realtor-in-calgary-spencer-rivers.jpg";
 
 const CREDENTIALS = [
   {
@@ -118,7 +119,7 @@ export default function AboutPage() {
             <div className="aspect-[3/4] rounded-sm overflow-hidden bg-secondary">
               <img
                 src={PORTRAIT}
-                alt="Spencer Rivers"
+                alt="top realtor in Calgary Spencer Rivers"
                 className="w-full h-full object-cover"
               />
             </div>
