@@ -25,6 +25,7 @@ const CREDENTIALS = [
   {
     abbr: "CLHMS",
     logo: "/img/designations/clhms-guild.png",
+    logoAlt: "CLHMS Million Dollar Guild — Certified Luxury Home Marketing Specialist seal",
     name: "Certified Luxury Home Marketing Specialist",
     blurb:
       "International credential held by the top 3% of agents working the luxury tier — Spencer has earned the Million Dollar Guild distinction for repeat performance above $1M.",
@@ -32,6 +33,7 @@ const CREDENTIALS = [
   {
     abbr: "CIPS",
     logo: "/img/designations/cips.png",
+    logoAlt: "CIPS — Certified International Property Specialist logo",
     name: "Certified International Property Specialist",
     blurb:
       "Designed for agents working with international clients. Helpful when out-of-province or out-of-country buyers move into Calgary's executive market.",
@@ -39,6 +41,7 @@ const CREDENTIALS = [
   {
     abbr: "CNE",
     logo: "/img/designations/cne.png",
+    logoAlt: "CNE — Certified Negotiation Expert logo",
     name: "Certified Negotiation Expert",
     blurb:
       "Specialist negotiation training that focuses on protecting client outcomes when offers, conditions, and competing buyers get complicated.",
@@ -46,6 +49,7 @@ const CREDENTIALS = [
   {
     abbr: "CCS",
     logo: "/img/designations/ccs.jpg",
+    logoAlt: "CREB C.C.S. — Certified Condominium Specialist badge",
     name: "Certified Condo Specialist",
     blurb:
       "Condominium documents and reserve fund studies require their own discipline — particularly in Calgary's high-rise inner-city buildings.",
@@ -53,6 +57,7 @@ const CREDENTIALS = [
   {
     abbr: "LLS",
     logo: "/img/designations/luxe.png",
+    logoAlt: "LUXE — Luxury Listing Specialist logo",
     name: "Luxury Listing Specialist",
     blurb:
       "Targeted training in pricing, photography, staging, and marketing of properties at the upper end of the local market.",
@@ -215,7 +220,7 @@ export default function AboutPage() {
                   </div>
                   <img
                     src={c.logo}
-                    alt={`${c.name} designation logo`}
+                    alt={c.logoAlt}
                     loading="lazy"
                     className="mt-3 h-12 w-auto max-w-[80px] object-contain"
                   />
