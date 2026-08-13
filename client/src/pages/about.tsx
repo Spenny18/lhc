@@ -24,30 +24,35 @@ const PORTRAIT = "/img/top-realtor-in-calgary-spencer-rivers.jpg";
 const CREDENTIALS = [
   {
     abbr: "CLHMS",
+    logo: "/img/designations/clhms-guild.png",
     name: "Certified Luxury Home Marketing Specialist",
     blurb:
       "International credential held by the top 3% of agents working the luxury tier — Spencer has earned the Million Dollar Guild distinction for repeat performance above $1M.",
   },
   {
     abbr: "CIPS",
+    logo: "/img/designations/cips.png",
     name: "Certified International Property Specialist",
     blurb:
       "Designed for agents working with international clients. Helpful when out-of-province or out-of-country buyers move into Calgary's executive market.",
   },
   {
     abbr: "CNE",
+    logo: "/img/designations/cne.png",
     name: "Certified Negotiation Expert",
     blurb:
       "Specialist negotiation training that focuses on protecting client outcomes when offers, conditions, and competing buyers get complicated.",
   },
   {
     abbr: "CCS",
+    logo: "/img/designations/ccs.jpg",
     name: "Certified Condo Specialist",
     blurb:
       "Condominium documents and reserve fund studies require their own discipline — particularly in Calgary's high-rise inner-city buildings.",
   },
   {
     abbr: "LLS",
+    logo: "/img/designations/luxe.png",
     name: "Luxury Listing Specialist",
     blurb:
       "Targeted training in pricing, photography, staging, and marketing of properties at the upper end of the local market.",
@@ -204,8 +209,16 @@ export default function AboutPage() {
                 className="grid grid-cols-[100px_1fr] gap-6 items-start"
                 data-testid={`credential-${c.abbr.toLowerCase()}`}
               >
-                <div className="font-serif text-3xl tabular-nums text-foreground/85 border-r border-border pr-4">
-                  {c.abbr}
+                <div className="border-r border-border pr-4">
+                  <div className="font-serif text-3xl tabular-nums text-foreground/85">
+                    {c.abbr}
+                  </div>
+                  <img
+                    src={c.logo}
+                    alt={`${c.name} designation logo`}
+                    loading="lazy"
+                    className="mt-3 h-12 w-auto max-w-[80px] object-contain"
+                  />
                 </div>
                 <div>
                   <div className="font-display text-[11px] tracking-[0.18em] text-foreground">
