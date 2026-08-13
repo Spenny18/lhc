@@ -1577,7 +1577,6 @@ interface InstagramPost {
   image: string;
   permalink: string;
   caption: string;
-  timestamp: string;
 }
 
 function InstagramFeed() {

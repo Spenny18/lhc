@@ -2110,26 +2110,42 @@ export async function registerRoutes(
   });
 
   // GET /api/public/instagram — real posts for the homepage feed strip.
-  // Proxies the WP site's /wp-json/sr/v1/instagram endpoint (a Code Snippet
-  // there reads Smash Balloon's cached posts, so the IG token stays on the
-  // WP side and images come from its permanent local cache, not expiring
-  // cdninstagram URLs). Cached in-memory for an hour; fails soft to the
-  // last-known data (or []) so the homepage never blocks on Instagram.
+  // Extracted from the PUBLIC rendered HTML of luxuryhomescalgary.ca, whose
+  // Smash Balloon widget keeps the feed fresh — nothing on the WP side had
+  // to change for this. The fetch carries a unique query param so
+  // Cloudflare's 30-day page cache can't serve stale HTML (the embedded
+  // cdninstagram URLs are signed and expire, so freshness matters).
+  // In-memory cache: 1h when we have posts, 5min after a miss; fails soft
+  // to last-known data so the homepage never blocks on Instagram.
   let igCache: { data: unknown[]; at: number } | null = null;
   app.get("/api/public/instagram", async (_req, res) => {
-    // Empty results retry after 5 min (covers the window before the WP
-    // endpoint exists / after a WP-side hiccup); real data holds for 1h.
     const TTL = (igCache?.data.length ? 60 : 5) * 60 * 1000;
     if (igCache && Date.now() - igCache.at < TTL) {
       return res.json(igCache.data);
     }
     try {
-      const r = await fetch(
-        "https://luxuryhomescalgary.ca/wp-json/sr/v1/instagram",
-        { signal: AbortSignal.timeout(8000), headers: { accept: "application/json" } },
-      );
-      const data = r.ok ? await r.json() : [];
-      igCache = { data: Array.isArray(data) ? data.slice(0, 12) : [], at: Date.now() };
+      const bust = Math.floor(Date.now() / (60 * 60 * 1000)); // hourly bucket
+      const r = await fetch(`https://luxuryhomescalgary.ca/?sr_ig=${bust}`, {
+        signal: AbortSignal.timeout(10000),
+        headers: { "user-agent": "Mozilla/5.0 (riversrealestate.ca feed sync)" },
+      });
+      const html = r.ok ? await r.text() : "";
+      const posts: Array<{ image: string; permalink: string; caption: string }> = [];
+      // Each Smash Balloon post is one `sbi_item` block containing the post
+      // permalink and a `data-full-res` image URL.
+      for (const chunk of html.split('class="sbi_item').slice(1)) {
+        const permalink = chunk.match(/href="(https:\/\/www\.instagram\.com\/p\/[^"]+)"/)?.[1];
+        // WP escapes ampersands as &#038; (or &amp;) — both must decode or
+        // the CDN URL's signature params are mangled and Instagram 403s.
+        const image = chunk
+          .match(/data-full-res="([^"]+)"/)?.[1]
+          ?.replace(/&(amp|#0?38);/g, "&");
+        const caption =
+          chunk.match(/alt="([^"]{1,140})/)?.[1]?.replace(/&(amp|#0?38);/g, "&") ?? "";
+        if (permalink && image) posts.push({ image, permalink, caption });
+        if (posts.length >= 12) break;
+      }
+      igCache = { data: posts.length ? posts : (igCache?.data ?? []), at: Date.now() };
     } catch {
       igCache = { data: igCache?.data ?? [], at: Date.now() };
     }
