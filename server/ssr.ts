@@ -48,6 +48,7 @@ export function queriesForPath(path: string): unknown[][] | null {
       ["/api/public/blog"],
       ["/api/public/testimonials"],
       ["/api/public/stats"],
+      ["/api/public/instagram"],
     ];
   if (p === "/blog") return [["/api/public/blog"]];
   if (p.startsWith("/blog/"))

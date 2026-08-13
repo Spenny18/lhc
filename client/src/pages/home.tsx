@@ -1573,20 +1573,24 @@ function LuxuryMarketOverview() {
 }
 
 // --- A12: Instagram Feed strip ---------------------------------------
+interface InstagramPost {
+  image: string;
+  permalink: string;
+  caption: string;
+  timestamp: string;
+}
+
 function InstagramFeed() {
-  // Static fallback tiles linking to the IG profile. A future enhancement
-  // could swap in a real IG embed (Instagram Basic Display API) — for now
-  // we render a clean 8-tile grid that points at the profile.
-  const tiles = [
-    "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=600&h=600&fit=crop&q=80",
-    "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=600&h=600&fit=crop&q=80",
-    "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=600&h=600&fit=crop&q=80",
-    "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&h=600&fit=crop&q=80",
-    "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=600&h=600&fit=crop&q=80",
-    "https://images.unsplash.com/photo-1600585154363-67eb9e2e2099?w=600&h=600&fit=crop&q=80",
-    "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=600&h=600&fit=crop&q=80",
-    "https://images.unsplash.com/photo-1600566753051-6057f0c4b5b3?w=600&h=600&fit=crop&q=80",
-  ];
+  // Real posts from @riversrealtor, via /api/public/instagram (which
+  // proxies the WP site's Smash Balloon cache — see server/routes.ts).
+  // Server-prefetched, so the tiles are in the SSR HTML. If the feed is
+  // ever empty (endpoint down, no posts), the section renders nothing —
+  // better no strip than stock photos pretending to be Instagram.
+  const feed = useQuery<InstagramPost[]>({
+    queryKey: ["/api/public/instagram"],
+  });
+  const posts = (feed.data ?? []).filter((p) => p.image && p.permalink).slice(0, 8);
+  if (posts.length === 0) return null;
   return (
     <section
       className="py-20 lg:py-28 bg-background"
@@ -1614,18 +1618,18 @@ function InstagramFeed() {
           </a>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 lg:gap-3">
-          {tiles.map((src, i) => (
+          {posts.map((post, i) => (
             <a
-              key={i}
-              href="https://instagram.com/riversrealtor"
+              key={post.permalink}
+              href={post.permalink}
               target="_blank"
               rel="noreferrer"
               className="group relative aspect-square overflow-hidden rounded-sm bg-secondary"
               data-testid={`ig-tile-${i}`}
             >
               <img
-                src={src}
-                alt=""
+                src={post.image}
+                alt={post.caption ? post.caption.slice(0, 100) : "Instagram post by @riversrealtor"}
                 loading="lazy"
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
               />

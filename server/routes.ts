@@ -2109,6 +2109,33 @@ export async function registerRoutes(
     res.json(storage.listTestimonials());
   });
 
+  // GET /api/public/instagram — real posts for the homepage feed strip.
+  // Proxies the WP site's /wp-json/sr/v1/instagram endpoint (a Code Snippet
+  // there reads Smash Balloon's cached posts, so the IG token stays on the
+  // WP side and images come from its permanent local cache, not expiring
+  // cdninstagram URLs). Cached in-memory for an hour; fails soft to the
+  // last-known data (or []) so the homepage never blocks on Instagram.
+  let igCache: { data: unknown[]; at: number } | null = null;
+  app.get("/api/public/instagram", async (_req, res) => {
+    // Empty results retry after 5 min (covers the window before the WP
+    // endpoint exists / after a WP-side hiccup); real data holds for 1h.
+    const TTL = (igCache?.data.length ? 60 : 5) * 60 * 1000;
+    if (igCache && Date.now() - igCache.at < TTL) {
+      return res.json(igCache.data);
+    }
+    try {
+      const r = await fetch(
+        "https://luxuryhomescalgary.ca/wp-json/sr/v1/instagram",
+        { signal: AbortSignal.timeout(8000), headers: { accept: "application/json" } },
+      );
+      const data = r.ok ? await r.json() : [];
+      igCache = { data: Array.isArray(data) ? data.slice(0, 12) : [], at: Date.now() };
+    } catch {
+      igCache = { data: igCache?.data ?? [], at: Date.now() };
+    }
+    res.json(igCache.data);
+  });
+
   // GET /api/public/stats — site stats for the homepage
   app.get("/api/public/stats", (_req, res) => {
     const activeCount = storage.countActiveMlsListings();
