@@ -576,7 +576,7 @@ export const AUDIENCE_SEGMENTS: AudienceSegment[] = [
       "A family home is a school zone, a safe street, a yard that earns its keep, and room to grow — before it's a number of bedrooms. Spencer Rivers raised his own family in Calgary and matches growing households to the communities built for exactly these years: Springbank Hill, Aspen Woods, Edgemont, Mahogany, McKenzie Lake, and beyond.",
     image:
       "/img/work-with/family-focused-properties.jpg",
-    imageAlt: "Aspen Woods homes around the community pond in west Calgary",
+    imageAlt: "A family of four in front of their Calgary home at golden hour",
     points: [
       {
         icon: GraduationCap,
