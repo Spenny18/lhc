@@ -71,28 +71,28 @@ const WORK_WITH_META: Record<
     description:
       "Buy in Calgary's $1M+ market with Spencer Rivers, CLHMS. Private showings, off-market access, and data-driven negotiation across Springbank Hill, Aspen Woods, Mount Royal, and more.",
     image:
-      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1600&h=1200&fit=crop",
+      `${ORIGIN}/img/work-with/luxury-properties.jpg`,
   },
   "first-time-home-sellers": {
     title: "First-Time Home Sellers in Calgary | Spencer Rivers, Rivers Real Estate",
     description:
       "Selling your first home in Calgary? Spencer Rivers handles pricing, prep, marketing, and every form — with a written plan and a net-proceeds estimate before you list.",
     image:
-      "https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=1600&h=1200&fit=crop",
+      `${ORIGIN}/img/work-with/first-time-home-sellers.jpg`,
   },
   "empty-nesters": {
     title: "Downsizing & Empty Nesters in Calgary | Spencer Rivers, Rivers Real Estate",
     description:
       "Right-size without compromise. Spencer Rivers, Certified Condo Specialist, coordinates the sale of the family home and the move into a luxury condo, villa, or bungalow — one plan, one move.",
     image:
-      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1600&h=1200&fit=crop",
+      `${ORIGIN}/img/neighbourhoods/eau-claire.jpg`,
   },
   "first-time-home-buyers": {
     title: "First-Time Home Buyers in Calgary | Spencer Rivers, Rivers Real Estate",
     description:
       "Buy your first Calgary home with a coach, not a salesperson. Spencer Rivers guides financing, inspections, and neighbourhood choice — data first, pressure never.",
     image:
-      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1600&h=1200&fit=crop",
+      `${ORIGIN}/img/neighbourhoods/bridgeland-riverside.jpg`,
   },
   "innercity-properties": {
     title:
@@ -100,7 +100,7 @@ const WORK_WITH_META: Record<
     description:
       "Buy or sell in Calgary's inner city with Spencer Rivers. Block-level expertise across Upper Mount Royal, Elbow Park, Roxboro, Mission, and Beltline — estates, infills, and condos.",
     image:
-      "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1600&h=1200&fit=crop",
+      `${ORIGIN}/img/neighbourhoods/upper-mount-royal.jpg`,
   },
   "move-ups": {
     title:
@@ -108,7 +108,7 @@ const WORK_WITH_META: Record<
     description:
       "Trading up to your forever home? Spencer Rivers coordinates the sell-and-buy sequence — pricing, bridge financing, and possession dates — so you move once, without carrying two mortgages.",
     image:
-      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1600&h=1200&fit=crop",
+      `${ORIGIN}/img/work-with/move-ups.jpg`,
   },
   "family-focused-properties": {
     title:
@@ -116,14 +116,14 @@ const WORK_WITH_META: Record<
     description:
       "Find the Calgary communities built for growing families. Spencer Rivers verifies school zones, walks the streets, and matches your family to the right home in Springbank Hill, Aspen Woods, Mahogany, and more.",
     image:
-      "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=1600&h=1200&fit=crop",
+      `${ORIGIN}/img/work-with/family-focused-properties.jpg`,
   },
   "urban-properties": {
     title: "Urban Condos, Lofts & Townhomes in Calgary | Spencer Rivers",
     description:
       "Buy urban Calgary with a Certified Condo Specialist. Spencer Rivers vets buildings — reserve funds, boards, construction — across Beltline, Mission, Kensington, Inglewood, and East Village.",
     image:
-      "https://images.unsplash.com/photo-1536376072261-38c75010e6c9?w=1600&h=1200&fit=crop",
+      `${ORIGIN}/img/neighbourhoods/beltline.jpg`,
   },
 };
 
@@ -365,9 +365,9 @@ export function metaForPath(path: string): SeoMeta | null {
       title: m.title,
       description: m.description,
       canonical,
-      // Deliberately not m.image — those are Unsplash stock, and OG/Twitter
-      // cards must never resolve to a stock-photo domain. Falls back to the
-      // brand card until per-segment brand photography exists.
+      // Per-segment brand photography (real listings/community shots as of
+      // 2026-08) — safe for OG cards again.
+      ogImage: m.image,
       jsonLd: [
         crumbs(
           HOME_CRUMB,

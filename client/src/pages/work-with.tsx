@@ -84,8 +84,8 @@ export const AUDIENCE_SEGMENTS: AudienceSegment[] = [
     intro:
       "Calgary's luxury tier is a small market where the best properties often trade quietly. Spencer Rivers — CLHMS, Million Dollar Guild — works it daily across Springbank Hill, Aspen Woods, Upper Mount Royal, Elbow Park, Britannia, and Bel-Aire, pairing serious buyers with estates, penthouses, and villas that fit how they actually live.",
     image:
-      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1600&h=1200&fit=crop",
-    imageAlt: "Modern Calgary luxury estate at dusk",
+      "/img/work-with/luxury-properties.jpg",
+    imageAlt: "Modern Calgary luxury estate at dusk — a Rivers Real Estate sale at 102 Malibou Road SW",
     points: [
       {
         icon: KeyRound,
@@ -165,8 +165,8 @@ export const AUDIENCE_SEGMENTS: AudienceSegment[] = [
     intro:
       "Selling a home you've never sold before means pricing, timing, staging, conditions, and paperwork all landing at once. Spencer Rivers walks first-time sellers through every step with the same process he runs on million-dollar estates — the math on paper, the prep scheduled, and no form left to chance.",
     image:
-      "https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=1600&h=1200&fit=crop",
-    imageAlt: "Well-kept Calgary home ready for market",
+      "/img/work-with/first-time-home-sellers.jpg",
+    imageAlt: "Established residential street of well-kept family homes",
     points: [
       {
         icon: LineChart,
@@ -246,8 +246,8 @@ export const AUDIENCE_SEGMENTS: AudienceSegment[] = [
     intro:
       "The family home did its job. The next chapter should be simpler — a luxury condo with a concierge, a lock-and-leave bungalow, or a curated build closer to the grandkids — without giving up the quality you're used to or the equity you've built. Spencer Rivers, a Certified Condo Specialist, coordinates both sides of the move.",
     image:
-      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1600&h=1200&fit=crop",
-    imageAlt: "Bright single-level luxury home interior",
+      "/img/neighbourhoods/eau-claire.jpg",
+    imageAlt: "Peace Bridge and the Bow River beside downtown Calgary — Eau Claire condo living",
     points: [
       {
         icon: Building2,
@@ -327,8 +327,8 @@ export const AUDIENCE_SEGMENTS: AudienceSegment[] = [
     intro:
       "Your first purchase sets up every move that follows, so it deserves more than a weekend of open houses. Spencer Rivers coaches first-time buyers through financing, inspections, and Calgary's submarkets with the same discipline he brings to the luxury tier — data first, pressure never.",
     image:
-      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1600&h=1200&fit=crop",
-    imageAlt: "First home interior with natural light",
+      "/img/neighbourhoods/bridgeland-riverside.jpg",
+    imageAlt: "Footbridge over the Bow River leading into downtown Calgary from Bridgeland",
     points: [
       {
         icon: LineChart,
@@ -408,8 +408,8 @@ export const AUDIENCE_SEGMENTS: AudienceSegment[] = [
     intro:
       "Upper Mount Royal, Elbow Park, Roxboro, Mission, Beltline — Calgary's inner city is where century-old estates, rebuilt infills, and full-floor condos share the same postal codes. Values here move block by block, and Spencer Rivers knows which blocks. This is the market he works every day.",
     image:
-      "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1600&h=1200&fit=crop",
-    imageAlt: "Tree-lined inner-city streetscape",
+      "/img/neighbourhoods/upper-mount-royal.jpg",
+    imageAlt: "Inner-city Calgary rooftops with the downtown skyline at sunset",
     points: [
       {
         icon: MapPin,
@@ -489,8 +489,8 @@ export const AUDIENCE_SEGMENTS: AudienceSegment[] = [
     intro:
       "The move-up is the hardest transaction in real estate: two deals, two sets of dates, and your equity in transit between them. Spencer Rivers coordinates the sell-and-buy sequence — pricing, conditions, bridge financing, possession dates — so you land in the forever home without ever carrying two mortgages you didn't plan for.",
     image:
-      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1600&h=1200&fit=crop",
-    imageAlt: "Spacious modern family home interior",
+      "/img/work-with/move-ups.jpg",
+    imageAlt: "Craftsman estate home on an acreage — a Rivers Real Estate sale at 43 Red Willow Crescent",
     points: [
       {
         icon: Clock,
@@ -570,8 +570,8 @@ export const AUDIENCE_SEGMENTS: AudienceSegment[] = [
     intro:
       "A family home is a school zone, a safe street, a yard that earns its keep, and room to grow — before it's a number of bedrooms. Spencer Rivers raised his own family in Calgary and matches growing households to the communities built for exactly these years: Springbank Hill, Aspen Woods, Edgemont, Mahogany, McKenzie Lake, and beyond.",
     image:
-      "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=1600&h=1200&fit=crop",
-    imageAlt: "Family home with large backyard",
+      "/img/work-with/family-focused-properties.jpg",
+    imageAlt: "Aspen Woods homes around the community pond in west Calgary",
     points: [
       {
         icon: GraduationCap,
@@ -651,8 +651,8 @@ export const AUDIENCE_SEGMENTS: AudienceSegment[] = [
     intro:
       "Loft condos in converted warehouses, executive townhomes off 17th Avenue, full-floor suites above the Beltline — urban Calgary is a market of buildings, and buildings have finances, boards, and reputations. Spencer Rivers, Certified Condo Specialist, vets the building as carefully as the suite.",
     image:
-      "https://images.unsplash.com/photo-1536376072261-38c75010e6c9?w=1600&h=1200&fit=crop",
-    imageAlt: "Urban loft condo with exposed brick",
+      "/img/neighbourhoods/beltline.jpg",
+    imageAlt: "Downtown Calgary skyline above the Beltline",
     points: [
       {
         icon: Building2,
