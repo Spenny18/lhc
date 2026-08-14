@@ -66,6 +66,9 @@ export interface AudienceSegment {
   intro: string;
   image: string;
   imageAlt: string;
+  /** "badge" = square emblem artwork: render uncropped on white instead of
+   *  the 4:5 object-cover photo treatment. */
+  imageStyle?: "badge";
   points: SegmentPoint[];
   steps: SegmentStep[];
   links: SegmentLink[];
@@ -245,9 +248,10 @@ export const AUDIENCE_SEGMENTS: AudienceSegment[] = [
     headline: ["Right-size", "without compromise."],
     intro:
       "The family home did its job. The next chapter should be simpler — a luxury condo with a concierge, a lock-and-leave bungalow, or a curated build closer to the grandkids — without giving up the quality you're used to or the equity you've built. Spencer Rivers, a Certified Condo Specialist, coordinates both sides of the move.",
-    image:
-      "/img/neighbourhoods/eau-claire.jpg",
-    imageAlt: "Peace Bridge and the Bow River beside downtown Calgary — Eau Claire condo living",
+    image: "/img/work-with/empty-nesters.jpg",
+    imageAlt:
+      "Empty Nesters — a couple enjoying sunset coffee overlooking the water",
+    imageStyle: "badge",
     points: [
       {
         icon: Building2,
@@ -326,9 +330,10 @@ export const AUDIENCE_SEGMENTS: AudienceSegment[] = [
     headline: ["Buy smart,", "not fast."],
     intro:
       "Your first purchase sets up every move that follows, so it deserves more than a weekend of open houses. Spencer Rivers coaches first-time buyers through financing, inspections, and Calgary's submarkets with the same discipline he brings to the luxury tier — data first, pressure never.",
-    image:
-      "/img/neighbourhoods/bridgeland-riverside.jpg",
-    imageAlt: "Footbridge over the Bow River leading into downtown Calgary from Bridgeland",
+    image: "/img/work-with/first-time-home-buyers.jpg",
+    imageAlt:
+      "First Time Buyers — a couple with keys in front of their new home",
+    imageStyle: "badge",
     points: [
       {
         icon: LineChart,
@@ -842,11 +847,21 @@ export default function WorkWithDetailPage() {
           </div>
 
           <div className="lg:col-span-5">
-            <div className="aspect-[4/5] rounded-sm overflow-hidden bg-secondary">
+            <div
+              className={
+                segment.imageStyle === "badge"
+                  ? "aspect-square rounded-sm overflow-hidden bg-white flex items-center justify-center"
+                  : "aspect-[4/5] rounded-sm overflow-hidden bg-secondary"
+              }
+            >
               <img
                 src={segment.image}
                 alt={segment.imageAlt}
-                className="w-full h-full object-cover"
+                className={
+                  segment.imageStyle === "badge"
+                    ? "w-full h-full object-contain"
+                    : "w-full h-full object-cover"
+                }
                 loading="eager"
               />
             </div>

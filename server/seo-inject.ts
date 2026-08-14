@@ -85,14 +85,14 @@ const WORK_WITH_META: Record<
     description:
       "Right-size without compromise. Spencer Rivers, Certified Condo Specialist, coordinates the sale of the family home and the move into a luxury condo, villa, or bungalow — one plan, one move.",
     image:
-      `${ORIGIN}/img/neighbourhoods/eau-claire.jpg`,
+      `${ORIGIN}/img/work-with/empty-nesters.jpg`,
   },
   "first-time-home-buyers": {
     title: "First-Time Home Buyers in Calgary | Spencer Rivers, Rivers Real Estate",
     description:
       "Buy your first Calgary home with a coach, not a salesperson. Spencer Rivers guides financing, inspections, and neighbourhood choice — data first, pressure never.",
     image:
-      `${ORIGIN}/img/neighbourhoods/bridgeland-riverside.jpg`,
+      `${ORIGIN}/img/work-with/first-time-home-buyers.jpg`,
   },
   "innercity-properties": {
     title:
