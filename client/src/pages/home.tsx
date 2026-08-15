@@ -822,8 +822,8 @@ function AuthorityBlock() {
         <div className="lg:col-span-5 order-2 lg:order-1">
           <div className="aspect-[4/5] overflow-hidden rounded-sm bg-secondary">
             <img
-              src="https://luxuryhomescalgary.ca/wp-content/uploads/2024/10/006-102-Malibou-rd-1-1-scaled.jpg"
-              alt="Calgary luxury home sold by Spencer Rivers"
+              src="/img/spencer-arriva.jpg"
+              alt="Spencer Rivers taking a client call in a Calgary high-rise"
               loading="lazy"
               className="w-full h-full object-cover"
             />
