@@ -40,7 +40,7 @@ primary_region = "sjc"
     timeout = "5s"
     grace_period = "10s"
     method = "GET"
-    path = "/api/public/stats"
+    path = "/healthz"
 
 [[mounts]]
   source = "rivers_data"

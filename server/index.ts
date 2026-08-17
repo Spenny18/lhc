@@ -31,6 +31,13 @@ app.use(
 
 app.use(express.urlencoded({ extended: false, limit: "12mb" }));
 
+// Fly only needs to know that the Node process can answer. Keep the health
+// check independent of SQLite and third-party services so transient load does
+// not cause healthy machines to be removed from service.
+app.get("/healthz", (_req, res) => {
+  res.status(200).type("text/plain").send("ok");
+});
+
 // 301 www → apex. Both hostnames resolve to this app; without the redirect
 // Google indexes duplicate content across the two hosts.
 app.use((req, res, next) => {
