@@ -7,6 +7,7 @@ import { serveStatic } from "./static";
 import { createServer } from "node:http";
 import { startSyncCron } from "./rets-sync";
 import { startLeadAlertCron } from "./lead-alert-cron";
+import { storage } from "./storage";
 
 const app = express();
 const httpServer = createServer(app);
@@ -87,6 +88,14 @@ app.use((req, res, next) => {
 
 (async () => {
   await registerRoutes(httpServer, app);
+
+  // Old MLS-number detail URLs permanently consolidate onto the canonical
+  // address/subdivision/city permalink. Slug URLs continue to SSR normally.
+  app.get("/mls/:segment", (req, res, next) => {
+    const legacy = storage.getMlsListingById(req.params.segment);
+    if (!legacy) return next();
+    return res.redirect(301, `/mls/${storage.getMlsSeoSlug(legacy)}`);
+  });
 
   try {
     startSyncCron();

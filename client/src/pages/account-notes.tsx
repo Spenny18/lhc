@@ -5,6 +5,7 @@ import { PublicLayout } from "@/components/public-layout";
 import { useAccount, useNotes } from "@/lib/account";
 import { formatPriceCompact } from "@/lib/format";
 import type { PublicMlsListing } from "@/lib/mls-types";
+import { mlsPropertyPath } from "@shared/mls-url";
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-CA", {
@@ -81,7 +82,7 @@ export default function AccountNotesPage() {
               const listing = listingQueries[idx]?.data;
               return (
                 <div key={n.id} className="border border-border rounded-sm overflow-hidden flex flex-col md:flex-row">
-                  <Link href={`/mls/${n.mlsId}`} className="md:w-56 md:flex-shrink-0 block bg-muted">
+                  <Link href={listing ? mlsPropertyPath(listing) : `/mls/${n.mlsId}`} className="md:w-56 md:flex-shrink-0 block bg-muted">
                       {listing?.heroImage ? (
                         <img
                           src={listing.heroImage}
@@ -96,7 +97,7 @@ export default function AccountNotesPage() {
                     
                   </Link>
                   <div className="p-5 flex-1 min-w-0">
-                    <Link href={`/mls/${n.mlsId}`} className="block group">
+                    <Link href={listing ? mlsPropertyPath(listing) : `/mls/${n.mlsId}`} className="block group">
                         <div className="font-serif text-xl group-hover:underline">
                           {listing ? formatPriceCompact(listing.listPrice) : "—"}
                         </div>

@@ -3,11 +3,13 @@
 export interface PublicMlsListing {
   id: string;
   mlsNumber: string;
+  seoSlug: string;
   status: string;
   listPrice: number;
   soldPrice: number | null;
   fullAddress: string;
   neighbourhood: string | null;
+  subdivision: string | null;
   city: string;
   province: string;
   postalCode: string | null;

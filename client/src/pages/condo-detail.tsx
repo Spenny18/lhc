@@ -10,6 +10,7 @@ import { ClientOnly } from "@/components/client-only";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice, formatSqft } from "@/lib/format";
 import { apiUrl } from "@/lib/queryClient";
+import { mlsPropertyPath } from "@shared/mls-url";
 import { SeoHead } from "@/components/seo-head";
 
 interface CondoDetail {
@@ -378,7 +379,7 @@ export default function CondoDetailPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {data.listings.map((l) => (
-                <Link key={l.id} href={`/mls/${l.id}`} className="group block">
+                <Link key={l.id} href={mlsPropertyPath(l as any)} className="group block">
                     <div className="relative aspect-[4/3] rounded-sm overflow-hidden bg-secondary">
                       <img
                         src={l.heroImage ? apiUrl(l.heroImage) : data.heroImage}

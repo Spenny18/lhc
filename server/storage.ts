@@ -54,6 +54,7 @@ import type {
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
 import { eq, desc, and, gte, lte, like, sql, or, asc, inArray } from "drizzle-orm";
+import { assignMlsSeoSlugs } from "@shared/mls-url";
 
 // Use data.db for SQLite. The publish flow snapshots/restores `data.db` across
 // redeploys. If the snapshot becomes corrupt ("database disk image is
@@ -867,6 +868,7 @@ export function normalizeStreetName(raw: string | null | undefined): string {
 }
 
 export class DatabaseStorage implements IStorage {
+  private mlsSlugCache: Map<string, string> | null = null;
   // Users
   getUserById(id: number) {
     return db.select().from(users).where(eq(users.id, id)).get();
@@ -1017,6 +1019,7 @@ export class DatabaseStorage implements IStorage {
 
   // ---- MLS listings -------------------------------------------------------
   upsertMlsListing(data: InsertMlsListing): MlsListing {
+    this.mlsSlugCache = null;
     const existing = db.select().from(mlsListings).where(eq(mlsListings.id, data.id!)).get();
     if (existing) {
       // Track price + status changes for the market snapshot.
@@ -1069,6 +1072,23 @@ export class DatabaseStorage implements IStorage {
   }
   getMlsListingById(id: string): MlsListing | undefined {
     return db.select().from(mlsListings).where(eq(mlsListings.id, id)).get();
+  }
+  getMlsSeoSlug(listing: MlsListing): string {
+    if (!this.mlsSlugCache) {
+      const sources = db.select({
+        id: mlsListings.id,
+        mlsNumber: mlsListings.mlsNumber,
+        fullAddress: mlsListings.fullAddress,
+        subdivision: mlsListings.subdivision,
+        neighbourhood: mlsListings.neighbourhood,
+        city: mlsListings.city,
+      }).from(mlsListings).all();
+      this.mlsSlugCache = assignMlsSeoSlugs(sources);
+    }
+    return this.mlsSlugCache.get(listing.id)!;
+  }
+  getMlsListingBySeoSlug(slug: string): MlsListing | undefined {
+    return db.select().from(mlsListings).all().find((row) => this.getMlsSeoSlug(row) === slug);
   }
   countMlsListings(): number {
     const r = db.select({ c: sql<number>`count(*)` }).from(mlsListings).get();
@@ -1301,6 +1321,7 @@ export class DatabaseStorage implements IStorage {
     const offset = opts.offset ?? 0;
     const items = all.slice(offset, offset + limit).map((row) => ({
       ...row,
+      seoSlug: this.getMlsSeoSlug(row),
       gallery: safeParseArray(row.gallery),
       features: safeParseArray(row.features),
     }));
@@ -1366,6 +1387,7 @@ export class DatabaseStorage implements IStorage {
     }
     return rows.map((row) => ({
       ...row,
+      seoSlug: this.getMlsSeoSlug(row),
       gallery: safeParseArray(row.gallery),
       features: safeParseArray(row.features),
     }));

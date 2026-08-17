@@ -5,6 +5,7 @@ import { PublicLayout } from "@/components/public-layout";
 import { useAccount, useFavorites, useRemoveFavorite } from "@/lib/account";
 import { formatPriceCompact, formatSqft } from "@/lib/format";
 import type { PublicMlsListing } from "@/lib/mls-types";
+import { mlsPropertyPath } from "@shared/mls-url";
 
 export default function AccountFavoritesPage() {
   const { data: me, isLoading: meLoading } = useAccount();
@@ -80,7 +81,7 @@ export default function AccountFavoritesPage() {
               const listing = listingQueries[idx]?.data;
               return (
                 <div key={f.id} className="border border-border rounded-sm overflow-hidden group relative">
-                  <Link href={`/mls/${f.mlsId}`} className="block">
+                  <Link href={listing ? mlsPropertyPath(listing) : `/mls/${f.mlsId}`} className="block">
                       {listing?.heroImage ? (
                         <div className="aspect-[4/3] bg-muted overflow-hidden">
                           <img

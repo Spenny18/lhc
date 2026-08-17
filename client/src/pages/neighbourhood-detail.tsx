@@ -27,6 +27,7 @@ import {
   FitBoundsOnce,
 } from "@/components/rivers-map";
 import { SeoHead } from "@/components/seo-head";
+import { mlsPropertyPath } from "@shared/mls-url";
 
 export default function NeighbourhoodDetailPage() {
   const [, params] = useRoute<{ slug: string }>("/neighbourhoods/:slug");
@@ -561,7 +562,7 @@ function NeighbourhoodAirbnbMap({
               )}
               <div className="flex-1 min-w-0 p-3">
                 <div className="flex items-start justify-between gap-2">
-                  <Link href={`/mls/${selectedListing.id}`} className="font-serif text-sm leading-snug hover:underline truncate block">
+                  <Link href={mlsPropertyPath(selectedListing as any)} className="font-serif text-sm leading-snug hover:underline truncate block">
                       {selectedListing.fullAddress}
                     
                   </Link>
