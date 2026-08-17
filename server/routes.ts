@@ -2579,11 +2579,12 @@ export async function registerRoutes(
   app.get("/api/public/neighbourhoods/:slug/pois", async (req, res) => {
     const n = storage.getNeighbourhoodBySlug(req.params.slug);
     if (!n) return res.status(404).json({ message: "Neighbourhood not found" });
-    // Center on the listings' centroid (same as the detail route) so "what's
-    // nearby" reflects the actual homes, not a stale stored center.
-    const display = storage.neighbourhoodDisplayCenter(n);
-    const lat = Number(display.lat);
-    const lng = Number(display.lng);
+    // Do not rescan the MLS table just to calculate a centroid on every POI
+    // request. The detail response already uses its live centroid for the map;
+    // this endpoint can use the neighbourhood's persisted centre and remain a
+    // cheap, browser-only enhancement when the external service is unhealthy.
+    const lat = Number(n.centerLat);
+    const lng = Number(n.centerLng);
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
       return res.json({
         center: { lat: null, lng: null },
