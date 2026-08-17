@@ -143,7 +143,7 @@ export default function NeighbourhoodsIndexPage() {
                       <div className="relative aspect-[4/3] overflow-hidden rounded-sm bg-secondary">
                         <img
                           src={n.heroImage}
-                          alt={n.name}
+                          alt={`${n.name} homes for sale`}
                           loading="lazy"
                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
                         />

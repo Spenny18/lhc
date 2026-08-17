@@ -170,6 +170,36 @@ export const neighbourhoodImages: NbImage[] = [
       sourceUrl: "https://commons.wikimedia.org/w/index.php?curid=66194195",
     },
   },
+  {
+    slug: "elbow-valley",
+    heroImage: "/img/neighbourhoods/elbow-valley.png",
+    heroCredit: null,
+  },
+  {
+    slug: "elbow-valley-west",
+    heroImage: "/img/neighbourhoods/elbow-valley-west.png",
+    heroCredit: null,
+  },
+  {
+    slug: "harmony",
+    heroImage: "/img/neighbourhoods/harmony.png",
+    heroCredit: null,
+  },
+  {
+    slug: "spring-creek",
+    heroImage: "/img/neighbourhoods/spring-creek.png",
+    heroCredit: null,
+  },
+  {
+    slug: "heritage-pointe",
+    heroImage: "/img/neighbourhoods/heritage-pointe.png",
+    heroCredit: null,
+  },
+  {
+    slug: "mckenzie-lake",
+    heroImage: "/img/neighbourhoods/mckenzie-lake.png",
+    heroCredit: null,
+  },
 ];
 
 // A hero we're allowed to replace: the old stock/AI sources, a prior curated

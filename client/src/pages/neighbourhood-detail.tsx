@@ -141,7 +141,7 @@ export default function NeighbourhoodDetailPage() {
       <section className="relative h-[80vh] min-h-[560px] w-full overflow-hidden -mt-16 lg:-mt-20">
         <img
           src={data.heroImage}
-          alt={data.name}
+          alt={`${data.name} homes for sale`}
           className="absolute inset-0 w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-black/85" />
@@ -216,7 +216,7 @@ export default function NeighbourhoodDetailPage() {
               >
                 <img
                   src={src}
-                  alt={`${data.name} ${i + 1}`}
+                  alt={`${data.name} homes for sale`}
                   loading="lazy"
                   className="absolute inset-0 w-full h-full object-cover"
                 />

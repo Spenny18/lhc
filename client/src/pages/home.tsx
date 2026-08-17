@@ -322,7 +322,7 @@ function NeighbourhoodPicker({
                 data-testid={`card-neighbourhood-${n.slug}`}>
                 <img
                   src={n.heroImage}
-                  alt={n.name}
+                  alt={`${n.name} homes for sale`}
                   loading="lazy"
                   className="w-full h-full object-cover opacity-75 transition-all duration-700 group-hover:scale-[1.04] group-hover:opacity-90"
                 />
