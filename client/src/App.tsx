@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider, useAuth } from "@/lib/auth";
-import { useEffect, useRef } from "react";
+import { lazy, Suspense, useEffect, useRef } from "react";
 
 // ---- Follow Up Boss pixel: SPA pageview tracker ----------------------------
 // The initial pageview fires from the snippet in index.html. This hook fires
@@ -33,7 +33,7 @@ function usePageviewTracker() {
 
 // Public pages
 import HomePage from "@/pages/home";
-import MlsSearchPage from "@/pages/mls-search";
+const MlsSearchPage = lazy(() => import("@/pages/mls-search"));
 import MlsDetailPage from "@/pages/mls-detail";
 import NeighbourhoodsIndexPage from "@/pages/neighbourhoods-index";
 import NeighbourhoodDetailPage from "@/pages/neighbourhood-detail";
@@ -49,30 +49,30 @@ import AssignmentsPage from "@/pages/assignments";
 
 // Admin (existing dashboard) pages — mounted under /admin/*
 import NotFound from "@/pages/not-found";
-import AuthPage from "@/pages/auth";
-import DashboardPage from "@/pages/dashboard";
-import ListingsPage from "@/pages/listings";
-import ListingEditPage from "@/pages/listing-edit";
+const AuthPage = lazy(() => import("@/pages/auth"));
+const DashboardPage = lazy(() => import("@/pages/dashboard"));
+const ListingsPage = lazy(() => import("@/pages/listings"));
+const ListingEditPage = lazy(() => import("@/pages/listing-edit"));
 import ListingPublicPage from "@/pages/listing-public";
-import LeadsPage from "@/pages/leads";
-import MlsSyncPage from "@/pages/mls-sync";
-import AdminCalendarPage from "@/pages/admin-calendar";
-import AdminMarketingPage from "@/pages/admin-marketing";
-import AdminAnalyticsPage from "@/pages/admin-analytics";
-import AdminSavedSearchesPage from "@/pages/admin-saved-searches";
-import AdminCondosPage from "@/pages/admin-condos";
-import AdminBlogPage from "@/pages/admin-blog";
-import AdminNeighbourhoodsPage from "@/pages/admin-neighbourhoods";
+const LeadsPage = lazy(() => import("@/pages/leads"));
+const MlsSyncPage = lazy(() => import("@/pages/mls-sync"));
+const AdminCalendarPage = lazy(() => import("@/pages/admin-calendar"));
+const AdminMarketingPage = lazy(() => import("@/pages/admin-marketing"));
+const AdminAnalyticsPage = lazy(() => import("@/pages/admin-analytics"));
+const AdminSavedSearchesPage = lazy(() => import("@/pages/admin-saved-searches"));
+const AdminCondosPage = lazy(() => import("@/pages/admin-condos"));
+const AdminBlogPage = lazy(() => import("@/pages/admin-blog"));
+const AdminNeighbourhoodsPage = lazy(() => import("@/pages/admin-neighbourhoods"));
 
 // Consumer portal (/account/*) pages
-import AccountLoginPage from "@/pages/account-login";
-import AccountDashboardPage from "@/pages/account-dashboard";
-import AccountFavoritesPage from "@/pages/account-favorites";
-import AccountSearchesPage from "@/pages/account-searches";
-import AccountNotesPage from "@/pages/account-notes";
-import AccountToursPage from "@/pages/account-tours";
-import AccountReportsPage from "@/pages/account-reports";
-import AccountCalendarPage from "@/pages/account-calendar";
+const AccountLoginPage = lazy(() => import("@/pages/account-login"));
+const AccountDashboardPage = lazy(() => import("@/pages/account-dashboard"));
+const AccountFavoritesPage = lazy(() => import("@/pages/account-favorites"));
+const AccountSearchesPage = lazy(() => import("@/pages/account-searches"));
+const AccountNotesPage = lazy(() => import("@/pages/account-notes"));
+const AccountToursPage = lazy(() => import("@/pages/account-tours"));
+const AccountReportsPage = lazy(() => import("@/pages/account-reports"));
+const AccountCalendarPage = lazy(() => import("@/pages/account-calendar"));
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType<any> }) {
   const { user, loading } = useAuth();
@@ -108,6 +108,7 @@ function AuthGate({ component: Component }: { component: React.ComponentType<any
 function AppRouter() {
   usePageviewTracker();
   return (
+    <Suspense fallback={<div className="min-h-screen bg-background" />}>
     <Switch>
       {/* PUBLIC marketing site */}
       <Route path="/" component={HomePage} />
@@ -196,6 +197,7 @@ function AppRouter() {
 
       <Route component={NotFound} />
     </Switch>
+    </Suspense>
   );
 }
 

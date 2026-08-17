@@ -81,6 +81,13 @@ type FetchPoisResult =
   | { ok: true; payload: PoiResultPayload; cached: boolean }
   | { ok: false; error: string; lastStatus: number | null };
 
+const POI_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const POI_FAILURE_TTL_MS = 5 * 60 * 1000;
+const POI_TOTAL_TIMEOUT_MS = 5_000;
+const POI_MIRROR_TIMEOUT_MS = 1_500;
+const poiRequests = new Map<string, Promise<FetchPoisResult>>();
+const poiFailures = new Map<string, number>();
+
 async function fetchPoisForPoint(
   lat: number,
   lng: number,
@@ -88,7 +95,7 @@ async function fetchPoisForPoint(
 ): Promise<FetchPoisResult> {
   const cacheId = `${lat.toFixed(4)}:${lng.toFixed(4)}:${radius}`;
   const cached = storage.getPoisCacheById(cacheId);
-  const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
+  const dayAgo = Date.now() - POI_CACHE_TTL_MS;
   if (cached && new Date(cached.fetchedAt).getTime() > dayAgo) {
     try {
       const payload = JSON.parse(cached.payload) as PoiResultPayload;
@@ -98,7 +105,38 @@ async function fetchPoisForPoint(
     }
   }
 
-  const ql = `[out:json][timeout:20];
+  // Do not let a failed third-party service repeatedly occupy the only app
+  // process. An expired cache is preferable to an empty map while Overpass is
+  // unavailable; otherwise use a short negative cache.
+  if ((poiFailures.get(cacheId) ?? 0) > Date.now()) {
+    if (cached) {
+      try {
+        return { ok: true, payload: JSON.parse(cached.payload), cached: true };
+      } catch {}
+    }
+    return { ok: false, error: "Amenities temporarily unavailable", lastStatus: null };
+  }
+  const inFlight = poiRequests.get(cacheId);
+  if (inFlight) return inFlight;
+
+  const request = fetchPoisUncached(lat, lng, radius, cacheId, cached);
+  poiRequests.set(cacheId, request);
+  try {
+    return await request;
+  } finally {
+    poiRequests.delete(cacheId);
+  }
+}
+
+async function fetchPoisUncached(
+  lat: number,
+  lng: number,
+  radius: number,
+  cacheId: string,
+  staleCache: ReturnType<typeof storage.getPoisCacheById>,
+): Promise<FetchPoisResult> {
+
+  const ql = `[out:json][timeout:3];
 (
   node[amenity~"^(school|college|university|kindergarten)$"](around:${radius},${lat},${lng});
   way[amenity~"^(school|college|university|kindergarten)$"](around:${radius},${lat},${lng});
@@ -120,7 +158,10 @@ out center tags;`;
   let overpassData: any = null;
   let lastStatus: number | null = null;
   let lastError: string | null = null;
+  const deadline = Date.now() + POI_TOTAL_TIMEOUT_MS;
   for (const url of OVERPASS_MIRRORS) {
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) break;
     try {
       const response = await fetch(url, {
         method: "POST",
@@ -130,6 +171,7 @@ out center tags;`;
           "User-Agent": "RiversRealEstate/1.0 (https://riversrealestate.ca)",
         },
         body: "data=" + encodeURIComponent(ql),
+        signal: AbortSignal.timeout(Math.min(POI_MIRROR_TIMEOUT_MS, remaining)),
       });
       if (!response.ok) {
         lastStatus = response.status;
@@ -145,6 +187,12 @@ out center tags;`;
     }
   }
   if (!overpassData) {
+    poiFailures.set(cacheId, Date.now() + POI_FAILURE_TTL_MS);
+    if (staleCache) {
+      try {
+        return { ok: true, payload: JSON.parse(staleCache.payload), cached: true };
+      } catch {}
+    }
     return {
       ok: false,
       error: `Overpass mirrors unavailable (last status ${lastStatus ?? "n/a"})`,
@@ -218,6 +266,7 @@ out center tags;`;
     radius,
     payload: JSON.stringify(payload),
   });
+  poiFailures.delete(cacheId);
   return { ok: true, payload, cached: false };
 }
 
@@ -1698,40 +1747,21 @@ export async function registerRoutes(
     });
   });
 
-  // GET /api/public/neighbourhoods (list) — computes activeCount + avgPrice
-  // LIVE from the MLS table by matching `subdivision === neighbourhood.name`
-  // (case-insensitive). Falls back to GPS proximity only if subdivision
-  // returns nothing — covers stale data before the next re-sync.
+  // GET /api/public/neighbourhoods (list). Counts and averages are refreshed
+  // after MLS sync, so this hot directory endpoint must not rescan thousands
+  // of listings once or twice for every neighbourhood on every page view.
   app.get("/api/public/neighbourhoods", (_req, res) => {
-    const items = storage.listNeighbourhoods().map((n) => {
-      let active = storage.listMlsBySubdivision(n.name, 5000);
-      if (active.length === 0) {
-        // Fallback: tighter 800m radius (was 1500 — even the fallback should
-        // err on the side of "this neighbourhood specifically").
-        active = storage
-          .listMlsNearPoint(n.centerLat, n.centerLng, 800, 5000)
-          .filter((m) => m.status === "Active");
-      }
-      const activeCount = active.length;
-      const avgPrice =
-        activeCount > 0
-          ? Math.round(active.reduce((s, l) => s + (l.listPrice || 0), 0) / activeCount)
-          : n.avgPrice;
-      return {
-        ...n,
-        activeCount,
-        avgPrice,
-        story: parseJsonArr(n.story),
-        outsideCopy: parseJsonArr(n.outsideCopy),
-        amenitiesCopy: parseJsonArr(n.amenitiesCopy),
-        shopDineCopy: parseJsonArr(n.shopDineCopy),
-        realEstateCopy: parseJsonArr(n.realEstateCopy),
-        lifeCopy: parseJsonArr(n.lifeCopy),
-        schools: parseJsonArr(n.schools),
-        gallery: parseJsonArr(n.gallery),
-        borders: (() => { try { return JSON.parse(n.borders); } catch { return {}; } })(),
-      };
-    });
+    res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+    const items = storage.listNeighbourhoods().map((n) => ({
+      slug: n.slug,
+      name: n.name,
+      tagline: n.tagline,
+      zone: n.zone,
+      heroImage: n.heroImage,
+      activeCount: n.activeCount,
+      avgPrice: n.avgPrice,
+      sortOrder: n.sortOrder,
+    }));
     res.json(items);
   });
 
