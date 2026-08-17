@@ -628,6 +628,26 @@ export function seedDatabase() {
   }
   console.log(`[seed] Inserted ${inserted} new condo buildings (${MARQUEE_CONDOS.length - inserted} skipped — already exist; admin owns content)`);
 
+  // Replace only the two legacy generic Unsplash placeholders with each
+  // building's dedicated local hero. Custom/admin and building-specific
+  // images remain untouched.
+  const GENERIC_CONDO_HEROES = new Set([
+    "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1600&h=900&fit=crop",
+    "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1600&h=900&fit=crop",
+  ]);
+  let condoHeroesMigrated = 0;
+  for (const condo of MARQUEE_CONDOS) {
+    if (!condo.heroImage?.startsWith("/condo-heroes/")) continue;
+    const existing = db.select().from(condoBuildings).where(eq(condoBuildings.slug, condo.slug)).get();
+    if (!existing || !GENERIC_CONDO_HEROES.has(existing.heroImage)) continue;
+    db.update(condoBuildings)
+      .set({ heroImage: condo.heroImage })
+      .where(eq(condoBuildings.slug, condo.slug))
+      .run();
+    condoHeroesMigrated++;
+  }
+  console.log(`[seed] Replaced ${condoHeroesMigrated} generic condo hero images`);
+
   // 4b. WP content patches — fill-only-empty-fields update for each condo
   //
   // CONDO_CONTENT_PATCHES is produced by `script/import-wp-condos.ts` from the
