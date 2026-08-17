@@ -172,32 +172,32 @@ export const neighbourhoodImages: NbImage[] = [
   },
   {
     slug: "elbow-valley",
-    heroImage: "/img/neighbourhoods/elbow-valley.png",
+    heroImage: "/img/neighbourhoods/elbow-valley.jpg",
     heroCredit: null,
   },
   {
     slug: "elbow-valley-west",
-    heroImage: "/img/neighbourhoods/elbow-valley-west.png",
+    heroImage: "/img/neighbourhoods/elbow-valley-west.jpg",
     heroCredit: null,
   },
   {
     slug: "harmony",
-    heroImage: "/img/neighbourhoods/harmony.png",
+    heroImage: "/img/neighbourhoods/harmony.jpg",
     heroCredit: null,
   },
   {
     slug: "spring-creek",
-    heroImage: "/img/neighbourhoods/spring-creek.png",
+    heroImage: "/img/neighbourhoods/spring-creek.jpg",
     heroCredit: null,
   },
   {
     slug: "heritage-pointe",
-    heroImage: "/img/neighbourhoods/heritage-pointe.png",
+    heroImage: "/img/neighbourhoods/heritage-pointe.jpg",
     heroCredit: null,
   },
   {
     slug: "mckenzie-lake",
-    heroImage: "/img/neighbourhoods/mckenzie-lake.png",
+    heroImage: "/img/neighbourhoods/mckenzie-lake.jpg",
     heroCredit: null,
   },
 ];
