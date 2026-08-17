@@ -711,6 +711,22 @@ export function seedDatabase() {
     `[seed] Inserted ${blogInserted} new blog posts (${ALL_BLOG_POSTS.length - blogInserted} skipped — already exist)`,
   );
 
+  // Fill featured images only on posts that still have no image. This lands
+  // newly generated editorial artwork without replacing any CMS-selected
+  // image, and is safe to run on every boot.
+  let blogImagesFilled = 0;
+  for (const post of ALL_BLOG_POSTS) {
+    if (!post.heroImage) continue;
+    const existing = db.select().from(blogPosts).where(eq(blogPosts.slug, post.slug!)).get();
+    if (!existing || existing.heroImage?.trim()) continue;
+    db.update(blogPosts)
+      .set({ heroImage: post.heroImage, heroImageAlt: existing.heroImageAlt || post.title })
+      .where(eq(blogPosts.slug, post.slug!))
+      .run();
+    blogImagesFilled++;
+  }
+  console.log(`[seed] Filled ${blogImagesFilled} missing blog featured images`);
+
   // 6. Testimonials
   const existingTestimonials = db.select().from(testimonials).all();
   if (existingTestimonials.length === 0) {
