@@ -118,7 +118,7 @@ export default function MlsDetailPage() {
   const seoDesc = data.description
     ? data.description.replace(/<[^>]+>/g, "").replace(/&[#a-zA-Z0-9]+;/g, "").slice(0, 200)
     : `${data.beds ?? "—"} bed · ${data.baths ?? "—"} bath · ${data.sqft ? data.sqft.toLocaleString("en-CA") + " sqft" : ""} home for sale at ${data.fullAddress}, Calgary.`;
-  const canonicalUrl = `https://riversrealestate.ca/mls/${data.id}`;
+  const canonicalUrl = `https://riversrealestate.ca/mls/${data.seoSlug}`;
   const heroImg = data.heroImage ? (data.heroImage.startsWith("http") ? data.heroImage : `https://riversrealestate.ca${data.heroImage}`) : undefined;
 
   return (
@@ -1196,4 +1196,3 @@ function Lightbox({
     </div>
   );
 }
-

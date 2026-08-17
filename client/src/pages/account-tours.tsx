@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useAccount, useTours, useCancelTour } from "@/lib/account";
 import { formatPriceCompact } from "@/lib/format";
 import type { PublicMlsListing } from "@/lib/mls-types";
+import { mlsPropertyPath } from "@shared/mls-url";
 
 const STATUS_LABELS: Record<string, { label: string; tone: string }> = {
   requested: { label: "Awaiting confirmation", tone: "bg-muted text-foreground" },
@@ -97,7 +98,7 @@ export default function AccountToursPage() {
               const isCancellable = t.status === "requested" || t.status === "confirmed";
               return (
                 <div key={t.id} className="border border-border rounded-sm p-5 flex flex-col md:flex-row gap-5">
-                  <Link href={`/mls/${t.listingId}`} className="md:w-48 md:flex-shrink-0 block bg-muted h-32">
+                  <Link href={listing ? mlsPropertyPath(listing) : `/mls/${t.listingId}`} className="md:w-48 md:flex-shrink-0 block bg-muted h-32">
                       {listing?.heroImage ? (
                         <img
                           src={listing.heroImage}
@@ -113,7 +114,7 @@ export default function AccountToursPage() {
                   </Link>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-3 flex-wrap">
-                      <Link href={`/mls/${t.listingId}`} className="block group min-w-0">
+                      <Link href={listing ? mlsPropertyPath(listing) : `/mls/${t.listingId}`} className="block group min-w-0">
                           <div className="font-serif text-xl group-hover:underline truncate">
                             {listing ? formatPriceCompact(listing.listPrice) : "—"}
                           </div>

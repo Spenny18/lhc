@@ -3,6 +3,7 @@ import { Bed, Bath, Square, MapPin, Heart } from "lucide-react";
 import type { PublicMlsListing } from "@/lib/mls-types";
 import { formatPrice, formatSqft } from "@/lib/format";
 import { apiUrl } from "@/lib/queryClient";
+import { mlsPropertyPath } from "@shared/mls-url";
 import {
   useAccount,
   useIsFavorited,
@@ -43,7 +44,7 @@ export function ListingCard({ listing, variant = "default" }: Props) {
   }
 
   return (
-    <Link href={`/mls/${listing.id}`} className="group block"
+    <Link href={mlsPropertyPath(listing)} className="group block"
         data-testid={`card-listing-${listing.id}`}>
         <div
           className={`relative overflow-hidden rounded-sm border border-border bg-card ${

@@ -529,9 +529,9 @@ export function metaForPath(path: string): SeoMeta | null {
   if (p.startsWith("/mls/")) {
     const id = p.slice("/mls/".length);
     try {
-      const l: any = storage.getMlsListingById(id);
+      const l: any = storage.getMlsListingBySeoSlug(id) ?? storage.getMlsListingById(id);
       if (!l) return null;
-      const lUrl = `${ORIGIN}/mls/${id}`;
+      const lUrl = `${ORIGIN}/mls/${storage.getMlsSeoSlug(l)}`;
       const addr = l.fullAddress || "Calgary";
       const heroImg = l.heroImage
         ? l.heroImage.startsWith("http")

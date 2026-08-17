@@ -677,7 +677,7 @@ export async function registerRoutes(
       const items = (listings as any).items ?? [];
       for (const l of items as any[]) {
         urls.push({
-          loc: `${origin}/mls/${l.id}`,
+          loc: `${origin}/mls/${l.seoSlug || storage.getMlsSeoSlug(l)}`,
           lastmod: l.priceChangedAt || l.listDate || l.createdAt || undefined,
           priority: "0.5",
           changefreq: "weekly",
@@ -1682,7 +1682,7 @@ export async function registerRoutes(
 
   // GET /api/public/mls/:id
   app.get("/api/public/mls/:id", (req, res) => {
-    const listing = storage.getMlsListingById(req.params.id);
+    const listing = storage.getMlsListingBySeoSlug(req.params.id) ?? storage.getMlsListingById(req.params.id);
     if (!listing) return res.status(404).json({ message: "Listing not found" });
     const safeParse = (s: string | null | undefined): any[] => {
       if (!s) return [];
@@ -1691,9 +1691,10 @@ export async function registerRoutes(
     const similar = storage.listSimilarMls(listing, 4);
     res.json({
       ...listing,
+      seoSlug: storage.getMlsSeoSlug(listing),
       gallery: safeParse(listing.gallery as any),
       features: safeParse(listing.features as any),
-      similar,
+      similar: similar.map((item: any) => ({ ...item, seoSlug: item.seoSlug || storage.getMlsSeoSlug(item) })),
     });
   });
 

@@ -38,6 +38,7 @@ import type {
   PublicNeighbourhood,
 } from "@/lib/mls-types";
 import { Link } from "wouter";
+import { mlsPropertyPath } from "@shared/mls-url";
 
 const PAGE_SIZE = 50;
 
@@ -837,7 +838,7 @@ export default function MlsSearchPage() {
                   data-testid="map-popup-card"
                 >
                   {/* Photo */}
-                  <Link href={`/mls/${popupListing.id}`} className="w-[140px] h-[140px] shrink-0 bg-secondary block"
+                  <Link href={mlsPropertyPath(popupListing)} className="w-[140px] h-[140px] shrink-0 bg-secondary block"
                       style={{ textDecoration: "none" }}>
                       {popupListing.heroImage ? (
                         <img
@@ -853,7 +854,7 @@ export default function MlsSearchPage() {
                     
                   </Link>
                   {/* Details */}
-                  <Link href={`/mls/${popupListing.id}`} className="flex-1 p-3.5 pr-9 block min-w-0"
+                  <Link href={mlsPropertyPath(popupListing)} className="flex-1 p-3.5 pr-9 block min-w-0"
                       style={{ textDecoration: "none", color: "#0a0a0a" }}>
                       <div
                         style={{
@@ -1745,7 +1746,7 @@ function ResultCard({
   onHover?: () => void;
 }) {
   return (
-    <Link href={`/mls/${listing.id}`} onMouseEnter={onHover}
+    <Link href={mlsPropertyPath(listing)} onMouseEnter={onHover}
         className={`flex gap-4 px-5 py-4 hover:bg-secondary/40 transition cursor-pointer ${selected ? "bg-secondary/60" : ""}`}
         data-testid={`result-card-${listing.id}`}>
         <div className="w-[150px] h-[110px] shrink-0 rounded-lg overflow-hidden bg-secondary relative">
