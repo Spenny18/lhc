@@ -18,6 +18,7 @@
  */
 import { storage } from "./storage";
 import { buildGraph, IDS, type SchemaNode } from "./schema/entities";
+import { getPublicPageContent } from "./page-content";
 
 const ORIGIN = (process.env.PUBLIC_ORIGIN || "https://riversrealestate.ca").replace(
   /\/$/,
@@ -244,14 +245,38 @@ export function metaForPath(path: string): SeoMeta | null {
 
   // ---- Static pages ----
   if (p === "/") {
+    // Title/description/OG come from the home page CMS (/admin/home), which
+    // falls back to the factory copy when nothing has been saved yet. Any
+    // FAQ block on the page also contributes FAQPage markup.
+    const home = getPublicPageContent("home");
+    const faqBlock = home.blocks.find((b) => b.type === "faq");
+    const faqItems = Array.isArray(faqBlock?.data?.items)
+      ? (faqBlock!.data.items as Array<{ question?: string; answer?: string }>).filter(
+          (q) => q?.question && q?.answer,
+        )
+      : [];
+    const jsonLd: SchemaNode[] = [];
+    if (faqItems.length > 0) {
+      jsonLd.push({
+        "@type": "FAQPage",
+        "@id": `${ORIGIN}/#faq`,
+        mainEntity: faqItems.map((q) => ({
+          "@type": "Question",
+          name: q.question,
+          acceptedAnswer: { "@type": "Answer", text: q.answer },
+        })),
+      });
+    }
     return {
-      title: "Spencer Rivers — Luxury Homes Calgary | Rivers Real Estate",
-      description:
-        "Calgary's top luxury real estate agent. Spencer Rivers represents buyers and sellers in Springbank Hill, Aspen Woods, Upper Mount Royal, Elbow Park, Britannia, and Bel-Aire.",
-      canonical: `${ORIGIN}/`,
+      title: home.seo.title,
+      description: home.seo.description,
+      canonical: home.seo.canonical || `${ORIGIN}/`,
+      ogImage: home.seo.ogImage || undefined,
       ogType: "website",
-      // WebSite + agent + person all live in the core graph — nothing
+      noindex: home.seo.noindex,
+      // WebSite + agent + person all live in the core graph — nothing else
       // page-specific to add.
+      jsonLd,
     };
   }
   if (p === "/mls") {

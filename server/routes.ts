@@ -18,6 +18,16 @@ import { getNeighbourhoodPolygon } from "./neighbourhood-polygons";
 import { pointInGeometry } from "./point-in-polygon";
 import { fetchValuation } from "./gnowise";
 import { sendEmail, buildValuationEmailHtml } from "./email";
+import {
+  getPageContent,
+  getPublicPageContent,
+  savePageContent,
+  resetPageContent,
+  isCmsPage,
+  CMS_PAGES,
+} from "./page-content";
+import { normalizeBlocks, normalizeSeo } from "@shared/home-content";
+import { invalidateSsrCache } from "./ssr";
 
 const execFileAsync = promisify(execFile);
 
@@ -2114,6 +2124,178 @@ export async function registerRoutes(
   // address autocomplete). The key is meant to be public — security comes
   // from HTTP-referrer restrictions on the Google Cloud Console side, not
   // from hiding the value.
+  // ---------- PAGE CMS (/admin/home) ----------
+  // The homepage renders from an ordered list of content blocks stored in
+  // the `pages` table (shape + factory defaults: shared/home-content.ts).
+  // Reads fall back to the factory page when no row exists, so the site is
+  // never blank on a fresh database.
+
+  /** Editing "/" invalidates the cached SSR HTML for it, so saves show up
+   * immediately instead of after the 5-minute render cache expires. */
+  function currentUserEmail(req: Request): string | null {
+    const id = resolveUserId(req);
+    if (id == null) return null;
+    return storage.getUserById(id)?.email ?? null;
+  }
+
+  function invalidatePageCache(slug: string) {
+    const path = CMS_PAGES[slug]?.path;
+    if (path) invalidateSsrCache(path);
+  }
+
+  // GET /api/public/pages/:slug — enabled blocks only, for the public site.
+  app.get("/api/public/pages/:slug", (req, res) => {
+    const slug = req.params.slug;
+    if (!isCmsPage(slug)) return res.status(404).json({ message: "Page not found" });
+    res.json(getPublicPageContent(slug));
+  });
+
+  // GET /api/admin/pages — the list of CMS-managed pages.
+  app.get("/api/admin/pages", requireAuth, (_req, res) => {
+    res.json(
+      Object.entries(CMS_PAGES).map(([slug, meta]) => {
+        const page = getPageContent(slug);
+        return {
+          slug,
+          name: meta.name,
+          path: meta.path,
+          blockCount: page.blocks.length,
+          updatedAt: page.updatedAt ?? null,
+        };
+      }),
+    );
+  });
+
+  // GET /api/admin/pages/:slug — full content including hidden blocks.
+  app.get("/api/admin/pages/:slug", requireAuth, (req, res) => {
+    const slug = req.params.slug;
+    if (!isCmsPage(slug)) return res.status(404).json({ message: "Page not found" });
+    res.json(getPageContent(slug));
+  });
+
+  // PUT /api/admin/pages/:slug — save blocks and/or SEO. The previous state
+  // is snapshotted into page_revisions first so an edit can be rolled back.
+  app.put("/api/admin/pages/:slug", requireAuth, (req, res) => {
+    const slug = req.params.slug;
+    if (!isCmsPage(slug)) return res.status(404).json({ message: "Page not found" });
+    const body = req.body || {};
+    try {
+      const saved = savePageContent(slug, {
+        seo: body.seo ? normalizeSeo(body.seo) : undefined,
+        blocks: Array.isArray(body.blocks) ? normalizeBlocks(body.blocks) : undefined,
+        updatedBy: currentUserEmail(req),
+      });
+      invalidatePageCache(slug);
+      res.json(saved);
+    } catch (err: any) {
+      console.error("[cms] save page failed:", err);
+      res.status(500).json({ message: err?.message ?? "Save failed" });
+    }
+  });
+
+  // POST /api/admin/pages/:slug/reset — restore the factory page.
+  app.post("/api/admin/pages/:slug/reset", requireAuth, (req, res) => {
+    const slug = req.params.slug;
+    if (!isCmsPage(slug)) return res.status(404).json({ message: "Page not found" });
+    try {
+      const saved = resetPageContent(
+        slug,
+        currentUserEmail(req),
+      );
+      invalidatePageCache(slug);
+      res.json(saved);
+    } catch (err: any) {
+      console.error("[cms] reset page failed:", err);
+      res.status(500).json({ message: err?.message ?? "Reset failed" });
+    }
+  });
+
+  // GET /api/admin/pages/:slug/revisions — snapshot list (newest first).
+  app.get("/api/admin/pages/:slug/revisions", requireAuth, (req, res) => {
+    const slug = req.params.slug;
+    if (!isCmsPage(slug)) return res.status(404).json({ message: "Page not found" });
+    const rows = storage.listPageRevisions(slug);
+    res.json(
+      rows.map((r) => {
+        let blockCount = 0;
+        try {
+          blockCount = (JSON.parse(r.snapshot)?.blocks ?? []).length;
+        } catch {}
+        return {
+          id: r.id,
+          label: r.label,
+          createdBy: r.createdBy,
+          createdAt: r.createdAt,
+          blockCount,
+        };
+      }),
+    );
+  });
+
+  // POST /api/admin/pages/:slug/revisions/:id/restore — roll back to a snapshot.
+  app.post("/api/admin/pages/:slug/revisions/:id/restore", requireAuth, (req, res) => {
+    const slug = req.params.slug;
+    if (!isCmsPage(slug)) return res.status(404).json({ message: "Page not found" });
+    const rev = storage.getPageRevision(parseInt(req.params.id, 10));
+    if (!rev || rev.pageSlug !== slug) {
+      return res.status(404).json({ message: "Revision not found" });
+    }
+    try {
+      const snapshot = JSON.parse(rev.snapshot) as { seo?: unknown; blocks?: unknown };
+      const saved = savePageContent(slug, {
+        seo: snapshot.seo ? normalizeSeo(snapshot.seo) : undefined,
+        blocks: Array.isArray(snapshot.blocks) ? normalizeBlocks(snapshot.blocks) : undefined,
+        updatedBy: currentUserEmail(req),
+        revisionLabel: `Before restoring #${rev.id}`,
+      });
+      invalidatePageCache(slug);
+      res.json(saved);
+    } catch (err: any) {
+      console.error("[cms] restore revision failed:", err);
+      res.status(500).json({ message: err?.message ?? "Restore failed" });
+    }
+  });
+
+  // POST /api/admin/media — upload an image for any CMS image field.
+  // Accepts a base64 data URL (same convention as the condo hero upload),
+  // writes it to the persistent uploads volume, returns the public URL.
+  app.post("/api/admin/media", requireAuth, (req, res) => {
+    const dataUrl: string | undefined = req.body?.dataUrl;
+    if (!dataUrl || typeof dataUrl !== "string") {
+      return res.status(400).json({ message: "dataUrl is required (data:image/...;base64,...)" });
+    }
+    const m = dataUrl.match(/^data:image\/(png|jpe?g|webp|gif|avif);base64,(.+)$/);
+    if (!m) {
+      return res
+        .status(400)
+        .json({ message: "dataUrl must be a base64 image (png|jpg|jpeg|webp|gif|avif)" });
+    }
+    let ext = m[1].toLowerCase();
+    if (ext === "jpeg") ext = "jpg";
+    const buf = Buffer.from(m[2], "base64");
+    if (buf.length > 10 * 1024 * 1024) {
+      return res.status(413).json({ message: "Image too large (max 10MB)" });
+    }
+    try {
+      const dir = ensureUploadsDir("cms");
+      // Slugified caller-supplied name, plus randomness so re-uploading an
+      // image under the same name can never serve a stale cached file.
+      const base = String(req.body?.name || "image")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 40) || "image";
+      const file = `${base}-${randomBytes(4).toString("hex")}.${ext}`;
+      const tmp = path.join(dir, `${file}.tmp`);
+      fs.writeFileSync(tmp, buf);
+      fs.renameSync(tmp, path.join(dir, file));
+      res.json({ url: `/uploads/cms/${file}` });
+    } catch (err: any) {
+      console.error("[cms] media upload failed:", err);
+      res.status(500).json({ message: err?.message ?? "Upload failed" });
+    }
+  });
+
   app.get("/api/public/config", (_req, res) => {
     res.json({
       googleMapsKey: process.env.GOOGLE_MAPS_API_KEY || null,

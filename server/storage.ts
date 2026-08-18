@@ -16,6 +16,8 @@ import {
   leadAlerts,
   mlsPriceHistory,
   userIntegrations,
+  pages,
+  pageRevisions,
 } from "@shared/schema";
 import type {
   User,
@@ -50,6 +52,9 @@ import type {
   InsertMlsPriceHistory,
   UserIntegration,
   InsertUserIntegration,
+  PageRow,
+  InsertPageRow,
+  PageRevision,
 } from "@shared/schema";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
@@ -417,6 +422,28 @@ sqlite.exec(`
     last_sent_at TEXT,
     created_at TEXT NOT NULL
   );
+  CREATE TABLE IF NOT EXISTS pages (
+    slug TEXT PRIMARY KEY,
+    name TEXT NOT NULL DEFAULT '',
+    seo_title TEXT NOT NULL DEFAULT '',
+    seo_description TEXT NOT NULL DEFAULT '',
+    seo_keywords TEXT NOT NULL DEFAULT '',
+    og_image TEXT NOT NULL DEFAULT '',
+    canonical TEXT NOT NULL DEFAULT '',
+    noindex INTEGER NOT NULL DEFAULT 0,
+    blocks TEXT NOT NULL DEFAULT '[]',
+    updated_at TEXT NOT NULL,
+    updated_by TEXT
+  );
+  CREATE TABLE IF NOT EXISTS page_revisions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    page_slug TEXT NOT NULL,
+    snapshot TEXT NOT NULL,
+    label TEXT,
+    created_by TEXT,
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_page_revisions_slug ON page_revisions(page_slug, id DESC);
 `);
 
 // Migration: add account_user_id to saved_searches so portal users own
@@ -2365,6 +2392,75 @@ export class DatabaseStorage implements IStorage {
   deleteSocialPost(id: number): boolean {
     const r = db.delete(socialPosts).where(eq(socialPosts.id, id)).run();
     return (r.changes ?? 0) > 0;
+  }
+
+  // ---- CMS pages ----------------------------------------------------------
+  // Rows are written by /admin/home; readers (public API, SEO injection) must
+  // tolerate a missing row and fall back to the factory defaults in
+  // shared/home-content.ts, so a fresh database still renders the homepage.
+  getPage(slug: string): PageRow | undefined {
+    return db.select().from(pages).where(eq(pages.slug, slug)).get();
+  }
+  listPages(): PageRow[] {
+    return db.select().from(pages).orderBy(asc(pages.slug)).all();
+  }
+  upsertPage(data: InsertPageRow): PageRow {
+    const row = { ...data, updatedAt: data.updatedAt ?? new Date().toISOString() };
+    const existing = db.select().from(pages).where(eq(pages.slug, data.slug)).get();
+    if (existing) {
+      return db.update(pages).set(row).where(eq(pages.slug, data.slug)).returning().get();
+    }
+    return db.insert(pages).values(row).returning().get();
+  }
+  deletePage(slug: string): boolean {
+    const r = db.delete(pages).where(eq(pages.slug, slug)).run();
+    return (r.changes ?? 0) > 0;
+  }
+
+  // ---- CMS page revisions -------------------------------------------------
+  listPageRevisions(slug: string, limit = 30): PageRevision[] {
+    return db
+      .select()
+      .from(pageRevisions)
+      .where(eq(pageRevisions.pageSlug, slug))
+      .orderBy(desc(pageRevisions.id))
+      .limit(limit)
+      .all();
+  }
+  getPageRevision(id: number): PageRevision | undefined {
+    return db.select().from(pageRevisions).where(eq(pageRevisions.id, id)).get();
+  }
+  createPageRevision(row: {
+    pageSlug: string;
+    snapshot: string;
+    label?: string | null;
+    createdBy?: string | null;
+  }): PageRevision {
+    const created = db
+      .insert(pageRevisions)
+      .values({
+        pageSlug: row.pageSlug,
+        snapshot: row.snapshot,
+        label: row.label ?? null,
+        createdBy: row.createdBy ?? null,
+      })
+      .returning()
+      .get();
+    this.prunePageRevisions(row.pageSlug);
+    return created;
+  }
+  /** Keep only the newest `keep` snapshots per page so the table stays small. */
+  prunePageRevisions(slug: string, keep = 30): void {
+    const ids = db
+      .select({ id: pageRevisions.id })
+      .from(pageRevisions)
+      .where(eq(pageRevisions.pageSlug, slug))
+      .orderBy(desc(pageRevisions.id))
+      .all()
+      .map((r) => r.id);
+    const stale = ids.slice(keep);
+    if (stale.length === 0) return;
+    db.delete(pageRevisions).where(inArray(pageRevisions.id, stale)).run();
   }
 }
 

@@ -62,6 +62,7 @@ const AdminAnalyticsPage = lazy(() => import("@/pages/admin-analytics"));
 const AdminSavedSearchesPage = lazy(() => import("@/pages/admin-saved-searches"));
 const AdminCondosPage = lazy(() => import("@/pages/admin-condos"));
 const AdminBlogPage = lazy(() => import("@/pages/admin-blog"));
+const AdminHomePage = lazy(() => import("@/pages/admin-home"));
 const AdminNeighbourhoodsPage = lazy(() => import("@/pages/admin-neighbourhoods"));
 
 // Consumer portal (/account/*) pages
@@ -181,6 +182,10 @@ function AppRouter() {
       <Route
         path="/admin/condos"
         component={() => <ProtectedRoute component={AdminCondosPage} />}
+      />
+      <Route
+        path="/admin/home"
+        component={() => <ProtectedRoute component={AdminHomePage} />}
       />
       <Route
         path="/admin/blog"

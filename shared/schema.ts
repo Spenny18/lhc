@@ -666,3 +666,45 @@ export const accountMarketReportSubs = sqliteTable("account_market_report_subs",
 
 export type AccountMarketReportSub = typeof accountMarketReportSubs.$inferSelect;
 export type InsertAccountMarketReportSub = typeof accountMarketReportSubs.$inferInsert;
+
+// ---- CMS pages (home page builder) ----------------------------------------
+// One row per editable page. `blocks` is the ordered JSON array of section
+// blocks defined in shared/home-content.ts; the SEO columns feed both the
+// server-side <head> injection (server/seo-inject.ts) and the client's
+// SeoHead. Only "home" exists today — the shape is page-generic on purpose
+// so /about, /contact etc. can move into the CMS without a migration.
+export const pages = sqliteTable("pages", {
+  slug: text("slug").primaryKey(),
+  name: text("name").notNull().default(""),
+  seoTitle: text("seo_title").notNull().default(""),
+  seoDescription: text("seo_description").notNull().default(""),
+  seoKeywords: text("seo_keywords").notNull().default(""),
+  ogImage: text("og_image").notNull().default(""),
+  canonical: text("canonical").notNull().default(""),
+  noindex: integer("noindex", { mode: "boolean" }).notNull().default(false),
+  blocks: text("blocks").notNull().default("[]"),
+  updatedAt: text("updated_at")
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+  updatedBy: text("updated_by"),
+});
+
+export type PageRow = typeof pages.$inferSelect;
+export type InsertPageRow = typeof pages.$inferInsert;
+
+// page_revisions — a snapshot is written before every save so an edit can be
+// rolled back from /admin/home. Pruned to the most recent 30 per page.
+export const pageRevisions = sqliteTable("page_revisions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  pageSlug: text("page_slug").notNull(),
+  // JSON {seo, blocks} — the full page as it was before the save.
+  snapshot: text("snapshot").notNull(),
+  label: text("label"),
+  createdBy: text("created_by"),
+  createdAt: text("created_at")
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+});
+
+export type PageRevision = typeof pageRevisions.$inferSelect;
+export type InsertPageRevision = typeof pageRevisions.$inferInsert;
