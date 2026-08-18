@@ -43,6 +43,9 @@ export function queriesForPath(path: string): unknown[][] | null {
 
   if (p === "/")
     return [
+      // CMS block content first — the homepage renders from it, so a render
+      // without it would produce the factory page and cache that.
+      ["/api/public/pages", "home"],
       ["/api/public/mls/featured"],
       ["/api/public/neighbourhoods"],
       ["/api/public/blog"],
@@ -136,10 +139,26 @@ interface CacheEntry {
   at: number;
 }
 
+/**
+ * Every live pipeline's cache, so a CMS save can drop the stale HTML for the
+ * page it just edited instead of waiting out the TTL (5 minutes in prod —
+ * long enough that an editor would think the save silently failed).
+ */
+const liveCaches = new Set<Map<string, CacheEntry>>();
+
+/** Drop cached HTML. Pass a path to target one URL, omit it to clear all. */
+export function invalidateSsrCache(path?: string): void {
+  liveCaches.forEach((cache) => {
+    if (path) cache.delete(path);
+    else cache.clear();
+  });
+}
+
 export function createSsrPipeline(opts: SsrPipelineOptions) {
   const ttl = opts.cacheTtlMs ?? 0;
   const maxEntries = opts.cacheMaxEntries ?? 300;
   const cache = new Map<string, CacheEntry>();
+  liveCaches.add(cache);
 
   /**
    * Render `rawPath` into `template` (index.html with head meta already
@@ -154,6 +173,12 @@ export function createSsrPipeline(opts: SsrPipelineOptions) {
   ): Promise<string | null> {
     const keys = queriesForPath(rawPath);
     if (keys === null) return null;
+
+    // The CMS preview iframe (/?cmsPreview=1) renders each section inside a
+    // click-to-select wrapper the server render doesn't produce, so serving
+    // SSR HTML there fails hydration. Preview is an authenticated editor
+    // surface with no SEO value — hand it the CSR shell.
+    if (new URLSearchParams(search || "").get("cmsPreview") === "1") return null;
 
     const cached = ttl > 0 && cacheable ? cache.get(rawPath) : undefined;
     if (cached && Date.now() - cached.at < ttl) {
