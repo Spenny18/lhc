@@ -1827,7 +1827,10 @@ export async function registerRoutes(
     const listings = raw.map((l) => ({
       id: l.id,
       mlsNumber: l.mlsNumber,
+      seoSlug: storage.getMlsSeoSlug(l),
       fullAddress: l.fullAddress,
+      subdivision: l.subdivision,
+      city: l.city,
       listPrice: l.listPrice,
       beds: l.beds,
       baths: l.baths,

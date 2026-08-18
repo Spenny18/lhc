@@ -34,5 +34,8 @@ export function assignMlsSeoSlugs<T extends MlsSlugSource>(listings: T[]): Map<s
 }
 
 export function mlsPropertyPath(listing: MlsSlugSource & { seoSlug?: string }): string {
-  return `/mls/${listing.seoSlug || mlsBaseSlug(listing)}`;
+  // A server-issued slug is authoritative. If a compact API response ever
+  // omits it, use the stable MLS id so the server can 301 to the canonical URL
+  // instead of inventing a partial address slug from missing fields.
+  return `/mls/${listing.seoSlug || listing.id}`;
 }
