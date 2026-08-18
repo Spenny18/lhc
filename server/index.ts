@@ -99,6 +99,13 @@ app.use((req, res, next) => {
   // Old MLS-number detail URLs permanently consolidate onto the canonical
   // address/subdivision/city permalink. Slug URLs continue to SSR normally.
   app.get("/mls/:segment", (req, res, next) => {
+    // A previous condo-card response omitted the canonical slug fields and
+    // briefly emitted this public URL. Preserve it as a permanent migration
+    // redirect rather than leaving shared/bookmarked copies as a 404.
+    if (req.params.segment === "1405-property") {
+      const affected = storage.getMlsListingById("A2332075");
+      if (affected) return res.redirect(301, `/mls/${storage.getMlsSeoSlug(affected)}`);
+    }
     const legacy = storage.getMlsListingById(req.params.segment);
     if (!legacy) return next();
     return res.redirect(301, `/mls/${storage.getMlsSeoSlug(legacy)}`);
