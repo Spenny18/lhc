@@ -28,6 +28,7 @@ const NAV: NavItem[] = [
 const WORK_WITH_LINKS: NavItem[] = [
   { label: "Luxury Properties", href: "/work-with/luxury-properties" },
   { label: "First-Time Home Sellers", href: "/work-with/first-time-home-sellers" },
+  { label: "Expired & Frustrated Sellers", href: "/work-with/expired-listings" },
   { label: "Empty Nesters", href: "/work-with/empty-nesters" },
   { label: "First-Time Home Buyers", href: "/work-with/first-time-home-buyers" },
   { label: "Innercity Properties", href: "/work-with/innercity-properties" },
