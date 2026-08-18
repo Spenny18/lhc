@@ -645,6 +645,7 @@ export async function registerRoutes(
       ...[
         "luxury-properties",
         "first-time-home-sellers",
+        "expired-listings",
         "empty-nesters",
         "first-time-home-buyers",
         "innercity-properties",

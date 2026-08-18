@@ -81,6 +81,13 @@ const WORK_WITH_META: Record<
     image:
       `${ORIGIN}/img/work-with/first-time-home-sellers.jpg`,
   },
+  "expired-listings": {
+    title: "Expired Listings in Calgary | Relist Your Luxury Home | Spencer Rivers",
+    description:
+      "Expired or stalled Calgary luxury listing? Spencer Rivers, CLHMS, diagnoses what went wrong — price, presentation, or exposure — then rebuilds the launch.",
+    image:
+      `${ORIGIN}/img/work-with/luxury-properties.jpg`,
+  },
   "empty-nesters": {
     title: "Downsizing & Empty Nesters in Calgary | Spencer Rivers, Rivers Real Estate",
     description:
@@ -378,7 +385,7 @@ export function metaForPath(path: string): SeoMeta | null {
     return {
       title: `Who We Work With | Spencer Rivers, ${SITE_NAME} Calgary`,
       description:
-        "Luxury buyers, first-time sellers, empty nesters, move-up families, and urban professionals — see how Spencer Rivers works with each, across Calgary's best communities.",
+        "Luxury buyers, first-time sellers, expired listings, empty nesters, move-up families, and urban professionals — see how Spencer Rivers works with each, across Calgary's best communities.",
       canonical: `${ORIGIN}/work-with`,
       jsonLd: [crumbs(HOME_CRUMB, ["Who We Work With", `${ORIGIN}/work-with`])],
     };

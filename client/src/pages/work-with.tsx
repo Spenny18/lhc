@@ -241,6 +241,95 @@ export const AUDIENCE_SEGMENTS: AudienceSegment[] = [
       "Selling your first home in Calgary? Spencer Rivers handles pricing, prep, marketing, and every form — with a written plan and a net-proceeds estimate before you list.",
   },
   {
+    slug: "expired-listings",
+    icon: Clock,
+    title: "Expired & Frustrated Sellers",
+    card: "Your luxury home didn't sell — or still hasn't. A written post-mortem on what went wrong, then a relaunch built to fix it.",
+    headline: ["Your home didn't sell.", "The market isn't the reason."],
+    intro:
+      "Expired, terminated, or simply still sitting — a Calgary luxury home rarely fails to sell for one reason. It's a price built on the wrong comparables, presentation that doesn't survive a phone screen, exposure that never reached the actual buyer pool, or an agent who went quiet after week three. Spencer Rivers — CLHMS, Million Dollar Guild — starts every relist with a written post-mortem of what actually happened, and only then talks about a new list price.",
+    image: "/img/work-with/luxury-properties.jpg",
+    imageAlt:
+      "Calgary luxury home photographed at dusk — the standard of presentation Spencer Rivers relaunches expired listings with",
+    points: [
+      {
+        icon: LineChart,
+        title: "A post-mortem before a relist",
+        body: "Showing counts, written feedback, days on market, and the comparables that actually closed while you sat — reviewed on paper before anyone suggests a number. Showings without offers usually means price. No showings usually means exposure or presentation. Guessing which one costs you a second failed listing.",
+      },
+      {
+        icon: Camera,
+        title: "Presentation rebuilt from zero",
+        body: "New photography, new floor plans, new copy, and a room-by-room prep list. Buyers above $1M shortlist from a phone screen in about four seconds, and a gallery that looked adequate in spring is invisible by fall. Nothing gets recycled from the last launch.",
+      },
+      {
+        icon: Users,
+        title: "The buyers who never saw it",
+        body: "The MLS is the floor, not the plan. Relaunches run paid distribution, the Calgary luxury agent network, and a private buyer list built across $100M+ in career sales — because the buyer who passed on your listing often never saw it in the first place.",
+      },
+    ],
+    steps: [
+      {
+        title: "The post-mortem — no listing pitch",
+        body: "One meeting. Spencer pulls your showing history, the feedback, and the sales that closed around you, then tells you what he thinks went wrong. You get that assessment whether or not you ever list with him.",
+      },
+      {
+        title: "A written relaunch plan",
+        body: "Price, prep, photography, timing, and marketing spend in one document with the math on it — the target buyer, the comparables the price is built on, and a net-proceeds estimate before you sign anything.",
+      },
+      {
+        title: "Relist, and stay in contact",
+        body: "Weekly reporting on showings, traffic, and feedback, plus a scheduled decision point if the market says something you didn't expect. The silence you got last time is the first thing Spencer fixes.",
+      },
+    ],
+    links: [
+      {
+        title: "What's it worth today?",
+        desc: "A no-obligation evaluation built on current comparables.",
+        href: "/home-evaluation",
+      },
+      {
+        title: "Spencer's track record",
+        desc: "Credentials, career sales, and how he works.",
+        href: "/about",
+      },
+      {
+        title: "Your community's numbers",
+        desc: "Prices, inventory, and days on market by neighbourhood.",
+        href: "/neighbourhoods",
+      },
+    ],
+    faq: [
+      {
+        q: "Why didn't my Calgary luxury home sell?",
+        a: "Above $1M it's almost always one of three things — a price built on the wrong comparables, presentation that doesn't hold up on a phone screen, or exposure that never reached the real buyer pool — and usually two of them at once. Days on market then compound it: buyers read a long listing history as permission to wait, and no one pays full price for a stale donut. The fix starts with identifying which of the three failed, which is exactly what the post-mortem is for.",
+      },
+      {
+        q: "My home is still listed with another brokerage — can we talk?",
+        a: "About strategy, yes. This is not an invitation to break your agreement. If your home is currently listed, the right first conversation is with your current agent — bring them the showing data and ask for a written plan. If the listing expires or the brokerage cancels it, the door here is open, and the post-mortem is free either way.",
+      },
+      {
+        q: "Can I switch agents before my listing agreement ends?",
+        a: "Your listing agreement is with the brokerage rather than the individual agent, and it runs to a fixed expiry date. Ending it early requires the brokerage to agree to a cancellation in writing — many will, some won't. Read your agreement for the expiry date and the holdover clause, which can still entitle the brokerage to commission if you sell to a buyer they introduced. Spencer will read it with you at no charge before you do anything.",
+      },
+      {
+        q: "Does relisting reset my days on market?",
+        a: "A new listing gets a new MLS number and a fresh days-on-market count, but the previous listing stays in the sale history every agent can pull. Relisting to hide days on market doesn't work. Relisting with a corrected price and rebuilt presentation does — which is why the relist should be the last thing that changes, not the first.",
+      },
+      {
+        q: "How much do I need to cut the price?",
+        a: "Possibly nothing. If photography, floor plans, and exposure were the failure, a price cut just pays for someone else's mistake. Spencer works out what the market was actually telling you first, then puts a number on it and shows the closed comparables it came from. Sometimes the answer is a real reduction — and when it is, you'll see why on paper.",
+      },
+      {
+        q: "How long should a luxury home take to sell in Calgary?",
+        a: "Longer than the rest of the market, and that's normal — the buyer pool above $1M is small, so a well-priced estate in Springbank Hill, Aspen Woods, or Upper Mount Royal can take months without anything being wrong. The signal isn't the calendar, it's the traffic: steady showings with no offers is a pricing problem, and no showings at all is a marketing problem. Either one is worth diagnosing before the term runs out.",
+      },
+    ],
+    seoTitle: "Expired Listings in Calgary | Relist Your Luxury Home | Spencer Rivers",
+    seoDescription:
+      "Expired or stalled Calgary luxury listing? Spencer Rivers, CLHMS, diagnoses what went wrong — price, presentation, or exposure — then rebuilds the launch.",
+  },
+  {
     slug: "empty-nesters",
     icon: Heart,
     title: "Empty Nesters",
@@ -992,7 +1081,7 @@ export function WorkWithIndexPage() {
     <PublicLayout>
       <SeoHead
         title="Who We Work With | Spencer Rivers, Rivers Real Estate Calgary"
-        description="Luxury buyers, first-time sellers, empty nesters, move-up families, and urban professionals — see how Spencer Rivers works with each, across Calgary's best communities."
+        description="Luxury buyers, first-time sellers, expired listings, empty nesters, move-up families, and urban professionals — see how Spencer Rivers works with each, across Calgary's best communities."
         canonical={`${SITE_ORIGIN}/work-with`}
       />
 
@@ -1006,12 +1095,12 @@ export function WorkWithIndexPage() {
           </h1>
           <p className="mt-6 text-[15px] lg:text-[16px] text-muted-foreground leading-relaxed max-w-2xl mx-auto">
             Every client walks in with a different next chapter. These are the
-            eight we know best — pick yours and see exactly how Spencer Rivers
+            nine we know best — pick yours and see exactly how Spencer Rivers
             runs the process.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
           {AUDIENCE_SEGMENTS.map(({ slug, icon: Icon, title, card }) => (
             <Link key={slug} href={`/work-with/${slug}`} className="group block border border-border rounded-sm p-7 lg:p-8 bg-card hover:border-foreground/40 transition-colors"
                 data-testid={`card-workwith-${slug}`}>
