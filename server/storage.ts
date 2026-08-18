@@ -896,6 +896,7 @@ export function normalizeStreetName(raw: string | null | undefined): string {
 
 export class DatabaseStorage implements IStorage {
   private mlsSlugCache: Map<string, string> | null = null;
+  private mlsSlugLookup: Map<string, string> | null = null;
   private mlsLegacySlugLookup: Map<string, string> | null = null;
   // Users
   getUserById(id: number) {
@@ -1048,6 +1049,7 @@ export class DatabaseStorage implements IStorage {
   // ---- MLS listings -------------------------------------------------------
   upsertMlsListing(data: InsertMlsListing): MlsListing {
     this.mlsSlugCache = null;
+    this.mlsSlugLookup = null;
     this.mlsLegacySlugLookup = null;
     const existing = db.select().from(mlsListings).where(eq(mlsListings.id, data.id!)).get();
     if (existing) {
@@ -1102,7 +1104,7 @@ export class DatabaseStorage implements IStorage {
   getMlsListingById(id: string): MlsListing | undefined {
     return db.select().from(mlsListings).where(eq(mlsListings.id, id)).get();
   }
-  getMlsSeoSlug(listing: MlsListing): string {
+  private ensureMlsSlugCaches(): void {
     if (!this.mlsSlugCache) {
       const sources = db.select({
         id: mlsListings.id,
@@ -1115,11 +1117,19 @@ export class DatabaseStorage implements IStorage {
         syncedAt: mlsListings.syncedAt,
       }).from(mlsListings).all();
       this.mlsSlugCache = assignMlsSeoSlugs(sources);
+      this.mlsSlugLookup = new Map(
+        Array.from(this.mlsSlugCache.entries()).map(([id, slug]) => [slug, id]),
+      );
     }
-    return this.mlsSlugCache.get(listing.id)!;
+  }
+  getMlsSeoSlug(listing: MlsListing): string {
+    this.ensureMlsSlugCaches();
+    return this.mlsSlugCache!.get(listing.id)!;
   }
   getMlsListingBySeoSlug(slug: string): MlsListing | undefined {
-    return db.select().from(mlsListings).all().find((row) => this.getMlsSeoSlug(row) === slug);
+    this.ensureMlsSlugCaches();
+    const id = this.mlsSlugLookup?.get(slug);
+    return id ? this.getMlsListingById(id) : undefined;
   }
   getMlsListingByLegacySeoSlug(slug: string): MlsListing | undefined {
     if (!this.mlsLegacySlugLookup) {
