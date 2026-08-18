@@ -59,7 +59,7 @@ import type {
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
 import { eq, desc, and, gte, lte, like, sql, or, asc, inArray } from "drizzle-orm";
-import { assignMlsLegacySeoSlugs, assignMlsSeoSlugs } from "@shared/mls-url";
+import { assignMlsLegacySeoSlugs, assignMlsPreviousSeoSlugs, assignMlsSeoSlugs } from "@shared/mls-url";
 
 // Use data.db for SQLite. The publish flow snapshots/restores `data.db` across
 // redeploys. If the snapshot becomes corrupt ("database disk image is
@@ -1111,6 +1111,8 @@ export class DatabaseStorage implements IStorage {
         subdivision: mlsListings.subdivision,
         neighbourhood: mlsListings.neighbourhood,
         city: mlsListings.city,
+        status: mlsListings.status,
+        syncedAt: mlsListings.syncedAt,
       }).from(mlsListings).all();
       this.mlsSlugCache = assignMlsSeoSlugs(sources);
     }
@@ -1122,10 +1124,11 @@ export class DatabaseStorage implements IStorage {
   getMlsListingByLegacySeoSlug(slug: string): MlsListing | undefined {
     if (!this.mlsLegacySlugLookup) {
       const rows = db.select().from(mlsListings).all();
-      const byId = assignMlsLegacySeoSlugs(rows);
-      this.mlsLegacySlugLookup = new Map(
-        Array.from(byId.entries()).map(([id, legacySlug]) => [legacySlug, id]),
-      );
+      const aliases = [assignMlsLegacySeoSlugs(rows), assignMlsPreviousSeoSlugs(rows)];
+      this.mlsLegacySlugLookup = new Map();
+      for (const byId of aliases) {
+        for (const [id, legacySlug] of byId) this.mlsLegacySlugLookup.set(legacySlug, id);
+      }
     }
     const id = this.mlsLegacySlugLookup.get(slug);
     return id ? this.getMlsListingById(id) : undefined;
