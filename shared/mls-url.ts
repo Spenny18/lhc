@@ -5,6 +5,8 @@ export type MlsSlugSource = {
   subdivision?: string | null;
   neighbourhood?: string | null;
   city: string;
+  status?: string | null;
+  syncedAt?: string | null;
 };
 
 export function slugifyMlsPart(value: string | null | undefined): string {
@@ -41,6 +43,7 @@ export function mlsLegacyBaseSlug(listing: MlsSlugSource): string {
 function assignSlugs<T extends MlsSlugSource>(
   listings: T[],
   baseFor: (listing: T) => string,
+  collisionMode: "preferred-clean" | "all-suffixed",
 ): Map<string, string> {
   const groups = new Map<string, T[]>();
   for (const listing of listings) {
@@ -49,19 +52,40 @@ function assignSlugs<T extends MlsSlugSource>(
   }
   const result = new Map<string, string>();
   groups.forEach((group, base) => {
-    for (const listing of group) {
-      result.set(listing.id, group.length === 1 ? base : `${base}-${slugifyMlsPart(listing.mlsNumber || listing.id)}`);
+    if (group.length === 1) {
+      result.set(group[0].id, base);
+      return;
+    }
+    const ordered = [...group].sort((a, b) => {
+      const active = Number((b.status ?? "").toLowerCase() === "active")
+        - Number((a.status ?? "").toLowerCase() === "active");
+      if (active !== 0) return active;
+      const freshness = String(b.syncedAt ?? "").localeCompare(String(a.syncedAt ?? ""));
+      return freshness || String(b.mlsNumber).localeCompare(String(a.mlsNumber));
+    });
+    for (const [index, listing] of ordered.entries()) {
+      const getsCleanSlug = collisionMode === "preferred-clean" && index === 0;
+      result.set(
+        listing.id,
+        getsCleanSlug ? base : `${base}-${slugifyMlsPart(listing.mlsNumber || listing.id)}`,
+      );
     }
   });
   return result;
 }
 
 export function assignMlsSeoSlugs<T extends MlsSlugSource>(listings: T[]): Map<string, string> {
-  return assignSlugs(listings, mlsBaseSlug);
+  return assignSlugs(listings, mlsBaseSlug, "preferred-clean");
 }
 
 export function assignMlsLegacySeoSlugs<T extends MlsSlugSource>(listings: T[]): Map<string, string> {
-  return assignSlugs(listings, mlsLegacyBaseSlug);
+  return assignSlugs(listings, mlsLegacyBaseSlug, "all-suffixed");
+}
+
+// Transitional format deployed briefly with street-first apartment addresses
+// but an MLS suffix on every colliding record.
+export function assignMlsPreviousSeoSlugs<T extends MlsSlugSource>(listings: T[]): Map<string, string> {
+  return assignSlugs(listings, mlsBaseSlug, "all-suffixed");
 }
 
 export function mlsPropertyPath(listing: MlsSlugSource & { seoSlug?: string }): string {
