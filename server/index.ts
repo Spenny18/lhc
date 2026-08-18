@@ -107,8 +107,9 @@ app.use((req, res, next) => {
       if (affected) return res.redirect(301, `/mls/${storage.getMlsSeoSlug(affected)}`);
     }
     const legacy = storage.getMlsListingById(req.params.segment);
-    if (!legacy) return next();
-    return res.redirect(301, `/mls/${storage.getMlsSeoSlug(legacy)}`);
+    const oldSlug = legacy ?? storage.getMlsListingByLegacySeoSlug(req.params.segment);
+    if (!oldSlug) return next();
+    return res.redirect(301, `/mls/${storage.getMlsSeoSlug(oldSlug)}`);
   });
 
   try {

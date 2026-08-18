@@ -59,7 +59,7 @@ import type {
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
 import { eq, desc, and, gte, lte, like, sql, or, asc, inArray } from "drizzle-orm";
-import { assignMlsSeoSlugs } from "@shared/mls-url";
+import { assignMlsLegacySeoSlugs, assignMlsSeoSlugs } from "@shared/mls-url";
 
 // Use data.db for SQLite. The publish flow snapshots/restores `data.db` across
 // redeploys. If the snapshot becomes corrupt ("database disk image is
@@ -896,6 +896,7 @@ export function normalizeStreetName(raw: string | null | undefined): string {
 
 export class DatabaseStorage implements IStorage {
   private mlsSlugCache: Map<string, string> | null = null;
+  private mlsLegacySlugLookup: Map<string, string> | null = null;
   // Users
   getUserById(id: number) {
     return db.select().from(users).where(eq(users.id, id)).get();
@@ -1047,6 +1048,7 @@ export class DatabaseStorage implements IStorage {
   // ---- MLS listings -------------------------------------------------------
   upsertMlsListing(data: InsertMlsListing): MlsListing {
     this.mlsSlugCache = null;
+    this.mlsLegacySlugLookup = null;
     const existing = db.select().from(mlsListings).where(eq(mlsListings.id, data.id!)).get();
     if (existing) {
       // Track price + status changes for the market snapshot.
@@ -1116,6 +1118,17 @@ export class DatabaseStorage implements IStorage {
   }
   getMlsListingBySeoSlug(slug: string): MlsListing | undefined {
     return db.select().from(mlsListings).all().find((row) => this.getMlsSeoSlug(row) === slug);
+  }
+  getMlsListingByLegacySeoSlug(slug: string): MlsListing | undefined {
+    if (!this.mlsLegacySlugLookup) {
+      const rows = db.select().from(mlsListings).all();
+      const byId = assignMlsLegacySeoSlugs(rows);
+      this.mlsLegacySlugLookup = new Map(
+        Array.from(byId.entries()).map(([id, legacySlug]) => [legacySlug, id]),
+      );
+    }
+    const id = this.mlsLegacySlugLookup.get(slug);
+    return id ? this.getMlsListingById(id) : undefined;
   }
   countMlsListings(): number {
     const r = db.select({ c: sql<number>`count(*)` }).from(mlsListings).get();
