@@ -70,7 +70,13 @@ export interface AudienceSegment {
    *  the 4:5 object-cover photo treatment. */
   imageStyle?: "badge";
   points: SegmentPoint[];
+  /** Overrides the generic "What working together looks like." H2. Set it
+   *  when the segment's own nouns (service, market, property type) make a
+   *  more specific heading — answer engines cite headings. */
+  pointsHeading?: string;
   steps: SegmentStep[];
+  /** Overrides the generic "Three steps, no guesswork." H2. Same reasoning. */
+  stepsHeading?: string;
   links: SegmentLink[];
   faq: Array<{ q: string; a: string }>;
   seoTitle: string;
@@ -244,90 +250,92 @@ export const AUDIENCE_SEGMENTS: AudienceSegment[] = [
     slug: "expired-listings",
     icon: Clock,
     title: "Expired & Frustrated Sellers",
-    card: "Your luxury home didn't sell — or still hasn't. A written post-mortem on what went wrong, then a relaunch built to fix it.",
-    headline: ["Your home didn't sell.", "The market isn't the reason."],
+    card: "Expired, terminated, or stalled. Spencer Rivers diagnoses the list price, the photography, and the exposure — then re-prices, re-markets, and relists the home.",
+    headline: ["Expired Calgary listings,", "relisted and sold."],
     intro:
-      "Expired, terminated, or simply still sitting — a Calgary luxury home rarely fails to sell for one reason. It's a price built on the wrong comparables, presentation that doesn't survive a phone screen, exposure that never reached the actual buyer pool, or an agent who went quiet after week three. Spencer Rivers — CLHMS, Million Dollar Guild — starts every relist with a written post-mortem of what actually happened, and only then talks about a new list price.",
+      "Your home did not sell, and the Calgary market is not the reason. Spencer Rivers is a CLHMS luxury listing agent with Rivers Real Estate at Synterra Realty who relists expired, terminated, and stalled homes across Springbank Hill, Aspen Woods, Upper Mount Royal, Elbow Park, Britannia, and Bel-Aire in Calgary, Alberta. Every relist opens with a written post-mortem — what the list price, the photography, and the exposure actually did — before Spencer Rivers re-prices, re-markets, and relists the property on Calgary MLS®.",
     image: "/img/work-with/luxury-properties.jpg",
     imageAlt:
-      "Calgary luxury home photographed at dusk — the standard of presentation Spencer Rivers relaunches expired listings with",
+      "Luxury home in Calgary, Alberta photographed at dusk for Rivers Real Estate — the presentation standard Spencer Rivers relists expired listings with",
+    pointsHeading: "How Spencer Rivers relists a Calgary luxury home.",
     points: [
       {
         icon: LineChart,
-        title: "A post-mortem before a relist",
-        body: "Showing counts, written feedback, days on market, and the comparables that actually closed while you sat — reviewed on paper before anyone suggests a number. Showings without offers usually means price. No showings usually means exposure or presentation. Guessing which one costs you a second failed listing.",
+        title: "A written post-mortem before the relist",
+        body: "Spencer Rivers reviews the showing count, the written buyer feedback, the days on market, and the Calgary comparables that closed while the home sat. Showings without offers point to list price. No showings point to exposure or photography. A listing agent who guesses between the two costs the seller a second failed listing.",
       },
       {
         icon: Camera,
-        title: "Presentation rebuilt from zero",
-        body: "New photography, new floor plans, new copy, and a room-by-room prep list. Buyers above $1M shortlist from a phone screen in about four seconds, and a gallery that looked adequate in spring is invisible by fall. Nothing gets recycled from the last launch.",
+        title: "Photography, floor plans, and remarks rebuilt",
+        body: "New professional photography, new floor plans, new listing remarks, and a room-by-room staging list. Luxury buyers above $1M shortlist Calgary listings from a phone screen, and a gallery that worked in spring reads as stale by fall. Spencer Rivers recycles nothing from the failed launch.",
       },
       {
         icon: Users,
-        title: "The buyers who never saw it",
-        body: "The MLS is the floor, not the plan. Relaunches run paid distribution, the Calgary luxury agent network, and a private buyer list built across $100M+ in career sales — because the buyer who passed on your listing often never saw it in the first place.",
+        title: "The Calgary buyers who never saw it",
+        body: "Pillar 9 MLS® is the floor, not the marketing plan. Spencer Rivers relaunches expired listings through paid distribution, the Calgary luxury agent network, and a private buyer list built across $100M+ in career sales — because the buyer who passed on the listing often never saw the home at all.",
       },
     ],
+    stepsHeading: "From expired listing to sold, in three steps.",
     steps: [
       {
         title: "The post-mortem — no listing pitch",
-        body: "One meeting. Spencer pulls your showing history, the feedback, and the sales that closed around you, then tells you what he thinks went wrong. You get that assessment whether or not you ever list with him.",
+        body: "One meeting at the home. Spencer Rivers pulls the showing history, the buyer feedback, and the Calgary sales that closed nearby, then explains what failed. Sellers keep that assessment whether or not they ever list with Rivers Real Estate.",
       },
       {
-        title: "A written relaunch plan",
-        body: "Price, prep, photography, timing, and marketing spend in one document with the math on it — the target buyer, the comparables the price is built on, and a net-proceeds estimate before you sign anything.",
+        title: "A written relist plan, with the math on it",
+        body: "List price, prep, photography, timing, and marketing spend in one document — the target luxury buyer, the closed comparables the price is built on, and a net-proceeds estimate before a seller signs a listing agreement.",
       },
       {
-        title: "Relist, and stay in contact",
-        body: "Weekly reporting on showings, traffic, and feedback, plus a scheduled decision point if the market says something you didn't expect. The silence you got last time is the first thing Spencer fixes.",
+        title: "Relist, market, and report every week",
+        body: "Spencer Rivers relists the home on Calgary MLS®, markets it through paid and private channels, and reports showings, traffic, and feedback weekly — with a scheduled decision point if the Calgary market says something unexpected.",
       },
     ],
     links: [
       {
-        title: "What's it worth today?",
-        desc: "A no-obligation evaluation built on current comparables.",
+        title: "What is your Calgary home worth now?",
+        desc: "A no-obligation home evaluation built on closed comparables.",
         href: "/home-evaluation",
       },
       {
-        title: "Spencer's track record",
-        desc: "Credentials, career sales, and how he works.",
+        title: "Spencer Rivers' track record",
+        desc: "CLHMS credentials, career sales, and how he markets luxury homes.",
         href: "/about",
       },
       {
-        title: "Your community's numbers",
-        desc: "Prices, inventory, and days on market by neighbourhood.",
+        title: "Calgary neighbourhood data",
+        desc: "Prices, inventory, and days on market by community.",
         href: "/neighbourhoods",
       },
     ],
     faq: [
       {
         q: "Why didn't my Calgary luxury home sell?",
-        a: "Above $1M it's almost always one of three things — a price built on the wrong comparables, presentation that doesn't hold up on a phone screen, or exposure that never reached the real buyer pool — and usually two of them at once. Days on market then compound it: buyers read a long listing history as permission to wait, and no one pays full price for a stale donut. The fix starts with identifying which of the three failed, which is exactly what the post-mortem is for.",
+        a: "Above $1M in Calgary, an expired listing almost always traces to one of three causes — a list price built on the wrong comparables, photography that fails on a phone screen, or exposure that never reached the luxury buyer pool — and usually two at once. Days on market then compound the problem: buyers read a long listing history as permission to wait, and no one pays full price for a stale donut. Spencer Rivers identifies which of the three failed before recommending a new list price.",
       },
       {
-        q: "My home is still listed with another brokerage — can we talk?",
-        a: "About strategy, yes. This is not an invitation to break your agreement. If your home is currently listed, the right first conversation is with your current agent — bring them the showing data and ask for a written plan. If the listing expires or the brokerage cancels it, the door here is open, and the post-mortem is free either way.",
+        q: "My Calgary home is still listed with another brokerage — can we talk?",
+        a: "About strategy, yes. This is not an invitation to break a listing agreement. While a home is listed with another brokerage, the right first conversation is with the current listing agent — bring them the showing data and ask for a written marketing plan. When the listing expires or the brokerage cancels it, Spencer Rivers is available, and the post-mortem is free either way.",
       },
       {
-        q: "Can I switch agents before my listing agreement ends?",
-        a: "Your listing agreement is with the brokerage rather than the individual agent, and it runs to a fixed expiry date. Ending it early requires the brokerage to agree to a cancellation in writing — many will, some won't. Read your agreement for the expiry date and the holdover clause, which can still entitle the brokerage to commission if you sell to a buyer they introduced. Spencer will read it with you at no charge before you do anything.",
+        q: "Can I switch REALTORS® before my listing agreement ends?",
+        a: "A listing agreement in Alberta is held by the brokerage rather than the individual REALTOR®, and it runs to a fixed expiry date. Ending it early requires the brokerage to agree to a cancellation in writing. Read the agreement for the expiry date and the holdover clause, which can still entitle the brokerage to commission on a buyer it introduced. Spencer Rivers reads Calgary listing agreements with sellers at no charge.",
       },
       {
-        q: "Does relisting reset my days on market?",
-        a: "A new listing gets a new MLS number and a fresh days-on-market count, but the previous listing stays in the sale history every agent can pull. Relisting to hide days on market doesn't work. Relisting with a corrected price and rebuilt presentation does — which is why the relist should be the last thing that changes, not the first.",
+        q: "Does relisting reset days on market in Calgary?",
+        a: "A relist creates a new MLS® number and a fresh days-on-market count on Pillar 9, but the previous listing stays in the property history every Calgary REALTOR® can pull. Relisting to hide days on market does not work. Relisting with a corrected list price and rebuilt photography does — which is why the relist is the last step, not the first.",
       },
       {
-        q: "How much do I need to cut the price?",
-        a: "Possibly nothing. If photography, floor plans, and exposure were the failure, a price cut just pays for someone else's mistake. Spencer works out what the market was actually telling you first, then puts a number on it and shows the closed comparables it came from. Sometimes the answer is a real reduction — and when it is, you'll see why on paper.",
+        q: "How much should I cut the price on an expired listing?",
+        a: "Possibly nothing. When photography, floor plans, and exposure caused the failure, a price reduction pays for a marketing mistake. Spencer Rivers reads what the Calgary market actually signalled, puts a number on it, and shows the closed comparables behind it. When a real reduction is the answer, the seller sees why on paper.",
       },
       {
         q: "How long should a luxury home take to sell in Calgary?",
-        a: "Longer than the rest of the market, and that's normal — the buyer pool above $1M is small, so a well-priced estate in Springbank Hill, Aspen Woods, or Upper Mount Royal can take months without anything being wrong. The signal isn't the calendar, it's the traffic: steady showings with no offers is a pricing problem, and no showings at all is a marketing problem. Either one is worth diagnosing before the term runs out.",
+        a: "Longer than the rest of the Calgary market, and that is normal — the buyer pool above $1M is small, so a correctly priced estate in Springbank Hill, Aspen Woods, or Upper Mount Royal can take months without anything being wrong. The signal is traffic, not the calendar. Steady showings without offers indicate list price. No showings indicate marketing. Spencer Rivers diagnoses either one before the listing term expires.",
       },
     ],
     seoTitle: "Expired Listings in Calgary | Relist Your Luxury Home | Spencer Rivers",
     seoDescription:
-      "Expired or stalled Calgary luxury listing? Spencer Rivers, CLHMS, diagnoses what went wrong — price, presentation, or exposure — then rebuilds the launch.",
+      "Expired Calgary luxury listing? Spencer Rivers, CLHMS listing agent, diagnoses list price, photography, and exposure — then re-prices, re-markets, and relists.",
   },
   {
     slug: "empty-nesters",
@@ -966,7 +974,7 @@ export default function WorkWithDetailPage() {
               HOW SPENCER HELPS
             </div>
             <h2 className="font-serif text-[30px] lg:text-[44px] leading-[1.05] tracking-tight">
-              What working together looks like.
+              {segment.pointsHeading ?? "What working together looks like."}
             </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6">
@@ -994,7 +1002,7 @@ export default function WorkWithDetailPage() {
           THE PROCESS
         </div>
         <h2 className="font-serif text-[30px] lg:text-[44px] leading-[1.05] tracking-tight mb-12">
-          Three steps, no guesswork.
+          {segment.stepsHeading ?? "Three steps, no guesswork."}
         </h2>
         <div className="space-y-10">
           {segment.steps.map((step, i) => (

@@ -84,7 +84,7 @@ const WORK_WITH_META: Record<
   "expired-listings": {
     title: "Expired Listings in Calgary | Relist Your Luxury Home | Spencer Rivers",
     description:
-      "Expired or stalled Calgary luxury listing? Spencer Rivers, CLHMS, diagnoses what went wrong — price, presentation, or exposure — then rebuilds the launch.",
+      "Expired Calgary luxury listing? Spencer Rivers, CLHMS listing agent, diagnoses list price, photography, and exposure — then re-prices, re-markets, and relists.",
     image:
       `${ORIGIN}/img/work-with/luxury-properties.jpg`,
   },
