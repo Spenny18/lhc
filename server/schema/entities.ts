@@ -147,11 +147,19 @@ const AGENT: SchemaNode = {
   ],
 };
 
+// The site name Google may show in place of the bare domain in search
+// results. Google reads WebSite.name here, og:site_name (seo-inject.ts), the
+// manifest name (client/public/site.webmanifest), and the homepage <title>,
+// and only uses a name it sees consistently across them — so change all four
+// together or Google falls back to "riversrealestate.ca". alternateName gives
+// it the accepted shorthand; both must be names the brand actually uses.
 const WEBSITE: SchemaNode = {
   "@type": "WebSite",
   "@id": IDS.website,
   url: `${ORIGIN}/`,
   name: "Rivers Real Estate",
+  alternateName: ["Luxury Homes Calgary", "Rivers Real Estate Calgary"],
+  inLanguage: "en-CA",
   publisher: { "@id": IDS.agent },
   potentialAction: {
     "@type": "SearchAction",
