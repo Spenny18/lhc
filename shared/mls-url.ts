@@ -63,7 +63,8 @@ function assignSlugs<T extends MlsSlugSource>(
       const freshness = String(b.syncedAt ?? "").localeCompare(String(a.syncedAt ?? ""));
       return freshness || String(b.mlsNumber).localeCompare(String(a.mlsNumber));
     });
-    for (const [index, listing] of ordered.entries()) {
+    for (let index = 0; index < ordered.length; index++) {
+      const listing = ordered[index];
       const getsCleanSlug = collisionMode === "preferred-clean" && index === 0;
       result.set(
         listing.id,

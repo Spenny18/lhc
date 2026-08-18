@@ -1047,10 +1047,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   // ---- MLS listings -------------------------------------------------------
-  upsertMlsListing(data: InsertMlsListing): MlsListing {
+  invalidateMlsSlugCaches(): void {
     this.mlsSlugCache = null;
     this.mlsSlugLookup = null;
     this.mlsLegacySlugLookup = null;
+  }
+  upsertMlsListing(data: InsertMlsListing): MlsListing {
     const existing = db.select().from(mlsListings).where(eq(mlsListings.id, data.id!)).get();
     if (existing) {
       // Track price + status changes for the market snapshot.
@@ -1137,7 +1139,7 @@ export class DatabaseStorage implements IStorage {
       const aliases = [assignMlsLegacySeoSlugs(rows), assignMlsPreviousSeoSlugs(rows)];
       this.mlsLegacySlugLookup = new Map();
       for (const byId of aliases) {
-        for (const [id, legacySlug] of byId) this.mlsLegacySlugLookup.set(legacySlug, id);
+        byId.forEach((legacySlug, id) => this.mlsLegacySlugLookup!.set(legacySlug, id));
       }
     }
     const id = this.mlsLegacySlugLookup.get(slug);
