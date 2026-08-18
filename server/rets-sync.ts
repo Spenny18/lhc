@@ -326,6 +326,11 @@ export async function runSync(): Promise<{
     });
     return { status: "error", fetched, upserted, removed, errorMessage: message };
   } finally {
+    // Thousands of individual upserts run in one sync. Keep the previous
+    // lookup usable throughout the batch, then rebuild lazily once from the
+    // completed dataset instead of forcing every concurrent page request to
+    // rebuild it between rows.
+    storage.invalidateMlsSlugCaches();
     try { await client.logout(); } catch {}
   }
 }
