@@ -444,6 +444,15 @@ sqlite.exec(`
     created_at TEXT NOT NULL
   );
   CREATE INDEX IF NOT EXISTS idx_page_revisions_slug ON page_revisions(page_slug, id DESC);
+
+  -- Focus-keyword intent set by hand in the admin SEO console. Absent rows mean
+  -- "derive the keyword from the page title", which is the default behaviour.
+  CREATE TABLE IF NOT EXISTS seo_keyword_targets (
+    path TEXT PRIMARY KEY,
+    focus_keyword TEXT NOT NULL,
+    note TEXT,
+    updated_at TEXT NOT NULL
+  );
 `);
 
 // Migration: add account_user_id to saved_searches so portal users own
@@ -1889,6 +1898,33 @@ export class DatabaseStorage implements IStorage {
     }
   }
   // ---- Condo Buildings ---------------------------------------------------
+  // ---------- SEO keyword targets (admin SEO console) ----------
+  listSeoKeywordTargets(): Array<{ path: string; focusKeyword: string; note: string | null; updatedAt: string }> {
+    const rows = sqlite
+      .prepare("SELECT path, focus_keyword, note, updated_at FROM seo_keyword_targets")
+      .all() as Array<{ path: string; focus_keyword: string; note: string | null; updated_at: string }>;
+    return rows.map((r) => ({
+      path: r.path, focusKeyword: r.focus_keyword, note: r.note, updatedAt: r.updated_at,
+    }));
+  }
+  setSeoKeywordTarget(path: string, focusKeyword: string, note?: string | null): void {
+    const kw = focusKeyword.trim();
+    if (!kw) { this.clearSeoKeywordTarget(path); return; }
+    sqlite
+      .prepare(
+        `INSERT INTO seo_keyword_targets (path, focus_keyword, note, updated_at)
+         VALUES (?, ?, ?, ?)
+         ON CONFLICT(path) DO UPDATE SET
+           focus_keyword = excluded.focus_keyword,
+           note = excluded.note,
+           updated_at = excluded.updated_at`,
+      )
+      .run(path, kw, note ?? null, new Date().toISOString());
+  }
+  clearSeoKeywordTarget(path: string): void {
+    sqlite.prepare("DELETE FROM seo_keyword_targets WHERE path = ?").run(path);
+  }
+
   listCondoBuildings(): CondoBuilding[] {
     return db.select().from(condoBuildings).orderBy(asc(condoBuildings.sortOrder)).all();
   }
