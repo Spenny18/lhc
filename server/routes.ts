@@ -3043,6 +3043,60 @@ export async function registerRoutes(
   // Lightweight read-only analytics derived from existing tables.
   // GSC + GA4 traffic stats for /admin/analytics. Dynamic import + caching
   // (1h in seo-stats.ts) so the page is snappy without burning API quota.
+  // ---------- SEO KEYWORD CONSOLE ----------
+  // Crawls the app's own public routes over loopback and returns per-page
+  // keyword scoring, cluster membership, the internal-link graph, and
+  // suggested targets. Cached because a full crawl costs a few seconds;
+  // ?refresh=1 forces a rebuild after content edits.
+  let seoReportCache: { at: number; data: unknown } | null = null;
+  const SEO_REPORT_TTL_MS = 10 * 60 * 1000;
+
+  app.get("/api/admin/seo/keywords", requireAuth, async (req, res) => {
+    try {
+      const refresh = req.query.refresh === "1";
+      if (!refresh && seoReportCache && Date.now() - seoReportCache.at < SEO_REPORT_TTL_MS) {
+        return res.json({ ok: true, cached: true, ...(seoReportCache.data as object) });
+      }
+      const { buildSeoReport } = await import("./seo-keywords");
+      const overrides: Record<string, string> = {};
+      for (const t of storage.listSeoKeywordTargets()) overrides[t.path] = t.focusKeyword;
+
+      // Crawl ourselves over loopback so the analysis sees exactly what a
+      // crawler sees, including SSR metadata and the real anchor graph.
+      const port = process.env.PORT || "5000";
+      const baseUrl = `http://127.0.0.1:${port}`;
+      const data = await buildSeoReport({ baseUrl, overrides });
+      seoReportCache = { at: Date.now(), data };
+      res.json({ ok: true, cached: false, ...data });
+    } catch (err: any) {
+      console.error("[seo-keywords] build failed:", err?.message ?? err);
+      res.status(500).json({ ok: false, message: err?.message ?? "Failed to build SEO report" });
+    }
+  });
+
+  app.put("/api/admin/seo/keywords", requireAuth, (req, res) => {
+    const { path: pagePath, focusKeyword, note } = req.body ?? {};
+    if (typeof pagePath !== "string" || !pagePath.startsWith("/")) {
+      return res.status(400).json({ ok: false, message: "path must be a site-relative path" });
+    }
+    if (typeof focusKeyword !== "string") {
+      return res.status(400).json({ ok: false, message: "focusKeyword is required" });
+    }
+    storage.setSeoKeywordTarget(pagePath, focusKeyword, note ?? null);
+    seoReportCache = null; // next read reflects the new target
+    res.json({ ok: true });
+  });
+
+  app.delete("/api/admin/seo/keywords", requireAuth, (req, res) => {
+    const pagePath = String(req.query.path ?? "");
+    if (!pagePath.startsWith("/")) {
+      return res.status(400).json({ ok: false, message: "path is required" });
+    }
+    storage.clearSeoKeywordTarget(pagePath);
+    seoReportCache = null;
+    res.json({ ok: true });
+  });
+
   app.get("/api/analytics/seo-stats", requireAuth, async (req, res) => {
     const days = Number(req.query.days);
     const safeDays = Number.isFinite(days) && days > 0 ? days : 28;

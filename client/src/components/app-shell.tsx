@@ -21,6 +21,7 @@ import {
   FileText,
   MapPinned,
   LayoutTemplate,
+  Target,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,7 @@ const primaryNav: NavItem[] = [
   { label: "Condos CMS", icon: Building2, href: "/admin/condos" },
   { label: "Neighbourhoods", icon: MapPinned, href: "/admin/neighbourhoods" },
   { label: "Blog CMS", icon: FileText, href: "/admin/blog" },
+  { label: "SEO Keywords", icon: Target, href: "/admin/seo" },
   { label: "MLS Sync", icon: Database, href: "/admin/mls-sync" },
 ];
 

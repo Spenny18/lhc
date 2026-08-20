@@ -359,3 +359,29 @@ export async function fetchSeoStats(days: number): Promise<SeoStatsPayload> {
   }
   return payload;
 }
+
+// ---------- Re-exports for the SEO keyword console ----------------------
+// The keyword console needs the ["page","query"] dimension pairing, which the
+// dashboard payload above does not expose (it fetches page and query as
+// separate dimensions). Rather than duplicate the auth + fetch plumbing, hand
+// the primitives out and let server/seo-keywords.ts compose its own request.
+
+/** Access token for Search Console, or null when Google is not configured. */
+export async function getAccessTokenForSeo(): Promise<string | null> {
+  const { token } = await getAccessToken();
+  return token ?? null;
+}
+
+/** The configured Search Console property (e.g. sc-domain:riversrealestate.ca). */
+export function gscSiteUrl(): string {
+  return process.env.GSC_SITE_URL || `sc-domain:${(process.env.PUBLIC_ORIGIN || "https://riversrealestate.ca").replace(/^https?:\/\//, "")}`;
+}
+
+/** Raw searchAnalytics.query passthrough. */
+export async function gscQueryRaw(
+  token: string,
+  siteUrl: string,
+  body: Record<string, unknown>,
+): Promise<any> {
+  return gscQuery(token, siteUrl, body);
+}
